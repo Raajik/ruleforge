@@ -150,7 +150,7 @@ for each task. The C# is in `ref/editor/`.
   - `src/core/ops/search.ts`: `findNextMatchingRule` gives the first match at or after `start`, else the first match
     before `start`, else -1. `goToNextMatchingRule` gives -1 for an empty search. Both match on `rule.name`, the text
     the list shows. Tested by `search.test.ts` (11 tests, 219 total). Facts: `docs/ops.md`.
-- [ ] T20 Copy and paste rule: `Form1.cs` 1054–1169.
+- [x] T20 Copy and paste rule: `Form1.cs` 1054–1169.
   - The clipboard text is `base64(sha256(utf8(ruleText))) + "#" + ruleText`.
   - Paste checks the hash, except "paste unchecked". Ctrl+paste replaces the selected rule.
   - Use `crypto.subtle` (it works in browsers and Node), so the function is async.

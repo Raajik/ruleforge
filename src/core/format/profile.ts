@@ -778,6 +778,32 @@ function writeSalvageCombine(block: SalvageCombineBlock, body: CountedWriter): v
   }
 }
 
+/**
+ * Writes one rule as text, as `cLootItemRule.Write` does
+ * (ref/shared/LootRules.cs 3003-3042). The copy command puts this text on the
+ * clipboard (ref/editor/Form1.cs 1078-1098).
+ */
+export function writeRuleText(rule: LootRule): string {
+  const writer = new CountedWriter()
+  writeRule(writer, rule)
+  return writer.toString()
+}
+
+/**
+ * Reads one rule from text, as `cLootItemRule.Read` does
+ * (ref/shared/LootRules.cs 2944-3001). `version` is the value the C# paste
+ * passes, the version of the loaded file (`LootRules.UTLFileVersion`).
+ * Throws when the rule header is missing or has no numbers. The C# read
+ * throws there too, so the paste then does nothing (Form1.cs 1154).
+ */
+export function readRuleText(text: string, version: number): LootRule {
+  const rule = readRule(new LineReader(text), version)
+  if (!Number.isFinite(rule.priority) || !Number.isFinite(rule.action)) {
+    throw new Error('Invalid rule text: the rule header is not "priority;action;..."')
+  }
+  return rule
+}
+
 export function writeProfile(profile: LootProfile): string {
   const writer = new CountedWriter()
   writer.writeLine('UTL')

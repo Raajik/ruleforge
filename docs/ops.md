@@ -78,3 +78,40 @@
   Test: `src/core/ops/search.test.ts`, "goToNextMatchingRule".
 - [Verified] The search finds the real rule names of `IAC_Level_NoCash.utl` and wraps to the first one from past
   the end of the list. Test: `src/core/ops/search.test.ts`, "finds the real rule names in a fixture".
+
+## Copy and paste (T20)
+
+- [Observed] Copy writes the current rule with `cLootItemRule.Write` and reads the stream as ASCII. It sets the
+  clipboard to `base64(sha256(utf8(ruleText))) + "#" + ruleText`. Empty rule text sets nothing.
+  `ref/editor/Form1.cs:1078-1099`.
+- [Observed] Paste splits the clipboard text on every `#`. Part 0 is the hash and the rest joins back with `#` as
+  the rule text. Empty clipboard text, fewer than two parts and a checked hash mismatch all show "Invalid rule
+  format in clipboard.". `ref/editor/Form1.cs:1104-1127`.
+- [Observed] The paste reads the rule with `cLootItemRule.Read` at `LootRules.UTLFileVersion`.
+  `LootRules.UTLFileVersion` holds the version of the loaded file (`ref/shared/LootRules.cs:3051`, set at load
+  `3144-3153`). Copy always writes the custom expression line (`LootRules.cs:3009`). A version 0 read skips that
+  line (`2950-2953`), so the expression becomes the rule header. `Convert.ToInt32("")` throws, and the empty catch
+  makes the paste do nothing. Copy and paste do not work on a version 0 file in the legacy editor.
+  `ref/editor/Form1.cs:1154`.
+- [Observed] Without Ctrl the pasted rule goes to the end of the list. With Ctrl and a selected rule, the paste
+  inserts the new rule after the selected one and deletes the old rule. The paste replaces the selected rule in
+  place. `ref/editor/Form1.cs:1131-1147`, `ref/editor/Form1.cs:1013-1016`.
+- [Observed] "Paste unchecked" calls the same code with the hash check off. Every rule read error passes an empty
+  catch, so a bad paste shows no message. `ref/editor/Form1.cs:1162-1165`, `ref/editor/Form1.cs:1154`.
+
+- [Verified] `copyRuleText` gives `base64(sha256(utf8(text))) + "#" + text`. The text starts with the rule name
+  line in CRLF. Test: `src/core/ops/clipboard.test.ts`, "copyRuleText".
+- [Verified] Copy then paste appends a rule equal to the copied one. It keeps the keep count of a `KeepUpTo` rule.
+  The input profile does not change. Test: `src/core/ops/clipboard.test.ts`, "copy then paste gives the same rule".
+- [Verified] A paste keeps a raw requirement as text and a `#` in the rule name. Test:
+  `src/core/ops/clipboard.test.ts`, "pastes a rule with an unsupported requirement" and "keeps a \"#\" in the rule
+  name".
+- [Verified] Changed rule text fails the hash check and gives null. `checkHash: false` takes the changed text.
+  Empty text, text without `#` and a wrong hash also give null. Test: `src/core/ops/clipboard.test.ts`, "changed
+  text fails the hash check", "rejects invalid clipboard text".
+- [Verified] A paste with `replaceIndex` replaces the rule in place and keeps the length. Test:
+  `src/core/ops/clipboard.test.ts`, "Ctrl+paste replaces the selected rule in place".
+- [Verified] An out-of-range `replaceIndex` returns the profile unchanged. Test:
+  `src/core/ops/clipboard.test.ts`, "returns the profile unchanged for an out-of-range replaceIndex".
+- [Verified] A paste into a version 0 profile gives null, because the C# read throws there. Test:
+  `src/core/ops/clipboard.test.ts`, "does nothing on a version 0 profile, where the C# read throws".
