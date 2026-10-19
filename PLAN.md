@@ -63,7 +63,9 @@ find one real example in a fixture (`rg -n -m3 '^<type number>$' fixtures/`) and
   - Implemented `LineReader` (one line at a time, strips CR), `CountedWriter` (collects lines with CRLF, has `count` and `resetCount()`), and `formatDouble` (copies .NET formatting).
   - Verified `formatDouble` against explicit values (`0.1`, `0.5`, `1`, `100`, `1E-05`, `1.5E+20`, `0.333333333333333`) and real doubles from fixtures. JS `String()` agrees with .NET for values in `[0.0001, 1e15)`.
   - All tests pass (49 total).
-- [ ] T06 File and rule records.
+- [x] T06 File and rule records.
+  - Read version 0 and version 1 headers. Dispatch requirements by type number; each type stays raw text
+    until T07–T13 add its reader. `src/core/format/profile.ts`, tested by `profile.test.ts`.
   - Read: `ref/shared/FileVersioning.cs` (65 lines), and in `LootRules.cs`: `cLootItemRule` (2873–3046),
     `cLootRules` (3047–3200), `iLootRule` (43–220), `cUnsupportedRequirement` (221–272).
   - Read version 0 and version 1 files. Dispatch requirements by type number.

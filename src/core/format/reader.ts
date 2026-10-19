@@ -54,6 +54,18 @@ export class LineReader {
   }
 
   /**
+   * Reads up to n characters as raw text. Line breaks are not treated.
+   * This copies `StreamReader.Read(char[], 0, n)`, which the C# code uses for
+   * an unsupported requirement and for an extra block body.
+   */
+  readChars(n: number): string {
+    const end = Math.min(this.pos + n, this.buffer.length)
+    const text = this.buffer.slice(this.pos, end)
+    this.pos = end
+    return text
+  }
+
+  /**
    * Gets the number of unread bytes remaining in the buffer.
    */
   get posRemaining(): number {
