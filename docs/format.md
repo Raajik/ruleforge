@@ -14,7 +14,10 @@
 - [Observed] An unknown requirement is skipped by its count and kept as raw characters. `ref/shared/LootRules.cs:2987-2992`.
 - [Observed] The writer always saves version `MAX_PROFILE_VERSION` (1), whatever the input version was. `ref/shared/LootRules.cs:3181`.
 - [Observed] Extra blocks after the rules are `typeId`, `length`, then `length` raw characters. `ref/shared/UTLFileExtraBlockManager.cs:94-120`.
-- [Verified] `readProfile` then `writeProfile` gives the same bytes for `vtclassic_editor_minimal.utl`, `vtclassic_editor_rich.utl`, `BuffedLongBuffedDouble.utl` and `UnfamilarShores.utl`, with types 0 and 1 parsed and the other types still raw. Test: `src/core/format/profile.test.ts`.
+- [Verified] `readProfile` then `writeProfile` gives the same bytes for `vtclassic_editor_minimal.utl`, `vtclassic_editor_rich.utl`, `BuffedLongBuffedDouble.utl` and `UnfamilarShores.utl` with types 0 and 1 parsed and the other types still raw. Test: `src/core/format/profile.test.ts`.
+
+### Requirement types
+- [Verified] Types 4 (`DoubleValKeyLE`), 5 (`DoubleValKeyGE`), 6 (`DamagePercentGE`), and 10 (`MinDamageGE`) each have a body of one or two lines containing a `keyval` double, formatted with `formatDouble` (`.NET G15` format via `src/core/format/doubles.test.ts`). Types 4 and 5 also write a `vk` (`DoubleValueKey`) number on a second line. Test: `src/core/format/profile.test.ts`, "round-trips the fixtures byte for byte" passes for all 8 fixtures including those with these types.
 
 ### Requirement types
 - [Observed] Type 0 `SpellNameMatch` reads one line as the regex pattern (`inf.ReadLine()`) and writes it back as one line. The pattern stays text. `ref/shared/LootRules.cs:313,318`.

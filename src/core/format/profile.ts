@@ -8,6 +8,7 @@
  */
 
 import { eLootAction, eLootRuleType } from './enums'
+import { formatDouble } from './doubles'
 import { LineReader } from './reader'
 import { CountedWriter } from './writer'
 
@@ -85,6 +86,34 @@ export interface LongValKeyNERequirement {
   vk: number
 }
 
+/** Type 4, DoubleValKeyLE. The body is two lines (LootRules.cs 686-696). */
+export interface DoubleValKeyLERequirement {
+  type: 4
+  keyval: number
+  /** DoubleValueKey, written base 10 as Convert.ToString((int)vk) does. */
+  vk: number
+}
+
+/** Type 5, DoubleValKeyGE. The body is two lines (LootRules.cs 761-798). */
+export interface DoubleValKeyGERequirement {
+  type: 5
+  keyval: number
+  /** DoubleValueKey, written base 10 as Convert.ToString((int)vk) does. */
+  vk: number
+}
+
+/** Type 6, DamagePercentGE. The body is one line (LootRules.cs 827-835). */
+export interface DamagePercentGERequirement {
+  type: 6
+  keyval: number
+}
+
+/** Type 10, MinDamageGE. The body is one line (LootRules.cs 1119-1127). */
+export interface MinDamageGERequirement {
+  type: 10
+  keyval: number
+}
+
 /**
  * One reader per type number, keyed like eLootRuleType. A reader reads only
  * the body of the requirement, after the length prefix of a version 1 file.
@@ -114,6 +143,14 @@ export const requirementReaders: Record<number, (reader: LineReader, version: nu
   12: (reader) => ({ type: 12, keyval: toInt(reader.readLine()), vk: toInt(reader.readLine()) }),
   // LootRules.cs 1529-1530: keyval line, then the IntValueKey number.
   13: (reader) => ({ type: 13, keyval: toInt(reader.readLine()), vk: toInt(reader.readLine()) }),
+  // LootRules.cs 686-688: keyval line, then the DoubleValueKey number.
+  4: (reader) => ({ type: 4, keyval: parseFloat(reader.readLine() ?? ''), vk: toInt(reader.readLine()) }),
+  // LootRules.cs 761-763: keyval line, then the DoubleValueKey number.
+  5: (reader) => ({ type: 5, keyval: parseFloat(reader.readLine() ?? ''), vk: toInt(reader.readLine()) }),
+  // LootRules.cs 827-829: keyval line.
+  6: (reader) => ({ type: 6, keyval: parseFloat(reader.readLine() ?? '') }),
+  // LootRules.cs 1119-1121: keyval line.
+  10: (reader) => ({ type: 10, keyval: parseFloat(reader.readLine() ?? '') }),
 }
 
 export interface LootRule {
@@ -249,6 +286,24 @@ function writeRequirementBody(body: CountedWriter, requirement: Requirement): vo
     case eLootRuleType.LongValKeyNE:
       body.writeLine(String(requirement.keyval))
       body.writeLine(String(requirement.vk))
+      break
+    // LootRules.cs 692-695: keyval line, then the DoubleValueKey number.
+    case eLootRuleType.DoubleValKeyLE:
+      body.writeLine(formatDouble(requirement.keyval))
+      body.writeLine(String(requirement.vk))
+      break
+    // LootRules.cs 792-795: keyval line, then the DoubleValueKey number.
+    case eLootRuleType.DoubleValKeyGE:
+      body.writeLine(formatDouble(requirement.keyval))
+      body.writeLine(String(requirement.vk))
+      break
+    // LootRules.cs 832-834: keyval line.
+    case eLootRuleType.DamagePercentGE:
+      body.writeLine(formatDouble(requirement.keyval))
+      break
+    // LootRules.cs 1124-1126: keyval line.
+    case eLootRuleType.MinDamageGE:
+      body.writeLine(formatDouble(requirement.keyval))
       break
   }
 }
