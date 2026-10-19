@@ -56,3 +56,25 @@
   `src/core/ops/rules.test.ts`, "a new rule and requirement in a file".
 - [Verified] An operation with an out-of-range index returns the profile unchanged. Test: `src/core/ops/rules.test.ts`,
   "does nothing for a bad index".
+
+## Search (T19)
+
+- [Observed] The rule list shows the rule name. A list item is the `rule.name` string, and the owner-draw prints
+  `Items[i].ToString()`. `ref/editor/Form1.cs:378,584`, `ref/editor/Form1.Designer.cs:1177`.
+- [Observed] The search box runs a search on every key press from `CurrentRuleNum`. The "next match" button runs it
+  from `CurrentRuleNum + 1`. `ref/editor/Form1.cs:954-957,993-996`.
+- [Observed] `FindNextMatchingRule` lowercases the search text and each rule name, then takes the first match at or
+  after `start`. With no match after `start` it wraps and gives the first match before `start`. With no match at all
+  it gives -1. `ref/editor/Form1.cs:972-991`.
+- [Observed] `GoToNextMatchingRule` does nothing when the search text is null or empty, and nothing when there is no
+  match. `ref/editor/Form1.cs:959-970`.
+- [Unknown] The C# `ToLower()` uses the culture of the PC, `toLowerCase()` does not. A name with a special I in a
+  Turkish culture could match differently. Every rule name in the fixtures is ASCII.
+
+- [Verified] `findNextMatchingRule` is case-insensitive, takes the first match at or after `start`, wraps to the
+  first match when `start` is past the end, and gives -1 for no match and for no rules. Test:
+  `src/core/ops/search.test.ts`, "findNextMatchingRule".
+- [Verified] `goToNextMatchingRule` gives -1 for an empty search and for no match, so the selection does not move.
+  Test: `src/core/ops/search.test.ts`, "goToNextMatchingRule".
+- [Verified] The search finds the real rule names of `IAC_Level_NoCash.utl` and wraps to the first one from past
+  the end of the list. Test: `src/core/ops/search.test.ts`, "finds the real rule names in a fixture".
