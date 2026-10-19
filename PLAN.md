@@ -171,8 +171,14 @@ for each task. The C# is in `ref/editor/`.
     action exactly (`KeepUpTo` is not `Keep`), appends the requirement at the end, and on `updateExisting` updates
     only the first existing one, as the C# breaks after the first match. Tested by `packslots.test.ts` (9 tests,
     250 total), including the real Keep and Salvage examples of `IAC_Level_NoCash.utl`. Facts: `docs/ops.md`.
-- [ ] T23 Add or update salvage rules: `Form1.cs` 790–805, `Macros.cs` 66–118, `AddSalvageRulesForm.cs`, and
+- [x] T23 Add or update salvage rules: `Form1.cs` 790–805, `Macros.cs` 66–118, `AddSalvageRulesForm.cs`, and
   `GameInfo.getMaterialGroups` (`Constants.cs` 695).
+  - `src/core/ops/salvage.ts`: `addSalvageRules(profile, group, work, updateExisting)` gives each material of the
+    group a Salvage rule named `S: <material name>` at the end, with the three requirements of `updateMaterialRule`
+    (Material LE, Material GE, SalvageWorkmanship GE). An existing rule matches only on exact name and the exact
+    `Salvage` action. It keeps its requirements on add and loses them all for the three new ones on update. An
+    unknown group gives the profile back, as the C# catch leaves the file alone. Tested by `salvage.test.ts` (8
+    tests, 258 total). Facts: `docs/ops.md`.
 - [ ] T24 Update workmanship requirements: `Form1.cs` 806–822, `Macros.cs` 119–143, `UpdateWorkReqsForm.cs`.
 - [ ] T25 Salvage combine edits: `Form_SalvageTab.cs` (295 lines).
   - Default range. Add and delete a material entry. Range. Value mode.

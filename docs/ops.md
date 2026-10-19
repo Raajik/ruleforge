@@ -160,3 +160,36 @@
 - [Verified] On `IAC_Level_NoCash.utl` the 39 Keep rules gain the requirement, the 2 that already have one keep or
   update it, and the changed profile round-trips through `writeProfile` and `readProfile`. Test:
   `src/core/ops/packslots.test.ts`, "adds the requirement to a real fixture and round-trips it".
+
+## Salvage rules (T23)
+
+- [Observed] The form defaults are workmanship 10 and the workmanship slider sets `Minimum = 1` and `Value = 10`
+  and sets no `Maximum`. The group combo lists the keys of `GameInfo.getMaterialGroups()` in `SortedDictionary`
+  order (sorted by name) and starts at index 0.
+  `ref/editor/AddSalvageRulesForm.cs:13-25`, `ref/editor/AddSalvageRulesForm.Designer.cs:94,98`.
+- [Unknown] The Designer sets no slider `Maximum`, so the WinForms default (10) would apply. This was not run.
+- [Observed] "Add rules" (OK) and "Add/Update rules" (Yes) both run the change. The material ids come from
+  `GameInfo.getMaterialGroups()[group]`. An unknown group throws and the catch shows a message, so the file does
+  not change. `ref/editor/Form1.cs:790-805`.
+- [Observed] Each material becomes one rule named `S: <material name>`, with the name of an unknown material id
+  taken as the empty string. The macro walks the materials in group order and appends a new rule at the end of the
+  list. `ref/editor/Macros.cs:66-108`, `ref/shared/Constants.cs:672-680`.
+- [Observed] A rule matches only when its action is exactly `Salvage` and its name equals the `S: ...` name, and
+  only the first match counts. The fixture calls its rules `(S) Aquamarine` and friends, so they never match and
+  the macro adds its own rules beside them. `ref/editor/Macros.cs:79-90`, `fixtures/IAC_Level_NoCash.utl:340`.
+- [Observed] A fresh rule has priority 0, action `Salvage`, keep count 0 and no custom expression (the
+  `cLootItemRule` field initializers). It sets the requirement list to exactly three requirements:
+  `LongValKeyLE(mat, Material)`, `LongValKeyGE(mat, Material)` and
+  `DoubleValKeyGE(work, SalvageWorkmanship)`. On update the C# drops the whole old list, so the rule loses its
+  other requirements. `ref/editor/Macros.cs:100-117`, `ref/shared/LootRules.cs:2875-2881`.
+
+- [Verified] `addSalvageRules` adds one `S: <name>` Salvage rule per material of the group at the end, in group
+  order, with the three C# requirements. Test: `src/core/ops/salvage.test.ts`, "adds one rule per material at the
+  end, in group order".
+- [Verified] On `updateExisting: false` an existing matching rule keeps its requirements. On `true` its whole
+  requirement list becomes the three new ones. A rule with another action or name does not match, so a second rule
+  joins the list. Test: `src/core/ops/salvage.test.ts`, "keeps the requirements of an existing ...",
+  "replaces every requirement of an existing rule ..." and "matches the name and the action exactly".
+- [Verified] An unknown group gives the same profile back, the input never changes, every material id of every
+  group has a name, and the changed profile round-trips through `writeProfile` and `readProfile`. Test:
+  `src/core/ops/salvage.test.ts`, the last five tests.
