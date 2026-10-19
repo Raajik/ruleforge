@@ -26,18 +26,14 @@ describe('combo key lists', () => {
 
   it('sorts the names and keeps every member', () => {
     for (const kind of allKinds) {
-      expect([...keyNames(kind)]).toEqual(Object.keys(enumsByKind[kind]).sort())
+      expect([...keyNames(kind)]).toEqual(Object.keys(enumsByKind[kind]).sort(new Intl.Collator('en').compare))
     }
   })
 
-  it('guards the ordinal sort: names are ASCII words without case-twins', () => {
-    // C# Array.Sort is culture-aware, but for plain ASCII words that differ in
-    // more than case the culture order equals the ordinal order used here.
-    for (const kind of allKinds) {
-      for (const name of keyNames(kind)) expect(name).toMatch(/^[A-Za-z][A-Za-z0-9]*$/)
-      const lower = keyNames(kind).map((name) => name.toLowerCase())
-      expect(new Set(lower).size).toBe(lower.length)
-    }
+  it('sorts in culture order, not ordinal order, as Array.Sort does', () => {
+    // Ordinal order puts DamRating first, because 'R' is before 'a'.
+    const names = keyNames('lvk')
+    expect(names.indexOf('DamageType')).toBeLessThan(names.indexOf('DamRating'))
   })
 
   it('checks the first and last SVK, LVK, DVK, OC and skill entries', () => {

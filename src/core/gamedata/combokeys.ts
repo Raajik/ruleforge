@@ -16,15 +16,14 @@ const enums = {
   skill: vtcSkillID,
 } as const
 
-// C# ComboKeys sorts the enum names with Array.Sort (culture-aware). The names
-// are plain ASCII words without case-twins, so the ordinal sort matches; the
-// guard test in combokeys.test.ts fails if that ever stops holding.
+// C# ComboKeys sorts the enum names with Array.Sort, which uses culture order, not ordinal order.
+const byCulture = new Intl.Collator('en').compare
 const sortedNames: Record<KeyKind, readonly string[]> = {
-  svk: Object.keys(stringValueKey).sort(),
-  lvk: Object.keys(intValueKey).sort(),
-  dvk: Object.keys(doubleValueKey).sort(),
-  oc: Object.keys(objectClass).sort(),
-  skill: Object.keys(vtcSkillID).sort(),
+  svk: Object.keys(stringValueKey).sort(byCulture),
+  lvk: Object.keys(intValueKey).sort(byCulture),
+  dvk: Object.keys(doubleValueKey).sort(byCulture),
+  oc: Object.keys(objectClass).sort(byCulture),
+  skill: Object.keys(vtcSkillID).sort(byCulture),
 }
 
 export function keyNames(kind: KeyKind): readonly string[] {

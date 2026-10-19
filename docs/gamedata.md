@@ -35,10 +35,9 @@ pattern changes, so a stale parse stops the build.
 
 `src/core/gamedata/combokeys.ts` builds on the generated enums. The generator script does not write it.
 
-- The five "acts on" lists hold the enum member names in name order. The C# `Array.Sort` uses culture
-  order. The names are plain ASCII words, and no two names differ only in case. So the ordinal sort here
-  gives the same order. **Observed** `ref/shared/ComboKeys.cs:56-103`. **Verified** `combokeys.test.ts`
-  "sorts the names and keeps every member" and "guards the ordinal sort".
+- The five "acts on" lists hold the enum member names in culture order, as the C# `Array.Sort` does. Ordinal
+  order is different: it puts `DamRating` before `DamageType`. **Observed** `ref/shared/ComboKeys.cs:56-103`.
+  **Verified** `combokeys.test.ts` "sorts the names and keeps every member" and "sorts in culture order".
 - `indexFromKeyValue` returns -1 for a value that no key has. The C# `List.IndexOf` does the same.
   **Observed** `ref/shared/ComboKeys.cs:109-112`. **Verified** `combokeys.test.ts` "returns -1 for a value
   that no key has".
