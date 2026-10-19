@@ -66,7 +66,7 @@ function inOrder(a: LootRule, b: LootRule): boolean {
   const aId = anyReqRequiresID(a)
   const bId = anyReqRequiresID(b)
   if (aId !== bId) return !aId
-  return a.name.localeCompare(b.name) <= 0
+  return a.name.localeCompare(b.name, 'en') <= 0
 }
 
 /** Sorts the rules as the legacy "Auto-Sort Rules" menu item does (Form1.cs 823-855). */
