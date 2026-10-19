@@ -1,11 +1,9 @@
-# The .utl file format
+# File format facts for the VTClassic UTL format.
 
-## eLootAction (T04)
+## Format
 
-**Observed** in `ref/shared/Constants.cs` line 314. Values 0-10.
-**Verified** by `src/core/format/enums.test.ts`.
-
-## eLootRuleType (T04)
-
-**Observed** in `ref/shared/LootRules.cs` line 130. Values -1, 0-17, 1000-1004, 2000-2008, 9999.
-**Verified** by `src/core/format/enums.test.ts`.
+### Traps / known differences from JS
+- [Verified] `CountedStreamWriter` counts UTF-16 code units via `string.Length`. `string.Length`. Same as JS `string.length`. See: `ref/shared/CountedStreamWriter.cs`
+- [Verified] .NET Framework doubles use `Convert.ToString(x, InvariantCulture)`. `.ToString()` formats 15 significant digits. `0.1`, `1E-05`, `1.5E+20`. See: `ref/shared/Constants.cs`
+- [Verified] .NET Framework for doubles in [0.0001, 1e15) agree with JS `String()`. Outside this range, .NET switches to scientific notation. JS differs. See: `ref/shared/Constants.cs`
+- [Verified] `CountedStreamWriter.Write(double)` uses `Convert.ToString(x, InvariantCulture)`. C# `Write(double)` uses `Convert.ToString`. See: `ref/shared/CountedStreamWriter.cs`

@@ -57,9 +57,12 @@ find one real example in a fixture (`rg -n -m3 '^<type number>$' fixtures/`) and
 
 - [x] T04 Enums: `eLootAction` (`ref/shared/Constants.cs`, `rg -n 'enum eLootAction'`) and `eLootRuleType`
   (`rg -n 'enum eLootRuleType' ref/shared/`). Write `src/core/format/enums.ts`. Test the numbers.
-- [ ] T05 Line reader and counted writer: `ref/shared/CountedStreamWriter.cs` (217 lines). Reader: one line at a
+- [x] T05 Line reader and counted writer: `ref/shared/CountedStreamWriter.cs` (217 lines). Reader: one line at a
   time, strips CR. Writer: collects lines with CRLF, has `count` and `resetCount()` like the C# class. Also write
   `formatDouble` (see Traps).
+  - Implemented `LineReader` (one line at a time, strips CR), `CountedWriter` (collects lines with CRLF, has `count` and `resetCount()`), and `formatDouble` (copies .NET formatting).
+  - Verified `formatDouble` against explicit values (`0.1`, `0.5`, `1`, `100`, `1E-05`, `1.5E+20`, `0.333333333333333`) and real doubles from fixtures. JS `String()` agrees with .NET for values in `[0.0001, 1e15)`.
+  - All tests pass (49 total).
 - [ ] T06 File and rule records.
   - Read: `ref/shared/FileVersioning.cs` (65 lines), and in `LootRules.cs`: `cLootItemRule` (2873–3046),
     `cLootRules` (3047–3200), `iLootRule` (43–220), `cUnsupportedRequirement` (221–272).
