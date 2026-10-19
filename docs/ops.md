@@ -193,3 +193,32 @@
 - [Verified] An unknown group gives the same profile back, the input never changes, every material id of every
   group has a name, and the changed profile round-trips through `writeProfile` and `readProfile`. Test:
   `src/core/ops/salvage.test.ts`, the last five tests.
+
+## Update workmanship requirements (T24)
+
+- [Observed] The menu item opens `UpdateWorkReqsForm`. On "Update" (OK) it calls `alterWorkmanshipReqs(f.act,
+  f.wrk)` and redraws the current rule. A thrown exception shows a message. `ref/editor/Form1.cs:806-822`.
+- [Observed] The form fields start at `wrk = 0` and `act = eLootAction.Keep`. The workmanship track bar runs from
+  -5 to 5, and the value label starts at "0" and only changes on a scroll. The action combo lists
+  `eLootActionTool.FriendlyNames()` (Keep, Salvage, Sell, Read, Keep #) and starts at index 0.
+  `ref/editor/UpdateWorkReqsForm.cs:13-14,21-22,26-28`, `ref/editor/UpdateWorkReqsForm.Designer.cs:72-73,95`.
+- [Observed] `alterWorkmanshipReqs(e, by)` negates `by` first when `e` is `Keep`. Then, for every rule whose
+  action equals `e`, each `DoubleValKeyGE` takes `Math.Min(10, keyval + by)` and each `DoubleValKeyLE` takes
+  `Math.Max(1, keyval - by)`. The key (`vk`) is not checked, so every DoubleValueKey changes, not only
+  workmanship. `ref/editor/Macros.cs:119-142`.
+- [Observed] The caps are one-sided. A GE value above 10 stays at 10, and a GE value below 0 stays as it is. An
+  LE value below 1 stays at 1, and an LE value above 1 stays as it is. A `by` of 0 still clamps.
+  `ref/editor/Macros.cs:128-139`.
+- [Observed] The action match is exact, so a `Keep` run does not touch a `KeepUpTo` rule. `ref/editor/Macros.cs:124`.
+- [Observed] The real fixture `LootSnobV4.utl` has 36 `DoubleValKeyGE` (vk 150) and 1 `DoubleValKeyLE`
+  (vk 167772171) on `Keep` rules, so the macro changes requirements that are not workmanship.
+  `fixtures/LootSnobV4.utl`. The single `KeepUpTo` rule of `vtclassic_editor_rich.utl` has
+  `DoubleValKeyGE` 7 with vk `SalvageWorkmanship` (167772169).
+
+- [Verified] `updateWorkmanshipRequirements` adds `by` to `DoubleValKeyGE` and subtracts it from `DoubleValKeyLE`,
+  then caps at 10 and floors at 1. It negates `by` for `Keep`. A `by` of 0 still clamps. It changes only the
+  rules of the exact action, leaves other types alone, never changes its input, and round-trips. Test:
+  `src/core/ops/workmanship.test.ts`, all tests.
+- [Verified] On `LootSnobV4.utl` the 36 `DoubleValKeyGE` of the `Keep` rules move from 1.03 and 1.04 to 4.03 and
+  4.04, the one `DoubleValKeyLE` floors at 1, and the result round-trips. Test:
+  `src/core/ops/workmanship.test.ts`, "changes the unrelated DoubleValueKeys of LootSnobV4 too".

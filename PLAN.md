@@ -179,7 +179,11 @@ for each task. The C# is in `ref/editor/`.
     `Salvage` action. It keeps its requirements on add and loses them all for the three new ones on update. An
     unknown group gives the profile back, as the C# catch leaves the file alone. Tested by `salvage.test.ts` (8
     tests, 258 total). Facts: `docs/ops.md`.
-- [ ] T24 Update workmanship requirements: `Form1.cs` 806–822, `Macros.cs` 119–143, `UpdateWorkReqsForm.cs`.
+- [x] T24 Update workmanship requirements: `Form1.cs` 806–822, `Macros.cs` 119–143, `UpdateWorkReqsForm.cs`.
+  - `src/core/ops/workmanship.ts`: `updateWorkmanshipRequirements(profile, action, by)` negates `by` for `Keep`,
+    then gives each `DoubleValKeyGE` of a rule of that action `Math.Min(10, keyval + by)` and each
+    `DoubleValKeyLE` `Math.Max(1, keyval - by)`. The key is not checked, so every DoubleValueKey changes. Tested
+    by `workmanship.test.ts` (10 tests, 268 total). Facts: `docs/ops.md`.
 - [ ] T25 Salvage combine edits: `Form_SalvageTab.cs` (295 lines).
   - Default range. Add and delete a material entry. Range. Value mode.
   - Import and export of ranges (258–295). Find the file format they use.
