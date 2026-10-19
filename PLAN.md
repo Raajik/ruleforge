@@ -113,13 +113,17 @@ find one real example in a fixture (`rg -n -m3 '^<type number>$' fixtures/`) and
     writer. Recorded in `docs/format.md`.
 
 ## Phase D: game data (`src/core/gamedata/`)
-- [ ] T16 Game data generator.
+- [x] T16 Game data generator.
   - Write `scripts/gen-gamedata.ts` (run with `npx tsx`). It writes `src/core/gamedata/generated.ts`.
   - Enums from `ref/decompiled/VTClassic/*.cs`: `IntValueKey`, `DoubleValueKey`, `StringValueKey`, `ObjectClass`,
     `VTCSkillID`.
   - Tables from `GameInfo` in `ref/shared/Constants.cs` (414–724): material names, material groups and the other
     tables there.
   - Add `npm run gen`. Test: the counts, and 3 known values for each table.
+  - The script parses the C# files at generation time and writes `src/core/gamedata/generated.ts`; it fails on an
+    unknown table pattern. `ObjectClass` numbers its members from 0, and `getSetInfo` uses a counter from 32 down
+    to 5, so the script evaluates the counter. `src/core/gamedata/generated.test.ts` checks each count and three
+    known values, and that every material group uses a real material id. Facts: `docs/gamedata.md`.
 - [ ] T17 Combo keys and colors.
   - `ref/shared/ComboKeys.cs` (200 lines): which keys each requirement type offers in its "acts on" list.
   - `ref/shared/ColorXML.cs` (121 lines) with `fixtures/ColorSlots.Default.xml`: the color slot data.
