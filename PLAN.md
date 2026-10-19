@@ -194,7 +194,7 @@ for each task. The C# is in `ref/editor/`.
     in place. `readSalvageCombine` now throws on a bad integer line, as the C# `int.Parse` does. Tested by
     `salvagecombine.test.ts` plus `parseInt32` and the bad-block tests (297 total). Facts: `docs/ops.md`,
     `docs/format.md`.
-- [ ] T26 File operations, all in `Form1.cs`.
+- [x] T26 File operations, all in `Form1.cs`.
   - New (292–307). The default VT profile folder (308–318). Load (360–387).
   - Unsaved-changes check (388–428). Save (429–464).
   - Keep the logic in `src/core/ops/file.ts`. The real file access comes in T31.

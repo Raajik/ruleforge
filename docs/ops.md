@@ -273,3 +273,31 @@
 - [Unknown] A delete followed by "New" may order the file lines differently than the legacy editor. A run on
   .NET 10 shows that `Dictionary` reuses the freed slot, so the new material lands at the deleted position.
   This editor appends at the end instead. The legacy .NET Framework app was not run.
+
+## File operations (T26)
+
+- [Observed] "New" writes no bytes: it clears the rule list, gives the profile a fresh `cLootRules`, sets the file
+  name to "", the window title to `<app name> - New File` and `FileChanged` to false. `ref/editor/Form1.cs:292-306`,
+  the same defaults as the constructor at `46-56`.
+- [Observed] The app name is `Virindi Tank Loot Editor`. A loaded or saved file puts the file name after it:
+  `<app name> - <file name>`. `ref/editor/Form1.cs:45,298,367,458`.
+- [Observed] The default VT profile folder comes from the Windows registry key
+  `Software\Decal\Plugins\{642F1F48-16BE-48BF-B1D4-286652C4533E}` value `ProfilePath`. A failure gives null.
+  This is Windows-only, so T26 does not copy it. `ref/editor/Form1.cs:308-318`.
+- [Observed] The unsaved-changes check runs only when `FileChanged` is true. "Yes" runs Save As and takes its
+  result (`saveasres`), "No" says continue, "Cancel" says stop. `ref/editor/Form1.cs:388-405`.
+- [Observed] The `FileChanged` setter takes a backup of a named file when `FileChanged` turns true and the last
+  backup is over 5 minutes old. The backup name is `<file name>.<yyyy-MM-dd-HH-mm>.bak`. It sends no backup for an
+  unnamed file. `ref/editor/Form1.cs:407-427`.
+- [Observed] `DoSave` clears the change flag and writes the profile. It does not touch `LastBackup`. Save As
+  resets that after the write. A load resets it before the read. "Save" runs `DoSave` only with a file name,
+  else it runs Save As. Save As with an empty dialog result writes nothing and reports false.
+  `ref/editor/Form1.cs:429-463`.
+
+- [Verified] `newFile` gives an empty version 1 profile, an empty file name, the `New File` title and
+  `changed: false`. `windowTitle` and `untitledTitle` use the C# app name. `unsavedChangesPrompt` asks only for a
+  changed file. Test: `src/core/ops/file.test.ts`, "newFile", "titles" and "unsavedChangesPrompt".
+- [Verified] `backupFileName` gives `<file name>.<yyyy-MM-dd-HH-mm>.bak` with every stamp field padded to two
+  digits. `saveState` writes the profile, clears the flag, keeps `lastBackup` and never changes its input.
+  `markChanged` backs up only a named, changed file whose last backup is over 5 minutes old, and it takes no
+  second backup within the interval. Test: `src/core/ops/file.test.ts`, "backupFileName", "save" and "markChanged".
