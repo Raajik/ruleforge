@@ -2,9 +2,10 @@
  * Reads and writes the rule section of a .utl profile, as cLootRules,
  * cLootItemRule and cUnsupportedRequirement do in ref/shared/LootRules.cs.
  *
- * Requirement types 0 to 13 and 1000 to 1004 have their own reader and
- * writer (T07-T11). Every other type stays raw text until T12-T13 add its
- * reader. Each requirement keeps its own type number and its serialized body.
+ * Requirement types 0 to 13, 1000 to 1004 and 14 to 17 and 9999 have their
+ * own reader and writer (T07-T12). Every other type stays raw text until T13
+ * adds its reader. Each requirement keeps its own type number and its
+ * serialized body.
  */
 
 import { eLootAction, eLootRuleType } from './enums'
@@ -172,11 +173,57 @@ export interface CharacterBaseSkillRequirement {
   maxskill: number
 }
 
+/** Type 9999, DisabledRule. The body is one line (LootRules.cs 1839-1844). */
+export interface DisabledRuleRequirement {
+  type: 9999
+  /** True when the rule is disabled. Only the exact text "true" reads as true. */
+  b: boolean
+}
+
+/** Type 14, AnySimilarColor. The body is five lines (LootRules.cs 1934-1940). */
+export interface AnySimilarColorRequirement {
+  type: 14
+  r: number
+  g: number
+  b: number
+  maxDifferenceH: number
+  maxDifferenceSV: number
+}
+
+/** Type 15, SimilarColorArmorType. The body is six lines (LootRules.cs 2083-2090). */
+export interface SimilarColorArmorTypeRequirement {
+  type: 15
+  r: number
+  g: number
+  b: number
+  maxDifferenceH: number
+  maxDifferenceSV: number
+  armorGroup: string
+}
+
+/** Type 16, SlotSimilarColor. The body is six lines (LootRules.cs 2239-2245). */
+export interface SlotSimilarColorRequirement {
+  type: 16
+  r: number
+  g: number
+  b: number
+  maxDifferenceH: number
+  maxDifferenceSV: number
+  slot: number
+}
+
+/** Type 17, SlotExactPalette. The body is two lines (LootRules.cs 2326-2329). */
+export interface SlotExactPaletteRequirement {
+  type: 17
+  slot: number
+  palette: number
+}
+
 /**
  * One reader per type number, keyed like eLootRuleType. A reader reads only
  * the body of the requirement, after the length prefix of a version 1 file.
- * Types 0 to 13 come from T07-T10, types 1000 to 1004 from T11. T12-T13 add
- * the rest.
+ * Types 0 to 13 come from T07-T10, types 1000 to 1004 from T11, types 14 to
+ * 17 and 9999 from T12. T13 adds the rest.
  */
 export type Requirement =
   | UnsupportedRequirement
@@ -199,6 +246,11 @@ export type Requirement =
   | CharacterLevelGERequirement
   | CharacterLevelLERequirement
   | CharacterBaseSkillRequirement
+  | DisabledRuleRequirement
+  | AnySimilarColorRequirement
+  | SimilarColorArmorTypeRequirement
+  | SlotSimilarColorRequirement
+  | SlotExactPaletteRequirement
 export const requirementReaders: Record<number, (reader: LineReader, version: number) => Requirement> = {
   // LootRules.cs 312: rx = new Regex(inf.ReadLine()).
   0: (reader) => ({ type: 0, pattern: reader.readLine() ?? '' }),
@@ -248,6 +300,39 @@ export const requirementReaders: Record<number, (reader: LineReader, version: nu
     minskill: toInt(reader.readLine()),
     maxskill: toInt(reader.readLine()),
   }),
+  // LootRules.cs 1839: one line, "true" (case-sensitive) or anything else.
+  9999: (reader) => ({ type: 9999, b: reader.readLine() === 'true' }),
+  // LootRules.cs 1934-1939: R, G, B lines, then the two differences.
+  14: (reader) => ({
+    type: 14,
+    r: toInt(reader.readLine()),
+    g: toInt(reader.readLine()),
+    b: toInt(reader.readLine()),
+    maxDifferenceH: haxConvertDouble(reader.readLine()),
+    maxDifferenceSV: haxConvertDouble(reader.readLine()),
+  }),
+  // LootRules.cs 2083-2089: the color lines, then the ArmorGroup line.
+  15: (reader) => ({
+    type: 15,
+    r: toInt(reader.readLine()),
+    g: toInt(reader.readLine()),
+    b: toInt(reader.readLine()),
+    maxDifferenceH: haxConvertDouble(reader.readLine()),
+    maxDifferenceSV: haxConvertDouble(reader.readLine()),
+    armorGroup: reader.readLine() ?? '',
+  }),
+  // LootRules.cs 2239-2244: the color lines, then the Slot line.
+  16: (reader) => ({
+    type: 16,
+    r: toInt(reader.readLine()),
+    g: toInt(reader.readLine()),
+    b: toInt(reader.readLine()),
+    maxDifferenceH: haxConvertDouble(reader.readLine()),
+    maxDifferenceSV: haxConvertDouble(reader.readLine()),
+    slot: toInt(reader.readLine()),
+  }),
+  // LootRules.cs 2326-2328: Slot line, then Palette line.
+  17: (reader) => ({ type: 17, slot: toInt(reader.readLine()), palette: toInt(reader.readLine()) }),
 }
 
 export interface LootRule {
@@ -438,6 +523,41 @@ function writeRequirementBody(body: CountedWriter, requirement: Requirement): vo
       body.writeLine(String(requirement.vk))
       body.writeLine(String(requirement.minskill))
       body.writeLine(String(requirement.maxskill))
+      break
+    // LootRules.cs 1842-1843: one line, "true" or "false".
+    case eLootRuleType.DisabledRule:
+      body.writeLine(requirement.b ? 'true' : 'false')
+      break
+    // LootRules.cs 1935-1939: R, G, B lines, then the two differences.
+    case eLootRuleType.AnySimilarColor:
+      body.writeLine(String(requirement.r))
+      body.writeLine(String(requirement.g))
+      body.writeLine(String(requirement.b))
+      body.writeLine(formatDouble(requirement.maxDifferenceH))
+      body.writeLine(formatDouble(requirement.maxDifferenceSV))
+      break
+    // LootRules.cs 2084-2089: the color lines, then the ArmorGroup line.
+    case eLootRuleType.SimilarColorArmorType:
+      body.writeLine(String(requirement.r))
+      body.writeLine(String(requirement.g))
+      body.writeLine(String(requirement.b))
+      body.writeLine(formatDouble(requirement.maxDifferenceH))
+      body.writeLine(formatDouble(requirement.maxDifferenceSV))
+      body.writeLine(requirement.armorGroup)
+      break
+    // LootRules.cs 2240-2244: the color lines, then the Slot line.
+    case eLootRuleType.SlotSimilarColor:
+      body.writeLine(String(requirement.r))
+      body.writeLine(String(requirement.g))
+      body.writeLine(String(requirement.b))
+      body.writeLine(formatDouble(requirement.maxDifferenceH))
+      body.writeLine(formatDouble(requirement.maxDifferenceSV))
+      body.writeLine(String(requirement.slot))
+      break
+    // LootRules.cs 2327-2328: Slot line, then Palette line.
+    case eLootRuleType.SlotExactPalette:
+      body.writeLine(String(requirement.slot))
+      body.writeLine(String(requirement.palette))
       break
   }
 }

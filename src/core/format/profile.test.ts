@@ -1,7 +1,7 @@
 // Tests for readProfile and writeProfile.
-// Types 0-13 and 1000-1004 are parsed (T07-T11). Every other type
-// stays raw text, so a fixture round-trips only when each requirement's
-// length prefix is exact.
+// Types 0-13, 1000-1004 and 14-17 and 9999 are parsed (T07-T12). Every
+// other type stays raw text, so a fixture round-trips only when each
+// requirement's length prefix is exact.
 
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
@@ -380,5 +380,102 @@ describe('requirement type 1004, CharacterBaseSkill', () => {
     // LootRules.cs 1763-1774: vk line, minskill line, maxskill line.
     expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;1004\r\n12\r\n1\r\n50\r\n999\r\n')
     expect(readProfile(text)).toEqual(profile)
+  })
+})
+
+describe('requirement type 9999, DisabledRule', () => {
+  it('writes true and false as lowercase one-line bodies and reads them back', () => {
+    const profile = literalProfile([
+      { type: 9999, b: true },
+      { type: 9999, b: false },
+    ])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 1842-1844: one line, "true" or "false".
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;9999;9999\r\n6\r\ntrue\r\n7\r\nfalse\r\n')
+    expect(readProfile(text)).toEqual(profile)
+  })
+
+  it('reads only lowercase true as true, as "true".Equals does', () => {
+    const text = 'UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;9999\r\n6\r\nTrue\r\n'
+    expect(readProfile(text).rules[0]!.requirements).toEqual([{ type: 9999, b: false }])
+  })
+
+  it('reads the real example of vtclassic_editor_rich.utl', () => {
+    const text = readFileSync('fixtures/vtclassic_editor_rich.utl', 'latin1')
+    expect(readProfile(text).rules[0]!.requirements[2]).toEqual({ type: 9999, b: true })
+  })
+})
+
+describe('requirement type 14, AnySimilarColor', () => {
+  it('writes the RGB lines and the two differences, and reads them back', () => {
+    const profile = literalProfile([{ type: 14, r: 255, g: 128, b: 0, maxDifferenceH: 10, maxDifferenceSV: 0.1 }])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 1935-1940: R, G, B lines, then MaxDifferenceH and MaxDifferenceSV.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;14\r\n22\r\n255\r\n128\r\n0\r\n10\r\n0.1\r\n')
+    expect(readProfile(text)).toEqual(profile)
+  })
+
+  it('reads a comma as the decimal point, as HaxConvertDouble does', () => {
+    const text = 'UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;14\r\n22\r\n255\r\n128\r\n0\r\n10\r\n0,1\r\n'
+    expect(readProfile(text).rules[0]!.requirements).toEqual([
+      { type: 14, r: 255, g: 128, b: 0, maxDifferenceH: 10, maxDifferenceSV: 0.1 },
+    ])
+  })
+})
+
+describe('requirement type 15, SimilarColorArmorType', () => {
+  it('writes the color lines and the armor group, and reads them back', () => {
+    const profile = literalProfile([
+      { type: 15, r: 255, g: 128, b: 0, maxDifferenceH: 10, maxDifferenceSV: 0.1, armorGroup: 'Leather' },
+    ])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 2084-2090: R, G, B, MaxDifferenceH, MaxDifferenceSV, then ArmorGroup.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;15\r\n31\r\n255\r\n128\r\n0\r\n10\r\n0.1\r\nLeather\r\n')
+    expect(readProfile(text)).toEqual(profile)
+  })
+})
+
+describe('requirement type 16, SlotSimilarColor', () => {
+  it('writes the color lines and the slot, and reads them back', () => {
+    const profile = literalProfile([
+      { type: 16, r: 255, g: 128, b: 0, maxDifferenceH: 10, maxDifferenceSV: 0.1, slot: 3 },
+    ])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 2240-2245: R, G, B, MaxDifferenceH, MaxDifferenceSV, then Slot.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;16\r\n25\r\n255\r\n128\r\n0\r\n10\r\n0.1\r\n3\r\n')
+    expect(readProfile(text)).toEqual(profile)
+  })
+})
+
+describe('requirement type 17, SlotExactPalette', () => {
+  it('writes the slot and the palette, and reads them back', () => {
+    const profile = literalProfile([{ type: 17, slot: 2, palette: 12345 }])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 2327-2329: Slot line, then Palette line.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;17\r\n10\r\n2\r\n12345\r\n')
+    expect(readProfile(text)).toEqual(profile)
+  })
+
+  it('reads a negative slot back with its sign', () => {
+    const profile = literalProfile([{ type: 17, slot: -1, palette: 0 }])
+    expect(readProfile(writeProfile(profile))).toEqual(profile)
+  })
+})
+
+describe('T12 types together', () => {
+  it('writes and reads all five types in one rule', () => {
+    const profile = literalProfile([
+      { type: 9999, b: true },
+      { type: 14, r: 255, g: 128, b: 0, maxDifferenceH: 10, maxDifferenceSV: 0.1 },
+      { type: 15, r: 255, g: 128, b: 0, maxDifferenceH: 10, maxDifferenceSV: 0.1, armorGroup: 'Leather' },
+      { type: 16, r: 255, g: 128, b: 0, maxDifferenceH: 10, maxDifferenceSV: 0.1, slot: 3 },
+      { type: 17, slot: 2, palette: 12345 },
+    ])
+    expect(readProfile(writeProfile(profile))).toEqual(profile)
   })
 })

@@ -89,8 +89,14 @@ find one real example in a fixture (`rg -n -m3 '^<type number>$' fixtures/`) and
 - [x] T10 Types 7, 8, 9: `ObjectClassE` (862–919), `SpellCountGE` (920–986), `SpellMatch` (987–1086).
 - [x] T11 Types 1000–1004: `CharacterSkillGE` (1229–1306), `CharacterMainPackEmptySlotsGE` (1307–1378),
   `CharacterLevelGE` (1613–1669), `CharacterLevelLE` (1670–1726), `CharacterBaseSkill` (1727–1812).
-- [ ] T12 Types 9999, 14–17: `DisabledRule` (1813–1876), `AnySimilarColor` (1877–2003), `SimilarColorArmorType`
+- [x] T12 Types 9999, 14–17: `DisabledRule` (1813–1876), `AnySimilarColor` (1877–2003), `SimilarColorArmorType`
   (2004–2175), `SlotSimilarColor` (2176–2295), `SlotExactPalette` (2296–2367).
+  - Type 9999 body: one line, `true` or `false` (only exact `"true"` reads as true). Type 14 body: R, G, B
+    lines, then MaxDifferenceH and MaxDifferenceSV. Type 15 adds the ArmorGroup line, type 16 the Slot
+    line. Type 17 body: Slot line, then Palette line. `src/core/format/profile.ts`, tested in `profile.test.ts`.
+  - Read `LootRules.cs` 1839, 1842-1844, 1934-1940, 2083-2090, 2239-2245, 2326-2329.
+  - Round-trip in the test: literal write/read per type, all five types in one rule, and the real type 9999
+    examples (body `true`) of all 5 fixtures that have one. No fixture has type 14, 15, 16 or 17.
 - [ ] T13 Types 2000–2008: `BuffedMedianDamageGE` (2368–2438), `BuffedMissileDamageGE` (2439–2505),
   `BuffedLongValKeyGE` (2506–2579), `BuffedDoubleValKeyGE` (2580–2653), `CalcdBuffedTinkedDamageGE` (2654–2720),
   `TotalRatingsGE` (2721–2787), `CalcedBuffedTinkedTargetMeleeGE` (2788–2872).
