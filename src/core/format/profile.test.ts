@@ -1,5 +1,5 @@
 // Tests for readProfile and writeProfile.
-// Types 0-6 and 10-13 are parsed (T07-T09). Every other type
+// Types 0-10 are parsed (T07-T10). Every other type
 // stays raw text, so a fixture round-trips only when each requirement's
 // length prefix is exact.
 
@@ -122,8 +122,8 @@ describe('requirement type 1, StringValueMatch', () => {
         key: 1,
       },
       { type: 1, pattern: 'Pyreal', key: 1 },
-      // Type 7 stays raw after the typed requirement of the same rule.
-      { type: 7, data: '7\r\n' },
+      // Type 7 in the same rule.
+      { type: 7, vk: 7 },
       { type: 1, pattern: 'Scroll', key: 1 },
       { type: 1, pattern: 'Blank Exploration Contract|Map', key: 1 },
       { type: 1, pattern: 'Mote', key: 1 },
@@ -255,5 +255,66 @@ describe('requirement types 6 and 10, DamagePercentGE and MinDamageGE', () => {
       { type: 6, keyval: 1.5 },
       { type: 10, keyval: 0 },
     ])
+  })
+})
+
+describe('requirement type 7, ObjectClass', () => {
+  it('writes one line and reads it back', () => {
+    const profile = literalProfile([{ type: 7, vk: 7 }])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 891-893: one ObjectClass line, written as (int)vk.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;7\r\n3\r\n7\r\n')
+    expect(readProfile(text)).toEqual(profile)
+  })
+
+  it('reads the real example of UnfamilarShores.utl', () => {
+    const text = readFileSync('fixtures/UnfamilarShores.utl', 'latin1')
+    const requirements = readProfile(text).rules[1]!.requirements
+    expect(requirements[1]).toEqual({ type: 7, vk: 7 })
+  })
+})
+
+describe('requirement type 8, SpellCountGE', () => {
+  it('writes one keyval line and reads it back', () => {
+    const profile = literalProfile([{ type: 8, keyval: 3 }])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 957-959: one Convert.ToInt32 keyval line.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;8\r\n3\r\n3\r\n')
+    expect(readProfile(text)).toEqual(profile)
+  })
+
+  it('reads a negative keyval back with its sign', () => {
+    const profile = literalProfile([{ type: 8, keyval: -2 }])
+    expect(readProfile(writeProfile(profile))).toEqual(profile)
+  })
+})
+
+describe('requirement type 9, SpellMatch', () => {
+  it('writes the two regex patterns and the count, and reads them back', () => {
+    const profile = literalProfile([
+      { type: 9, rxDoesMatch: 'a', rxDoesNotMatch: 'b', count: 2 },
+    ])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 1043-1046: two regex lines, then the Count line.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;9\r\n9\r\na\r\nb\r\n2\r\n')
+    expect(readProfile(text)).toEqual(profile)
+  })
+
+  it('keeps an empty "does not match" pattern as an empty line', () => {
+    const profile = literalProfile([{ type: 9, rxDoesMatch: 'x', rxDoesNotMatch: '', count: 1 }])
+    expect(readProfile(writeProfile(profile))).toEqual(profile)
+  })
+
+  it('reads the real example of vtclassic_editor_rich.utl', () => {
+    const text = readFileSync('fixtures/vtclassic_editor_rich.utl', 'latin1')
+    expect(readProfile(text).rules[0]!.requirements[0]).toEqual({
+      type: 9,
+      rxDoesMatch: 'Legendary Str|Legendary End|Legendary Coord',
+      rxDoesNotMatch: 'Epic|Major|Minor',
+      count: 2,
+    })
   })
 })

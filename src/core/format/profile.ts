@@ -2,9 +2,9 @@
  * Reads and writes the rule section of a .utl profile, as cLootRules,
  * cLootItemRule and cUnsupportedRequirement do in ref/shared/LootRules.cs.
  *
- * Requirement types 0, 1, 2, 3, 11, 12 and 13 have their own reader and
- * writer (T07, T08). Every other type stays raw text until T09-T13 add its
- * reader. Each requirement keeps its own type number and its serialized body.
+ * Requirement types 0 to 13 have their own reader and writer (T07-T10). Every
+ * other type stays raw text until T11-T13 add its reader. Each requirement
+ * keeps its own type number and its serialized body.
  */
 
 import { eLootAction, eLootRuleType } from './enums'
@@ -114,10 +114,33 @@ export interface MinDamageGERequirement {
   keyval: number
 }
 
+/** Type 7, ObjectClassE. The body is one line (LootRules.cs 891-893). */
+export interface ObjectClassERequirement {
+  type: 7
+  /** ObjectClass, written base 10 as Convert.ToString((int)vk) does. */
+  vk: number
+}
+
+/** Type 8, SpellCountGE. The body is one line (LootRules.cs 957-959). */
+export interface SpellCountGERequirement {
+  type: 8
+  keyval: number
+}
+
+/** Type 9, SpellMatch. The body is three lines (LootRules.cs 1043-1046). */
+export interface SpellMatchRequirement {
+  type: 9
+  /** The "does match" regex pattern as text. It is never compiled here (see PLAN.md Traps). */
+  rxDoesMatch: string
+  /** The "does not match" regex pattern as text. */
+  rxDoesNotMatch: string
+  count: number
+}
+
 /**
  * One reader per type number, keyed like eLootRuleType. A reader reads only
  * the body of the requirement, after the length prefix of a version 1 file.
- * Types 0, 1, 2, 3, 11, 12 and 13 come from T07 and T08. T09-T13 add the rest.
+ * Types 0 to 13 come from T07-T10. T11-T13 add the rest.
  */
 export type Requirement =
   | UnsupportedRequirement
@@ -132,6 +155,9 @@ export type Requirement =
   | DoubleValKeyGERequirement
   | DamagePercentGERequirement
   | MinDamageGERequirement
+  | ObjectClassERequirement
+  | SpellCountGERequirement
+  | SpellMatchRequirement
 export const requirementReaders: Record<number, (reader: LineReader, version: number) => Requirement> = {
   // LootRules.cs 312: rx = new Regex(inf.ReadLine()).
   0: (reader) => ({ type: 0, pattern: reader.readLine() ?? '' }),
@@ -155,6 +181,17 @@ export const requirementReaders: Record<number, (reader: LineReader, version: nu
   6: (reader) => ({ type: 6, keyval: haxConvertDouble(reader.readLine()) }),
   // LootRules.cs 1119-1121: keyval line.
   10: (reader) => ({ type: 10, keyval: haxConvertDouble(reader.readLine()) }),
+  // LootRules.cs 891: one ObjectClass line.
+  7: (reader) => ({ type: 7, vk: toInt(reader.readLine()) }),
+  // LootRules.cs 957: one keyval line.
+  8: (reader) => ({ type: 8, keyval: toInt(reader.readLine()) }),
+  // LootRules.cs 1043-1045: two regex lines, then the Count line.
+  9: (reader) => ({
+    type: 9,
+    rxDoesMatch: reader.readLine() ?? '',
+    rxDoesNotMatch: reader.readLine() ?? '',
+    count: toInt(reader.readLine()),
+  }),
 }
 
 export interface LootRule {
@@ -308,6 +345,20 @@ function writeRequirementBody(body: CountedWriter, requirement: Requirement): vo
     // LootRules.cs 1124-1126: keyval line.
     case eLootRuleType.MinDamageGE:
       body.writeLine(formatDouble(requirement.keyval))
+      break
+    // LootRules.cs 893: one ObjectClass line.
+    case eLootRuleType.ObjectClass:
+      body.writeLine(String(requirement.vk))
+      break
+    // LootRules.cs 959: one keyval line.
+    case eLootRuleType.SpellCountGE:
+      body.writeLine(String(requirement.keyval))
+      break
+    // LootRules.cs 1044-1046: two regex lines, then the Count line.
+    case eLootRuleType.SpellMatch:
+      body.writeLine(requirement.rxDoesMatch)
+      body.writeLine(requirement.rxDoesNotMatch)
+      body.writeLine(String(requirement.count))
       break
   }
 }

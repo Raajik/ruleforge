@@ -86,7 +86,7 @@ find one real example in a fixture (`rg -n -m3 '^<type number>$' fixtures/`) and
     (types 2, 3, 12, 13; type 11 has no fixture example), and all 8 fixtures byte for byte.
 - [x] T09 Types 4, 5, 6, 10: `DoubleValKeyLE` (655–729), `DoubleValKeyGE` (730–804), `DamagePercentGE` (805–861),
   `MinDamageGE` (1087–1153).
-- [ ] T10 Types 7, 8, 9: `ObjectClassE` (862–919), `SpellCountGE` (920–986), `SpellMatch` (987–1086).
+- [x] T10 Types 7, 8, 9: `ObjectClassE` (862–919), `SpellCountGE` (920–986), `SpellMatch` (987–1086).
 - [ ] T11 Types 1000–1004: `CharacterSkillGE` (1229–1306), `CharacterMainPackEmptySlotsGE` (1307–1378),
   `CharacterLevelGE` (1613–1669), `CharacterLevelLE` (1670–1726), `CharacterBaseSkill` (1727–1812).
 - [ ] T12 Types 9999, 14–17: `DisabledRule` (1813–1876), `AnySimilarColor` (1877–2003), `SimilarColorArmorType`
