@@ -2,9 +2,9 @@
  * Reads and writes the rule section of a .utl profile, as cLootRules,
  * cLootItemRule and cUnsupportedRequirement do in ref/shared/LootRules.cs.
  *
- * Requirement types 0 and 1 have their own reader and writer (T07). Every
- * other type stays raw text until T08-T13 add its reader. Each requirement
- * keeps its own type number and its serialized body.
+ * Requirement types 0, 1, 2, 3, 11, 12 and 13 have their own reader and
+ * writer (T07, T08). Every other type stays raw text until T09-T13 add its
+ * reader. Each requirement keeps its own type number and its serialized body.
  */
 
 import { eLootAction, eLootRuleType } from './enums'
@@ -45,20 +45,75 @@ export interface StringValueMatchRequirement {
   key: number
 }
 
+/** Type 2, LongValKeyLE. The body is two lines (LootRules.cs 452-462). */
+export interface LongValKeyLERequirement {
+  type: 2
+  keyval: number
+  /** IntValueKey, written base 10 as Convert.ToString((int)vk) does. */
+  vk: number
+}
+
+/** Type 3, LongValKeyGE. The body is two lines (LootRules.cs 569-579). */
+export interface LongValKeyGERequirement {
+  type: 3
+  keyval: number
+  /** IntValueKey, written base 10 as Convert.ToString((int)vk) does. */
+  vk: number
+}
+
+/** Type 11, LongValKeyFlagExists. The body is two lines (LootRules.cs 1185-1195). */
+export interface LongValKeyFlagExistsRequirement {
+  type: 11
+  keyval: number
+  /** IntValueKey, written base 10 as Convert.ToString((int)vk) does. */
+  vk: number
+}
+
+/** Type 12, LongValKeyE. The body is two lines (LootRules.cs 1410-1420). */
+export interface LongValKeyERequirement {
+  type: 12
+  keyval: number
+  /** IntValueKey, written base 10 as Convert.ToString((int)vk) does. */
+  vk: number
+}
+
+/** Type 13, LongValKeyNE. The body is two lines (LootRules.cs 1527-1537). */
+export interface LongValKeyNERequirement {
+  type: 13
+  keyval: number
+  /** IntValueKey, written base 10 as Convert.ToString((int)vk) does. */
+  vk: number
+}
+
 /**
  * One reader per type number, keyed like eLootRuleType. A reader reads only
  * the body of the requirement, after the length prefix of a version 1 file.
- * Types 0 and 1 come from T07. T08-T13 add the rest.
+ * Types 0, 1, 2, 3, 11, 12 and 13 come from T07 and T08. T09-T13 add the rest.
  */
 export type Requirement =
   | UnsupportedRequirement
   | SpellNameMatchRequirement
   | StringValueMatchRequirement
+  | LongValKeyLERequirement
+  | LongValKeyGERequirement
+  | LongValKeyFlagExistsRequirement
+  | LongValKeyERequirement
+  | LongValKeyNERequirement
 export const requirementReaders: Record<number, (reader: LineReader, version: number) => Requirement> = {
   // LootRules.cs 312: rx = new Regex(inf.ReadLine()).
   0: (reader) => ({ type: 0, pattern: reader.readLine() ?? '' }),
   // LootRules.cs 378-380: pattern line, then the StringValueKey number.
   1: (reader) => ({ type: 1, pattern: reader.readLine() ?? '', key: toInt(reader.readLine()) }),
+  // LootRules.cs 454-455: keyval line, then the IntValueKey number.
+  2: (reader) => ({ type: 2, keyval: toInt(reader.readLine()), vk: toInt(reader.readLine()) }),
+  // LootRules.cs 571-572: keyval line, then the IntValueKey number.
+  3: (reader) => ({ type: 3, keyval: toInt(reader.readLine()), vk: toInt(reader.readLine()) }),
+  // LootRules.cs 1187-1188: keyval line, then the IntValueKey number.
+  11: (reader) => ({ type: 11, keyval: toInt(reader.readLine()), vk: toInt(reader.readLine()) }),
+  // LootRules.cs 1412-1413: keyval line, then the IntValueKey number.
+  12: (reader) => ({ type: 12, keyval: toInt(reader.readLine()), vk: toInt(reader.readLine()) }),
+  // LootRules.cs 1529-1530: keyval line, then the IntValueKey number.
+  13: (reader) => ({ type: 13, keyval: toInt(reader.readLine()), vk: toInt(reader.readLine()) }),
 }
 
 export interface LootRule {
@@ -169,6 +224,31 @@ function writeRequirementBody(body: CountedWriter, requirement: Requirement): vo
     case eLootRuleType.StringValueMatch:
       body.writeLine(requirement.pattern)
       body.writeLine(String(requirement.key))
+      break
+    // LootRules.cs 460-461: keyval line, then the IntValueKey number.
+    case eLootRuleType.LongValKeyLE:
+      body.writeLine(String(requirement.keyval))
+      body.writeLine(String(requirement.vk))
+      break
+    // LootRules.cs 577-578: keyval line, then the IntValueKey number.
+    case eLootRuleType.LongValKeyGE:
+      body.writeLine(String(requirement.keyval))
+      body.writeLine(String(requirement.vk))
+      break
+    // LootRules.cs 1193-1194: keyval line, then the IntValueKey number.
+    case eLootRuleType.LongValKeyFlagExists:
+      body.writeLine(String(requirement.keyval))
+      body.writeLine(String(requirement.vk))
+      break
+    // LootRules.cs 1418-1419: keyval line, then the IntValueKey number.
+    case eLootRuleType.LongValKeyE:
+      body.writeLine(String(requirement.keyval))
+      body.writeLine(String(requirement.vk))
+      break
+    // LootRules.cs 1535-1536: keyval line, then the IntValueKey number.
+    case eLootRuleType.LongValKeyNE:
+      body.writeLine(String(requirement.keyval))
+      body.writeLine(String(requirement.vk))
       break
   }
 }

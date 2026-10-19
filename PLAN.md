@@ -77,8 +77,13 @@ find one real example in a fixture (`rg -n -m3 '^<type number>$' fixtures/`) and
   - Read `LootRules.cs` 313, 318, 379–386. The length prefix counts UTF-16 code units of the body.
   - Round-trip in the test: `vtclassic_editor_minimal.utl` (type 0) and `UnfamilarShores.utl` (5 type 1
     requirements, one raw type 7 in the same rule).
-- [ ] T08 Types 2, 3, 11, 12, 13: `LongValKeyLE` (421–537), `LongValKeyGE` (538–654), `LongValKeyFlagExists`
+- [x] T08 Types 2, 3, 11, 12, 13: `LongValKeyLE` (421–537), `LongValKeyGE` (538–654), `LongValKeyFlagExists`
   (1154–1228), `LongValKeyE` (1379–1495), `LongValKeyNE` (1496–1612).
+  - All five bodies are two lines: `keyval` (Int32) then `vk` (IntValueKey written as int).
+    `src/core/format/profile.ts`, tested in `profile.test.ts`.
+  - Read `LootRules.cs` 454–461, 571–578, 1187–1194, 1412–1419, 1529–1536.
+  - Round-trip in the test: literal write/read per type, the real examples of `IAC_Level_NoCash.utl`
+    (types 2, 3, 12, 13; type 11 has no fixture example), and all 8 fixtures byte for byte.
 - [ ] T09 Types 4, 5, 6, 10: `DoubleValKeyLE` (655–729), `DoubleValKeyGE` (730–804), `DamagePercentGE` (805–861),
   `MinDamageGE` (1087–1153).
 - [ ] T10 Types 7, 8, 9: `ObjectClassE` (862–919), `SpellCountGE` (920–986), `SpellMatch` (987–1086).
