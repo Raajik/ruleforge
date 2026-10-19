@@ -164,9 +164,13 @@ for each task. The C# is in `ref/editor/`.
     10 and 2000–2008, `isIdProperty` for 1–5 and 11–13, `false` for the rest). `autoSortRules` is the same stable
     bubble sort and uses `localeCompare` for the name (see `docs/ops.md`). Tested by `sort.test.ts` (13 tests, 241
     total), including the real 56 rules of `IAC_Level_NoCash.utl`.
-- [ ] T22 Add packslot requirements: `Form1.cs` 856–899 and `SelectMinPackSlotsForm.cs`. "OK" adds a
+- [x] T22 Add packslot requirements: `Form1.cs` 856–899 and `SelectMinPackSlotsForm.cs`. "OK" adds a
   `CharacterMainPackEmptySlotsGE` to rules with the chosen action that do not have one. "Yes" also updates the
   value in rules that have one.
+  - `src/core/ops/packslots.ts`: `addPackslotRequirements(profile, action, slots, updateExisting)` matches the
+    action exactly (`KeepUpTo` is not `Keep`), appends the requirement at the end, and on `updateExisting` updates
+    only the first existing one, as the C# breaks after the first match. Tested by `packslots.test.ts` (9 tests,
+    250 total), including the real Keep and Salvage examples of `IAC_Level_NoCash.utl`. Facts: `docs/ops.md`.
 - [ ] T23 Add or update salvage rules: `Form1.cs` 790–805, `Macros.cs` 66–118, `AddSalvageRulesForm.cs`, and
   `GameInfo.getMaterialGroups` (`Constants.cs` 695).
 - [ ] T24 Update workmanship requirements: `Form1.cs` 806–822, `Macros.cs` 119–143, `UpdateWorkReqsForm.cs`.

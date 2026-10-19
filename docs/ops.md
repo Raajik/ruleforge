@@ -141,3 +141,22 @@
   rules after the 42 Keep and KeepUpTo rules, a second sort changes nothing, and the sorted profile round-trips
   through `writeProfile` and `readProfile`. Test: `src/core/ops/sort.test.ts`, "sorts a real fixture into order and
   round-trips it" and "is idempotent on a real fixture".
+
+## Packslot requirements (T22)
+
+- [Observed] The form defaults are slots 1 and action `Keep`. The slots box allows 1 to 102.
+  `ref/editor/SelectMinPackSlotsForm.cs:13-14`, `ref/editor/SelectMinPackSlotsForm.Designer.cs:44-61`.
+- [Observed] "OK" and "Yes" both run the change. It walks every rule and keeps the rules whose `Action()` equals the
+  chosen action exactly, so a `KeepUpTo` rule does not match `Keep`. A rule without a
+  `CharacterMainPackEmptySlotsGE` gets one with the chosen value at the end of its requirement list. A rule with one
+  keeps its value on "OK". On "Yes" the first one takes the new value; the loop breaks after the first match, so a
+  second one keeps its value. `ref/editor/Form1.cs:856-899`, `ref/shared/LootRules.cs:1312-1313`.
+- [Observed] Both `Keep` and `Salvage` rules in the fixtures have a `CharacterMainPackEmptySlotsGE`, so the action
+  match matters: `IAC_Level_NoCash.utl` has 2 Keep rules with value 12 and 14 Salvage rules with values 7 to 48.
+
+- [Verified] `addPackslotRequirements` matches the action exactly, appends the requirement at the end, changes an
+  existing value only when `updateExisting` is true and only for the first one, never changes its input and copies
+  the rule objects. Test: `src/core/ops/packslots.test.ts`, all tests.
+- [Verified] On `IAC_Level_NoCash.utl` the 39 Keep rules gain the requirement, the 2 that already have one keep or
+  update it, and the changed profile round-trips through `writeProfile` and `readProfile`. Test:
+  `src/core/ops/packslots.test.ts`, "adds the requirement to a real fixture and round-trips it".
