@@ -55,7 +55,7 @@ Each requirement type has a `Read` and a `Write` method in `ref/shared/LootRules
 a `read` function and a `write` function. Test each type: write a literal requirement, read it back, compare. Also
 find one real example in a fixture (`rg -n -m3 '^<type number>$' fixtures/`) and round-trip it.
 
-- [ ] T04 Enums: `eLootAction` (`ref/shared/Constants.cs`, `rg -n 'enum eLootAction'`) and `eLootRuleType`
+- [x] T04 Enums: `eLootAction` (`ref/shared/Constants.cs`, `rg -n 'enum eLootAction'`) and `eLootRuleType`
   (`rg -n 'enum eLootRuleType' ref/shared/`). Write `src/core/format/enums.ts`. Test the numbers.
 - [ ] T05 Line reader and counted writer: `ref/shared/CountedStreamWriter.cs` (217 lines). Reader: one line at a
   time, strips CR. Writer: collects lines with CRLF, has `count` and `resetCount()` like the C# class. Also write
