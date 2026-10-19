@@ -8,7 +8,8 @@ Spec: `specs/vtclassic-editor.md`. Read it once at the start of each session.
    lines. Use `rg -n` to find things, and `sed -n 'A,Bp'` to read a range.
 3. Write the test first, then the code. Run `npm test` and `npm run typecheck`. Both must pass.
 4. Put each new fact in `docs/` (see `docs/README.md`). Tag it **Verified** (name the test), **Observed** (name the
-   C# file:line) or **Unknown**.
+   C# file:line) or **Unknown**. **Verified** needs a test that passes. **Observed** needs a file:line that you
+   read in this session. If you did not check a fact, tag it **Unknown**. A false tag is worse than no fact.
 5. Commit only your own files: `git add <paths>`, never `git add -A`. Subject: `Area: one fact as a sentence`.
    Example: `Format: CountedStreamWriter counts UTF-16 code units`.
 6. Change `- [ ]` to `- [x]` for the task, and commit this file with the task.
@@ -42,7 +43,7 @@ Spec: `specs/vtclassic-editor.md`. Read it once at the start of each session.
   their bytes). The origin of each file is in `fixtures/README.md`.
 
 ## Phase B: check the reference
-- [ ] T03 Compare the shipped binaries with the svn source.
+- [x] T03 Compare the shipped binaries with the svn source. (Closed by the orchestrator: see `docs/reference.md`.)
   - Install ilspycmd: `dotnet tool install -g ilspycmd`.
   - Decompile `ref/shipped/VTClassic.dll` and `ref/shipped/uTank2 Settings Editor.exe` into `/tmp/re/vtclassic/`.
   - Diff the classes in `LootRules.cs`, `Constants.cs`, `FileVersioning.cs` and `Form1.cs` against the decompiled
