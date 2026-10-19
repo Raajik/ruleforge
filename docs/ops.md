@@ -115,3 +115,29 @@
   `src/core/ops/clipboard.test.ts`, "returns the profile unchanged for an out-of-range replaceIndex".
 - [Verified] A paste into a version 0 profile gives null, because the C# read throws there. Test:
   `src/core/ops/clipboard.test.ts`, "does nothing on a version 0 profile, where the C# read throws".
+
+## Auto-sort (T21)
+
+- [Observed] "Auto-Sort Rules" runs a stable bubble sort on the rule list. Each swap is a "move rule down" of index
+  `j`, so equal rules keep their order. `ref/editor/Form1.cs:823-855`.
+- [Observed] The compare is: the action number first, with `KeepUpTo` counted as `Keep`. At an equal action number
+  a rule with an ID requirement comes after a rule without one. Then the names compare with `name.CompareTo`.
+  `ref/editor/Form1.cs:838-843`.
+- [Observed] `AnyReqRequiresID` is true when any requirement of the rule has `MayRequireID` true.
+  `ref/shared/LootRules.cs:2891-2898`.
+- [Observed] `MayRequireID` is true for types 0, 8, 9, 10 and 2000-2008. It is `GameInfo.IsIDProperty(vk)` for type 1
+  (a StringValueKey), types 2, 3, 11, 12 and 13 (an IntValueKey) and types 4 and 5 (a DoubleValueKey). It is false
+  for types 6, 7, 1000-1004, 14-17 and 9999, and for `cUnsupportedRequirement`.
+  `ref/shared/LootRules.cs:263,331-2843`, `ref/shared/Constants.cs:425-496`.
+- [Unknown] The C# `string.CompareTo` is culture-aware. The rebuild uses `localeCompare` with the locale of the
+  environment, so a name with special letters could sort differently. Every rule name in the fixtures is ASCII.
+
+- [Verified] `requirementMayRequireID` gives the C# result for all 31 types and for a raw requirement. Test:
+  `src/core/ops/sort.test.ts`, "anyReqRequiresID".
+- [Verified] `autoSortRules` orders by the action number with `KeepUpTo` as `Keep`, then by the ID requirement, then
+  by the name. It is stable, it never changes its input and it copies the rule objects. Test:
+  `src/core/ops/sort.test.ts`, "autoSortRules".
+- [Verified] On `IAC_Level_NoCash.utl` (56 rules) the sort is a permutation of the input, it puts the 14 Salvage
+  rules after the 42 Keep and KeepUpTo rules, a second sort changes nothing, and the sorted profile round-trips
+  through `writeProfile` and `readProfile`. Test: `src/core/ops/sort.test.ts`, "sorts a real fixture into order and
+  round-trips it" and "is idempotent on a real fixture".

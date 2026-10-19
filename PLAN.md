@@ -155,11 +155,15 @@ for each task. The C# is in `ref/editor/`.
   - Paste checks the hash, except "paste unchecked". Ctrl+paste replaces the selected rule.
   - Use `crypto.subtle` (it works in browsers and Node), so the function is async.
   - Test: copy then paste gives the same rule, and a changed text fails the hash check.
-- [ ] T21 Auto-sort: `Form1.cs` 823–855 and `AnyReqRequiresID` (LootRules.cs 2889).
+- [x] T21 Auto-sort: `Form1.cs` 823–855 and `AnyReqRequiresID` (LootRules.cs 2889).
   - Order: action number first (KeepUpTo counts as Keep). Then rules without ID before rules that need ID. Then
     name.
   - The name compare is `string.CompareTo`, which is culture-aware. Record what you choose in `docs/ops.md`.
   - It is a stable bubble sort. Keep that.
+  - `src/core/ops/sort.ts`: `requirementMayRequireID` copies the `MayRequireID` of every type (`true` for 0, 8, 9,
+    10 and 2000–2008, `isIdProperty` for 1–5 and 11–13, `false` for the rest). `autoSortRules` is the same stable
+    bubble sort and uses `localeCompare` for the name (see `docs/ops.md`). Tested by `sort.test.ts` (13 tests, 241
+    total), including the real 56 rules of `IAC_Level_NoCash.utl`.
 - [ ] T22 Add packslot requirements: `Form1.cs` 856–899 and `SelectMinPackSlotsForm.cs`. "OK" adds a
   `CharacterMainPackEmptySlotsGE` to rules with the chosen action that do not have one. "Yes" also updates the
   value in rules that have one.
