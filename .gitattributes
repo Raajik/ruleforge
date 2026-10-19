@@ -1,0 +1,3 @@
+# Keep fixture bytes exactly as the legacy editor wrote them.
+*.utl -text
+*.xml -text
