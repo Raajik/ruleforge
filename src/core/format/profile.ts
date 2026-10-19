@@ -8,7 +8,7 @@
  */
 
 import { eLootAction, eLootRuleType } from './enums'
-import { formatDouble } from './doubles'
+import { formatDouble, haxConvertDouble } from './doubles'
 import { LineReader } from './reader'
 import { CountedWriter } from './writer'
 
@@ -128,6 +128,10 @@ export type Requirement =
   | LongValKeyFlagExistsRequirement
   | LongValKeyERequirement
   | LongValKeyNERequirement
+  | DoubleValKeyLERequirement
+  | DoubleValKeyGERequirement
+  | DamagePercentGERequirement
+  | MinDamageGERequirement
 export const requirementReaders: Record<number, (reader: LineReader, version: number) => Requirement> = {
   // LootRules.cs 312: rx = new Regex(inf.ReadLine()).
   0: (reader) => ({ type: 0, pattern: reader.readLine() ?? '' }),
@@ -144,13 +148,13 @@ export const requirementReaders: Record<number, (reader: LineReader, version: nu
   // LootRules.cs 1529-1530: keyval line, then the IntValueKey number.
   13: (reader) => ({ type: 13, keyval: toInt(reader.readLine()), vk: toInt(reader.readLine()) }),
   // LootRules.cs 686-688: keyval line, then the DoubleValueKey number.
-  4: (reader) => ({ type: 4, keyval: parseFloat(reader.readLine() ?? ''), vk: toInt(reader.readLine()) }),
+  4: (reader) => ({ type: 4, keyval: haxConvertDouble(reader.readLine()), vk: toInt(reader.readLine()) }),
   // LootRules.cs 761-763: keyval line, then the DoubleValueKey number.
-  5: (reader) => ({ type: 5, keyval: parseFloat(reader.readLine() ?? ''), vk: toInt(reader.readLine()) }),
+  5: (reader) => ({ type: 5, keyval: haxConvertDouble(reader.readLine()), vk: toInt(reader.readLine()) }),
   // LootRules.cs 827-829: keyval line.
-  6: (reader) => ({ type: 6, keyval: parseFloat(reader.readLine() ?? '') }),
+  6: (reader) => ({ type: 6, keyval: haxConvertDouble(reader.readLine()) }),
   // LootRules.cs 1119-1121: keyval line.
-  10: (reader) => ({ type: 10, keyval: parseFloat(reader.readLine() ?? '') }),
+  10: (reader) => ({ type: 10, keyval: haxConvertDouble(reader.readLine()) }),
 }
 
 export interface LootRule {

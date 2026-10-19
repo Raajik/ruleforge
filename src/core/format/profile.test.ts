@@ -1,5 +1,5 @@
 // Tests for readProfile and writeProfile.
-// Types 0, 1, 2, 3, 11, 12 and 13 are parsed (T07, T08); every other type
+// Types 0-6 and 10-13 are parsed (T07-T09). Every other type
 // stays raw text, so a fixture round-trips only when each requirement's
 // length prefix is exact.
 
@@ -216,5 +216,44 @@ describe('requirement type 13, LongValKeyNE', () => {
     const rule = readProfile(text).rules[5]!
     expect(rule.name).toBe('(W+) Weapon')
     expect(rule.requirements[2]).toEqual({ type: 13, keyval: 10, vk: 353 })
+  })
+})
+
+describe('requirement types 4 and 5, DoubleValKeyLE and DoubleValKeyGE', () => {
+  it('writes the keyval as G15 and the value key, and reads them back', () => {
+    const profile = literalProfile([{ type: 4, keyval: 0.1 + 0.2, vk: 167772171 }])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 692-696: keyval with Convert.ToString, then (int)vk.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;4\r\n16\r\n0.3\r\n167772171\r\n')
+    expect(readProfile(text).rules[0]!.requirements[0]).toEqual({ type: 4, keyval: 0.3, vk: 167772171 })
+  })
+
+  it('reads the real examples of LootSnobV4.utl', () => {
+    const rules = readProfile(readFileSync('fixtures/LootSnobV4.utl', 'latin1')).rules
+    expect(rules[211]!.requirements[4]).toEqual({ type: 5, keyval: 1.04, vk: 150 })
+    expect(rules[472]!.requirements[5]).toEqual({ type: 4, keyval: 0.53, vk: 167772171 })
+  })
+})
+
+describe('requirement types 6 and 10, DamagePercentGE and MinDamageGE', () => {
+  it('writes one keyval line and reads it back', () => {
+    const profile = literalProfile([
+      { type: 6, keyval: 1.5e20 },
+      { type: 10, keyval: 12 },
+    ])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 832-835 and 1124-1127: one keyval line each.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;6;10\r\n9\r\n1.5E+20\r\n4\r\n12\r\n')
+    expect(readProfile(text)).toEqual(profile)
+  })
+
+  it('reads a comma as the decimal point and bad text as 0, as HaxConvertDouble does', () => {
+    const text = 'UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;6;10\r\n5\r\n1,5\r\n5\r\nabc\r\n'
+    expect(readProfile(text).rules[0]!.requirements).toEqual([
+      { type: 6, keyval: 1.5 },
+      { type: 10, keyval: 0 },
+    ])
   })
 })

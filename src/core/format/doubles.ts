@@ -23,3 +23,14 @@ export function formatDouble(value: number): string {
   if (digits.length <= intLen) return sign + digits.padEnd(intLen, '0')
   return `${sign}${digits.slice(0, intLen)}.${digits.slice(intLen)}`
 }
+
+// haxConvertDouble copies GameInfo.HaxConvertDouble (ref/shared/Constants.cs 415-422): ',' becomes '.',
+// then double.TryParse with NumberStyles.Float and InvariantCulture, and 0 when the parse fails.
+export function haxConvertDouble(line: string | null | undefined): number {
+  const s = (line ?? '').replace(/,/g, '.').trim()
+  if (s === 'NaN') return NaN
+  if (s === 'Infinity') return Infinity
+  if (s === '-Infinity') return -Infinity
+  // NumberStyles.Float: a sign, digits with one '.', and an exponent. No hex, no thousands separator.
+  return /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(s) ? Number(s) : 0
+}

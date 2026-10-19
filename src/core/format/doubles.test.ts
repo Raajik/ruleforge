@@ -4,7 +4,7 @@
 // JS String(x) differs (0.00001, 1e-5). formatDouble copies .NET behavior.
 
 import { describe, expect, it } from 'vitest'
-import { formatDouble } from './doubles'
+import { formatDouble, haxConvertDouble } from './doubles'
 
 describe('formatDouble', () => {
   it('formats 0.1 same as .NET', () => {
@@ -145,4 +145,17 @@ describe('formatDouble against .NET G15 output', () => {
   for (const [value, want] of cases) {
     it(`${value} -> ${want}`, () => expect(formatDouble(value)).toBe(want))
   }
+})
+
+describe('haxConvertDouble', () => {
+  it('copies GameInfo.HaxConvertDouble', () => {
+    expect(haxConvertDouble('0.53')).toBe(0.53)
+    expect(haxConvertDouble('1,5')).toBe(1.5)
+    expect(haxConvertDouble(' -1E-05 ')).toBe(-1e-5)
+    expect(haxConvertDouble('.5')).toBe(0.5)
+    expect(haxConvertDouble('Infinity')).toBe(Infinity)
+    expect(haxConvertDouble('NaN')).toBeNaN()
+    // TryParse fails, so the C# returns 0.
+    for (const bad of ['', 'abc', '0x10', '1.2.3', '1,000.5', null]) expect(haxConvertDouble(bad)).toBe(0)
+  })
 })
