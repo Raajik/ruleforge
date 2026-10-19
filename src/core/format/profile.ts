@@ -5,6 +5,8 @@
  * Requirement types 0 to 13, 1000 to 1004, 14 to 17, 9999 and 2000 to 2008
  * have their own reader and writer (T07-T13). Every other type stays raw text.
  * Each requirement keeps its own type number and its serialized body.
+ * The extra blocks after the rules parse SalvageCombine and keep every other
+ * block as raw text (T14).
  */
 
 import { eLootAction, eLootRuleType } from './enums'
@@ -420,11 +422,34 @@ export interface LootRule {
   requirements: Requirement[]
 }
 
-/** An unread block after the rules, with its own type id and length. */
-export interface ExtraBlock {
+/** A block after the rules with no handler: its body stays raw text. */
+export interface RawExtraBlock {
+  kind: 'raw'
   typeId: string
   data: string
 }
+
+/**
+ * The parsed SalvageCombine block, as UTLBlock_SalvageCombine.cs does it
+ * (Read at 272-299, Write at 302-321).
+ */
+export interface SalvageCombineBlock {
+  kind: 'salvageCombine'
+  /** The combine ranges of materials without their own line. */
+  defaultCombineString: string
+  /**
+   * One combine string per material id, in file order. A Map keeps that
+   * order: the real blocks are not sorted by material id.
+   */
+  materialCombineStrings: Map<number, string>
+  /**
+   * One "salvage for money" target value per material id. Empty when the
+   * block ends before this section (UTLBlock_SalvageCombine.cs 289-290).
+   */
+  materialValueModeValues: Map<number, number>
+}
+
+export type ExtraBlock = SalvageCombineBlock | RawExtraBlock
 
 export interface LootProfile {
   version: number
@@ -469,7 +494,13 @@ function readExtraBlocks(reader: LineReader): ExtraBlock[] {
   while (reader.posRemaining > 0) {
     const typeId = reader.readLine()
     if (typeId === null || typeId === '') break
-    blocks.push({ typeId, data: reader.readChars(toInt(reader.readLine())) })
+    const data = reader.readChars(toInt(reader.readLine()))
+    blocks.push(
+      typeId === SALVAGE_COMBINE
+        ? readSalvageCombine(data)
+        : // Unknown blocktype, skip ahead (UTLFileExtraBlockManager.cs 111-116).
+          { kind: 'raw', typeId, data },
+    )
   }
   return blocks
 }
@@ -501,6 +532,37 @@ export function readProfile(text: string): LootProfile {
   }
 
   return { version, rules, extraBlocks: readExtraBlocks(reader) }
+}
+
+// UTLBlock_SalvageCombine.cs line 269: BlockTypeID.
+const SALVAGE_COMBINE = 'SalvageCombine'
+
+// UTLBlock_SalvageCombine.cs line 42: the writer saves this version.
+const SALVAGE_BLOCK_FORMAT_VERSION = 1
+
+/** Reads a SalvageCombine body, as UTLBlock_SalvageCombine.Read does (272-299). */
+function readSalvageCombine(data: string): SalvageCombineBlock {
+  const body = new LineReader(data)
+  body.readLine() // The format version line is read, then ignored (line 276).
+  const defaultCombineString = body.readLine() ?? ''
+
+  const materialCombineStrings = new Map<number, string>()
+  const materialCount = toInt(body.readLine())
+  for (let i = 0; i < materialCount; ++i) {
+    materialCombineStrings.set(toInt(body.readLine()), body.readLine() ?? '')
+  }
+
+  const materialValueModeValues = new Map<number, number>()
+  // This is all there is for older blocks (lines 289-290).
+  if (body.posRemaining > 0) {
+    const valueModeCount = toInt(body.readLine())
+    for (let i = 0; i < valueModeCount; ++i) {
+      const material = toInt(body.readLine())
+      materialValueModeValues.set(material, toInt(body.readLine()))
+    }
+  }
+
+  return { kind: 'salvageCombine', defaultCombineString, materialCombineStrings, materialValueModeValues }
 }
 
 /** Writes the body of a requirement, as its Write method does in LootRules.cs. */
@@ -697,6 +759,25 @@ function writeRule(writer: CountedWriter, rule: LootRule): void {
   }
 }
 
+/** Writes a SalvageCombine body, as UTLBlock_SalvageCombine.Write does (302-321). */
+function writeSalvageCombine(block: SalvageCombineBlock, body: CountedWriter): void {
+  // The writer saves the current version, whatever the block had.
+  body.writeLine(String(SALVAGE_BLOCK_FORMAT_VERSION))
+  body.writeLine(block.defaultCombineString)
+
+  body.writeLine(String(block.materialCombineStrings.size))
+  for (const [material, combine] of block.materialCombineStrings) {
+    body.writeLine(String(material))
+    body.writeLine(combine)
+  }
+
+  body.writeLine(String(block.materialValueModeValues.size))
+  for (const [material, value] of block.materialValueModeValues) {
+    body.writeLine(String(material))
+    body.writeLine(String(value))
+  }
+}
+
 export function writeProfile(profile: LootProfile): string {
   const writer = new CountedWriter()
   writer.writeLine('UTL')
@@ -708,9 +789,20 @@ export function writeProfile(profile: LootProfile): string {
   }
 
   for (const block of profile.extraBlocks) {
-    writer.writeLine(block.typeId)
-    writer.writeLine(String(block.data.length))
-    writer.write(block.data)
+    // Each block is a type id line, a length line, then the raw body
+    // (UTLFileExtraBlockManager.cs 122-137).
+    const body = new CountedWriter()
+    let typeId: string
+    if (block.kind === 'salvageCombine') {
+      typeId = SALVAGE_COMBINE
+      writeSalvageCombine(block, body)
+    } else {
+      typeId = block.typeId
+      body.write(block.data)
+    }
+    writer.writeLine(typeId)
+    writer.writeLine(String(body.count))
+    writer.write(body.toString())
   }
 
   return writer.toString()

@@ -100,9 +100,13 @@ find one real example in a fixture (`rg -n -m3 '^<type number>$' fixtures/`) and
 - [x] T13 Types 2000–2008: `BuffedMedianDamageGE` (2368–2438), `BuffedMissileDamageGE` (2439–2505),
   `BuffedLongValKeyGE` (2506–2579), `BuffedDoubleValKeyGE` (2580–2653), `CalcdBuffedTinkedDamageGE` (2654–2720),
   `TotalRatingsGE` (2721–2787), `CalcedBuffedTinkedTargetMeleeGE` (2788–2872).
-- [ ] T14 Extra blocks: `ref/shared/UTLFileExtraBlockManager.cs` (140 lines) and
+- [x] T14 Extra blocks: `ref/shared/UTLFileExtraBlockManager.cs` (140 lines) and
   `ref/shared/UTLBlock_SalvageCombine.cs` (323 lines). Parse `SalvageCombine`. Keep unknown blocks as raw data.
   Test: `fixtures/BuffedLongBuffedDouble.utl` round-trips.
+  - A `SalvageCombine` block reads into a default combine string, a material id to combine string map and a
+    value mode map. The maps keep the file order. The fixture ids are not sorted, and the C# writes its .NET
+    `Dictionary` in read order. Every other block type keeps its raw body, so it round-trips, while the C# drops
+    it on save. `src/core/format/profile.ts`, tested in `profile.test.ts`. All 8 fixtures round-trip byte for byte.
 - [ ] T15 Round-trip gate.
   - Replace `src/core/fixtures.test.ts` with a test: for each fixture, read then write gives the same bytes.
   - Also check that no requirement in a fixture stays unsupported.

@@ -57,8 +57,7 @@ describe('readProfile and writeProfile', () => {
     expect(rule.requirements).toEqual([{ type: 0, pattern: 'Legendary Strength' }])
 
     expect(profile.extraBlocks).toHaveLength(1)
-    expect(profile.extraBlocks[0]!.typeId).toBe('SalvageCombine')
-    expect(profile.extraBlocks[0]!.data.length).toBe(277)
+    expect(profile.extraBlocks[0]!.kind).toBe('salvageCombine')
   })
 
   it('reads the KeepUpTo value and multiple raw requirements of the rich fixture', () => {
@@ -600,5 +599,84 @@ describe('T13 types together', () => {
       { type: 2008, dot: 109, meleeDefenseBonus: 1.17, attackBonus: 1.17 },
     ])
     expect(readProfile(writeProfile(profile))).toEqual(profile)
+  })
+})
+
+describe('extra block, SalvageCombine', () => {
+  it('writes a literal block and reads it back', () => {
+    const profile: LootProfile = {
+      version: 1,
+      rules: [],
+      extraBlocks: [
+        {
+          kind: 'salvageCombine',
+          defaultCombineString: '1-6, 7-8, 9, 10',
+          materialCombineStrings: new Map([
+            [5, '1-10'],
+            [13, '3-4'],
+          ]),
+          materialValueModeValues: new Map([[25, 500]]),
+        },
+      ],
+    }
+    const text = writeProfile(profile)
+
+    // UTLFileExtraBlockManager.cs 131-136: type id line, body length line,
+    // body. The body copies UTLBlock_SalvageCombine.Write (302-321).
+    expect(text).toBe(
+      'UTL\r\n1\r\n0\r\nSalvageCombine\r\n53\r\n1\r\n1-6, 7-8, 9, 10\r\n2\r\n5\r\n1-10\r\n13\r\n3-4\r\n1\r\n25\r\n500\r\n',
+    )
+    expect(readProfile(text)).toEqual(profile)
+  })
+
+  it('reads the real block of BuffedLongBuffedDouble.utl', () => {
+    const text = readFileSync('fixtures/BuffedLongBuffedDouble.utl', 'latin1')
+    const block = readProfile(text).extraBlocks[0]!
+    if (block.kind !== 'salvageCombine') throw new Error('expected a parsed SalvageCombine block')
+
+    expect(block.defaultCombineString).toBe('1-6, 7-8, 9, 10')
+    expect(block.materialCombineStrings.size).toBe(25)
+    // The file is not sorted by material id (52 comes before 51), so the map
+    // must keep the file order.
+    expect([...block.materialCombineStrings.keys()]).toEqual([
+      10, 14, 16, 17, 18, 19, 22, 25, 29, 30, 36, 37, 41, 47, 35, 27, 26, 21, 15, 13, 50, 49, 34, 52, 51,
+    ])
+    expect(block.materialCombineStrings.get(10)).toBe('1-10')
+    expect(block.materialValueModeValues.size).toBe(0)
+  })
+
+  it('round-trips BuffedLongBuffedDouble.utl with its block parsed', () => {
+    const text = readFileSync('fixtures/BuffedLongBuffedDouble.utl', 'latin1')
+    const profile = readProfile(text)
+    expect(profile.extraBlocks.map((b) => b.kind)).toEqual(['salvageCombine'])
+    expect(writeProfile(profile)).toBe(text)
+  })
+
+  it('keeps a block with an unknown type id as raw data', () => {
+    const profile: LootProfile = {
+      version: 1,
+      rules: [],
+      extraBlocks: [{ kind: 'raw', typeId: 'SomeFutureBlock', data: 'abc\r\ndef' }],
+    }
+    const text = writeProfile(profile)
+
+    expect(text).toBe('UTL\r\n1\r\n0\r\nSomeFutureBlock\r\n8\r\nabc\r\ndef')
+    expect(readProfile(text)).toEqual(profile)
+  })
+
+  it('reads an old block that ends before the value mode section', () => {
+    // UTLBlock_SalvageCombine.cs 289-290: an old block has no value mode lines.
+    const text =
+      'UTL\r\n1\r\n0\r\nSalvageCombine\r\n32\r\n1\r\n1-6, 7-8, 9, 10\r\n1\r\n5\r\n1-10\r\n'
+    const block = readProfile(text).extraBlocks[0]!
+    if (block.kind !== 'salvageCombine') throw new Error('expected a parsed SalvageCombine block')
+    expect([...block.materialCombineStrings]).toEqual([[5, '1-10']])
+    expect(block.materialValueModeValues.size).toBe(0)
+
+    // UTLBlock_SalvageCombine.cs 315: the writer always writes the count, so
+    // an old block gains the "0" line on save.
+    expect(writeProfile(readProfile(text))).toBe(
+      'UTL\r\n1\r\n0\r\nSalvageCombine\r\n35\r\n1\r\n1-6, 7-8, 9, 10\r\n1\r\n5\r\n1-10\r\n0\r\n',
+    )
   })
 })
