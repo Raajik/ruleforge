@@ -120,7 +120,7 @@ find one real example in a fixture (`rg -n -m3 '^<type number>$' fixtures/`) and
   - Tables from `GameInfo` in `ref/shared/Constants.cs` (414–724): material names, material groups and the other
     tables there.
   - Add `npm run gen`. Test: the counts, and 3 known values for each table.
-  - The script parses the C# files at generation time and writes `src/core/gamedata/generated.ts`; it fails on an
+  - The script parses the C# files at generation time and writes `src/core/gamedata/generated.ts`. It fails on an
     unknown table pattern. `ObjectClass` numbers its members from 0, and `getSetInfo` uses a counter from 32 down
     to 5, so the script evaluates the counter. `src/core/gamedata/generated.test.ts` checks each count and three
     known values, and that every material group uses a real material id. Facts: `docs/gamedata.md`.
@@ -135,13 +135,16 @@ find one real example in a fixture (`rg -n -m3 '^<type number>$' fixtures/`) and
 ## Phase E: editor operations (`src/core/ops/`)
 Each operation is a pure function: `(profile, args) => newProfile`. It never changes its input. Make one test file
 for each task. The C# is in `ref/editor/`.
-- [ ] T18 Rule and requirement edits. All line numbers are in `Form1.cs`, except where the line names a file.
+- [x] T18 Rule and requirement edits. All line numbers are in `Form1.cs`, except where the line names a file.
   - New rule (497–506), clone (481–496), delete (507–511).
   - Move up and down: `Macros.cs` 36–65. Ctrl moves 3: 770–789.
   - New, clone and delete requirement (522–576).
   - Rename (577–588). Action and keep count (589–629).
   - Change requirement type (630–655). Find which default values the new type gets.
   - Toggle disabled (910–938).
+  - `src/core/ops/rules.ts`: one pure function for each edit. `defaultRequirement` holds the C# field defaults of
+    all 31 types. A clone copies the name, the action and the requirements only, as the legacy code does.
+    Tested by `rules.test.ts`. Facts: `docs/ops.md`.
 - [ ] T19 Search: `GoToNextMatchingRule` and `FindNextMatchingRule` (`Form1.cs` 959–992). Case-insensitive, wraps
   around to the start. Match on the same text that the rule list shows (find how `lstRules` items get their text).
 - [ ] T20 Copy and paste rule: `Form1.cs` 1054–1169.
