@@ -97,7 +97,7 @@ find one real example in a fixture (`rg -n -m3 '^<type number>$' fixtures/`) and
   - Read `LootRules.cs` 1839, 1842-1844, 1934-1940, 2083-2090, 2239-2245, 2326-2329.
   - Round-trip in the test: literal write/read per type, all five types in one rule, and the real type 9999
     examples (body `true`) of all 5 fixtures that have one. No fixture has type 14, 15, 16 or 17.
-- [ ] T13 Types 2000–2008: `BuffedMedianDamageGE` (2368–2438), `BuffedMissileDamageGE` (2439–2505),
+- [x] T13 Types 2000–2008: `BuffedMedianDamageGE` (2368–2438), `BuffedMissileDamageGE` (2439–2505),
   `BuffedLongValKeyGE` (2506–2579), `BuffedDoubleValKeyGE` (2580–2653), `CalcdBuffedTinkedDamageGE` (2654–2720),
   `TotalRatingsGE` (2721–2787), `CalcedBuffedTinkedTargetMeleeGE` (2788–2872).
 - [ ] T14 Extra blocks: `ref/shared/UTLFileExtraBlockManager.cs` (140 lines) and

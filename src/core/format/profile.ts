@@ -2,10 +2,9 @@
  * Reads and writes the rule section of a .utl profile, as cLootRules,
  * cLootItemRule and cUnsupportedRequirement do in ref/shared/LootRules.cs.
  *
- * Requirement types 0 to 13, 1000 to 1004 and 14 to 17 and 9999 have their
- * own reader and writer (T07-T12). Every other type stays raw text until T13
- * adds its reader. Each requirement keeps its own type number and its
- * serialized body.
+ * Requirement types 0 to 13, 1000 to 1004, 14 to 17, 9999 and 2000 to 2008
+ * have their own reader and writer (T07-T13). Every other type stays raw text.
+ * Each requirement keeps its own type number and its serialized body.
  */
 
 import { eLootAction, eLootRuleType } from './enums'
@@ -219,11 +218,62 @@ export interface SlotExactPaletteRequirement {
   palette: number
 }
 
+/** Type 2000, BuffedMedianDamageGE. The body is one line (LootRules.cs 2404-2408). */
+export interface BuffedMedianDamageGERequirement {
+  type: 2000
+  keyval: number
+}
+
+/** Type 2001, BuffedMissileDamageGE. The body is one line (LootRules.cs 2471-2475). */
+export interface BuffedMissileDamageGERequirement {
+  type: 2001
+  keyval: number
+}
+
+/** Type 2003, BuffedLongValKeyGE. The body is two lines (LootRules.cs 2533-2538). */
+export interface BuffedLongValKeyGERequirement {
+  type: 2003
+  keyval: number
+  /** IntValueKey, written base 10 as Convert.ToString((int)vk) does. */
+  vk: number
+}
+
+/** Type 2005, BuffedDoubleValKeyGE. The body is two lines (LootRules.cs 2607-2612). */
+export interface BuffedDoubleValKeyGERequirement {
+  type: 2005
+  keyval: number
+  /** DoubleValueKey, written base 10 as Convert.ToString((int)vk) does. */
+  vk: number
+}
+
+/** Type 2006, CalcdBuffedTinkedDamageGE. The body is one line (LootRules.cs 2686-2690). */
+export interface CalcdBuffedTinkedDamageGERequirement {
+  type: 2006
+  keyval: number
+}
+
+/** Type 2007, TotalRatingsGE. The body is one line (LootRules.cs 2753-2757). */
+export interface TotalRatingsGERequirement {
+  type: 2007
+  keyval: number
+}
+
+/** Type 2008, CalcedBuffedTinkedTargetMeleeGE. The body is three lines (LootRules.cs 2819-2827). */
+export interface CalcedBuffedTinkedTargetMeleeGERequirement {
+  type: 2008
+  /** TargetCalcedBuffedTinkedDoT. */
+  dot: number
+  /** TargetBuffedMeleeDefenseBonus. */
+  meleeDefenseBonus: number
+  /** TargetBuffedAttackBonus. */
+  attackBonus: number
+}
+
 /**
  * One reader per type number, keyed like eLootRuleType. A reader reads only
  * the body of the requirement, after the length prefix of a version 1 file.
- * Types 0 to 13 come from T07-T10, types 1000 to 1004 from T11, types 14 to
- * 17 and 9999 from T12. T13 adds the rest.
+ * Types 0 to 13 come from T07-T10. Types 1000 to 1004 come from T11.
+ * Types 14 to 17 and 9999 come from T12. Types 2000 to 2008 come from T13.
  */
 export type Requirement =
   | UnsupportedRequirement
@@ -251,6 +301,13 @@ export type Requirement =
   | SimilarColorArmorTypeRequirement
   | SlotSimilarColorRequirement
   | SlotExactPaletteRequirement
+  | BuffedMedianDamageGERequirement
+  | BuffedMissileDamageGERequirement
+  | BuffedLongValKeyGERequirement
+  | BuffedDoubleValKeyGERequirement
+  | CalcdBuffedTinkedDamageGERequirement
+  | TotalRatingsGERequirement
+  | CalcedBuffedTinkedTargetMeleeGERequirement
 export const requirementReaders: Record<number, (reader: LineReader, version: number) => Requirement> = {
   // LootRules.cs 312: rx = new Regex(inf.ReadLine()).
   0: (reader) => ({ type: 0, pattern: reader.readLine() ?? '' }),
@@ -333,6 +390,25 @@ export const requirementReaders: Record<number, (reader: LineReader, version: nu
   }),
   // LootRules.cs 2326-2328: Slot line, then Palette line.
   17: (reader) => ({ type: 17, slot: toInt(reader.readLine()), palette: toInt(reader.readLine()) }),
+  // LootRules.cs 2406: one keyval line.
+  2000: (reader) => ({ type: 2000, keyval: haxConvertDouble(reader.readLine()) }),
+  // LootRules.cs 2473: one keyval line.
+  2001: (reader) => ({ type: 2001, keyval: haxConvertDouble(reader.readLine()) }),
+  // LootRules.cs 2535-2536: keyval line, then the IntValueKey number.
+  2003: (reader) => ({ type: 2003, keyval: haxConvertDouble(reader.readLine()), vk: toInt(reader.readLine()) }),
+  // LootRules.cs 2609-2610: keyval line, then the DoubleValueKey number.
+  2005: (reader) => ({ type: 2005, keyval: haxConvertDouble(reader.readLine()), vk: toInt(reader.readLine()) }),
+  // LootRules.cs 2688: one keyval line.
+  2006: (reader) => ({ type: 2006, keyval: haxConvertDouble(reader.readLine()) }),
+  // LootRules.cs 2755: one keyval line.
+  2007: (reader) => ({ type: 2007, keyval: haxConvertDouble(reader.readLine()) }),
+  // LootRules.cs 2821-2823: DoT, melee defense bonus and attack bonus lines.
+  2008: (reader) => ({
+    type: 2008,
+    dot: haxConvertDouble(reader.readLine()),
+    meleeDefenseBonus: haxConvertDouble(reader.readLine()),
+    attackBonus: haxConvertDouble(reader.readLine()),
+  }),
 }
 
 export interface LootRule {
@@ -558,6 +634,38 @@ function writeRequirementBody(body: CountedWriter, requirement: Requirement): vo
     case eLootRuleType.SlotExactPalette:
       body.writeLine(String(requirement.slot))
       body.writeLine(String(requirement.palette))
+      break
+    // LootRules.cs 2408: one keyval line.
+    case eLootRuleType.BuffedMedianDamageGE:
+      body.writeLine(formatDouble(requirement.keyval))
+      break
+    // LootRules.cs 2475: one keyval line.
+    case eLootRuleType.BuffedMissileDamageGE:
+      body.writeLine(formatDouble(requirement.keyval))
+      break
+    // LootRules.cs 2537-2538: keyval line, then the IntValueKey number.
+    case eLootRuleType.BuffedLongValKeyGE:
+      body.writeLine(formatDouble(requirement.keyval))
+      body.writeLine(String(requirement.vk))
+      break
+    // LootRules.cs 2611-2612: keyval line, then the DoubleValueKey number.
+    case eLootRuleType.BuffedDoubleValKeyGE:
+      body.writeLine(formatDouble(requirement.keyval))
+      body.writeLine(String(requirement.vk))
+      break
+    // LootRules.cs 2690: one keyval line.
+    case eLootRuleType.CalcdBuffedTinkedDamageGE:
+      body.writeLine(formatDouble(requirement.keyval))
+      break
+    // LootRules.cs 2757: one keyval line.
+    case eLootRuleType.TotalRatingsGE:
+      body.writeLine(formatDouble(requirement.keyval))
+      break
+    // LootRules.cs 2825-2827: DoT line, melee defense bonus line, attack bonus line.
+    case eLootRuleType.CalcedBuffedTinkedTargetMeleeGE:
+      body.writeLine(formatDouble(requirement.dot))
+      body.writeLine(formatDouble(requirement.meleeDefenseBonus))
+      body.writeLine(formatDouble(requirement.attackBonus))
       break
   }
 }

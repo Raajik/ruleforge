@@ -479,3 +479,126 @@ describe('T12 types together', () => {
     expect(readProfile(writeProfile(profile))).toEqual(profile)
   })
 })
+
+describe('requirement types 2000 and 2001, BuffedMedianDamageGE and BuffedMissileDamageGE', () => {
+  it('write one keyval line each and read them back', () => {
+    const profile = literalProfile([
+      { type: 2000, keyval: 5 },
+      { type: 2001, keyval: 78.6 },
+    ])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 2404-2408 and 2471-2475: one double keyval line each.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;2000;2001\r\n3\r\n5\r\n6\r\n78.6\r\n')
+    expect(readProfile(text)).toEqual(profile)
+  })
+
+  it('reads the real example of LootSnobV4.utl', () => {
+    const text = readFileSync('fixtures/LootSnobV4.utl', 'latin1')
+    const rule = readProfile(text).rules.find((r) => r.name === '(M) Bow (OD +10)')!
+    expect(rule.requirements[2]).toEqual({ type: 2001, keyval: 78.6 })
+  })
+})
+
+describe('requirement type 2003, BuffedLongValKeyGE', () => {
+  it('writes the keyval and the key, and reads them back', () => {
+    const profile = literalProfile([{ type: 2003, keyval: 200, vk: 28 }])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 2533-2538: keyval line, then the IntValueKey line as (int)vk.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;2003\r\n9\r\n200\r\n28\r\n')
+    expect(readProfile(text)).toEqual(profile)
+  })
+
+  it('reads the real example of BuffedLongBuffedDouble.utl', () => {
+    const text = readFileSync('fixtures/BuffedLongBuffedDouble.utl', 'latin1')
+    expect(readProfile(text).rules[0]!.requirements[0]).toEqual({ type: 2003, keyval: 200, vk: 28 })
+  })
+})
+
+describe('requirement type 2005, BuffedDoubleValKeyGE', () => {
+  it('writes the keyval and the key, and reads them back', () => {
+    const profile = literalProfile([{ type: 2005, keyval: 20, vk: 167772172 }])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 2607-2612: keyval line, then the DoubleValueKey line as (int)vk.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;2005\r\n15\r\n20\r\n167772172\r\n')
+    expect(readProfile(text)).toEqual(profile)
+  })
+
+  it('reads the real example of BuffedLongBuffedDouble.utl', () => {
+    const text = readFileSync('fixtures/BuffedLongBuffedDouble.utl', 'latin1')
+    expect(readProfile(text).rules[0]!.requirements[1]).toEqual({
+      type: 2005,
+      keyval: 20,
+      vk: 167772172,
+    })
+  })
+})
+
+describe('requirement type 2006, CalcdBuffedTinkedDamageGE', () => {
+  it('writes one keyval line and reads it back', () => {
+    const profile = literalProfile([{ type: 2006, keyval: 1.5 }])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 2686-2690: one double keyval line.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;2006\r\n5\r\n1.5\r\n')
+    expect(readProfile(text)).toEqual(profile)
+  })
+})
+
+describe('requirement type 2007, TotalRatingsGE', () => {
+  it('writes one keyval line and reads it back', () => {
+    const profile = literalProfile([{ type: 2007, keyval: 300 }])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 2753-2757: one double keyval line.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;2007\r\n5\r\n300\r\n')
+    expect(readProfile(text)).toEqual(profile)
+  })
+
+  it('reads the real example of BuffedLongBuffedDouble.utl', () => {
+    const text = readFileSync('fixtures/BuffedLongBuffedDouble.utl', 'latin1')
+    const rule = readProfile(text).rules.find((r) => r.name === 'Quick rule')!
+    expect(rule.requirements[1]).toEqual({ type: 2007, keyval: 300 })
+  })
+})
+
+describe('requirement type 2008, CalcedBuffedTinkedTargetMeleeGE', () => {
+  it('writes the three double lines and reads them back', () => {
+    const profile = literalProfile([
+      { type: 2008, dot: 109, meleeDefenseBonus: 1.17, attackBonus: 1.17 },
+    ])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 2819-2827: DoT line, melee defense bonus line, attack bonus line.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;2008\r\n17\r\n109\r\n1.17\r\n1.17\r\n')
+    expect(readProfile(text)).toEqual(profile)
+  })
+
+  it('reads the real example of ILT_Legendary.utl', () => {
+    const text = readFileSync('fixtures/ILT_Legendary.utl', 'latin1')
+    const rule = readProfile(text).rules.find((r) => r.name === '(H) 430 Insane')!
+    expect(rule.requirements[2]).toEqual({
+      type: 2008,
+      dot: 109,
+      meleeDefenseBonus: 1.17,
+      attackBonus: 1.17,
+    })
+  })
+})
+
+describe('T13 types together', () => {
+  it('writes and reads all seven types in one rule', () => {
+    const profile = literalProfile([
+      { type: 2000, keyval: 5 },
+      { type: 2001, keyval: 78.6 },
+      { type: 2003, keyval: 200, vk: 28 },
+      { type: 2005, keyval: 20, vk: 167772172 },
+      { type: 2006, keyval: 1.5 },
+      { type: 2007, keyval: 300 },
+      { type: 2008, dot: 109, meleeDefenseBonus: 1.17, attackBonus: 1.17 },
+    ])
+    expect(readProfile(writeProfile(profile))).toEqual(profile)
+  })
+})
