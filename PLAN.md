@@ -124,10 +124,13 @@ find one real example in a fixture (`rg -n -m3 '^<type number>$' fixtures/`) and
     unknown table pattern. `ObjectClass` numbers its members from 0, and `getSetInfo` uses a counter from 32 down
     to 5, so the script evaluates the counter. `src/core/gamedata/generated.test.ts` checks each count and three
     known values, and that every material group uses a real material id. Facts: `docs/gamedata.md`.
-- [ ] T17 Combo keys and colors.
+- [x] T17 Combo keys and colors.
   - `ref/shared/ComboKeys.cs` (200 lines): which keys each requirement type offers in its "acts on" list.
   - `ref/shared/ColorXML.cs` (121 lines) with `fixtures/ColorSlots.Default.xml`: the color slot data.
   - Put both in `src/core/gamedata/`, with tests.
+  - `combokeys.ts` sorts the five enum name lists like the C# `Array.Sort`, maps index to value and back,
+    and exposes `isIdProperty`. `colorslots.ts` parses the slot XML text. The test reads the real fixture
+    (63 definitions). Facts: `docs/gamedata.md`.
 
 ## Phase E: editor operations (`src/core/ops/`)
 Each operation is a pure function: `(profile, args) => newProfile`. It never changes its input. Make one test file

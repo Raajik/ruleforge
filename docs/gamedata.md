@@ -31,6 +31,45 @@ pattern changes, so a stale parse stops the build.
   Sort a table in the UI when the legacy editor shows it sorted. **Observed**
   `ref/shared/Constants.cs:486, 522, 559, 578-579, 695`.
 
+## Combo keys (T17)
+
+`src/core/gamedata/combokeys.ts` builds on the generated enums. The generator script does not write it.
+
+- The five "acts on" lists hold the enum member names in name order. The C# `Array.Sort` uses culture
+  order. The names are plain ASCII words, and no two names differ only in case. So the ordinal sort here
+  gives the same order. **Observed** `ref/shared/ComboKeys.cs:56-103`. **Verified** `combokeys.test.ts`
+  "sorts the names and keeps every member" and "guards the ordinal sort".
+- `indexFromKeyValue` returns -1 for a value that no key has. The C# `List.IndexOf` does the same.
+  **Observed** `ref/shared/ComboKeys.cs:109-112`. **Verified** `combokeys.test.ts` "returns -1 for a value
+  that no key has".
+- `isIdProperty` copies `GameInfo.IsIDProperty`. A StringValueKey is non-ID only for `Name` and
+  `SecondaryName`. 28 IntValueKeys are non-ID. The list is in Constants.cs 435-474. `Burden` and `OwnedBy`
+  appear there as comments, so they stay ID properties. A DoubleValueKey is non-ID only for
+  `ApproachDistance` and `SalvageWorkmanship`. **Observed** `ref/shared/Constants.cs:425-484`.
+  **Verified** `combokeys.test.ts`, the three tests in "isIdProperty".
+- ObjectClass and VTCSkillID have no ID property. The legacy editor draws them always white. **Observed**
+  `ref/shared/ComboKeys.cs:191-198`. **Verified** `combokeys.test.ts` "has no ID property for ObjectClass
+  and VTCSkillID".
+
+## Color slots (T17)
+
+`src/core/gamedata/colorslots.ts` parses the slot XML text. The core gets the text from its caller. The
+tests read `fixtures/ColorSlots.Default.xml` with `node:fs`.
+
+- The result always has "None" with an empty list. A slotdef tag matches case-insensitively. An entry tag
+  and the attribute names match case-sensitively. The parser skips a slotdef as a whole when the
+  name is missing or an entry value is bad. A later definition of the same name replaces the first.
+  **Observed** `ref/shared/ColorXML.cs:73-117`. **Verified** `colorslots.test.ts`, the "edge cases" tests.
+- The shipped default file has 63 slot definitions. The file comments out the two Diforsa definitions. So no
+  slot loads them. **Observed** `fixtures/ColorSlots.Default.xml:65-70`. **Verified**
+  `colorslots.test.ts` "reads 63 slot definitions from the file" and "ignores the commented-out Diforsa
+  definitions".
+- The C# loads `ColorSlots.Default.xml` and then `ColorSlots.User.xml`. It looks in the program directory
+  and the VTank profile directory. The C# loader skips a file that is not well-formed XML as a whole,
+  because `XmlDocument.Load` throws. The TS parser only skips the parts that it cannot match. It does not
+  reject a whole file. **Observed** `ref/shared/ColorXML.cs:56-87`. **Verified** the skip tests in
+  `colorslots.test.ts`.
+
 ## Unknown
 
 - How the legacy editor orders these lists in its own UI. Phase F (T27–T28) reads `Form1.cs` and settles it.
