@@ -2,11 +2,12 @@
  * Reads and writes the rule section of a .utl profile, as cLootRules,
  * cLootItemRule and cUnsupportedRequirement do in ref/shared/LootRules.cs.
  *
- * Every requirement type stays raw text until T07-T13 add its reader, so a
- * requirement keeps its own type number and its serialized body.
+ * Requirement types 0 and 1 have their own reader and writer (T07). Every
+ * other type stays raw text until T08-T13 add its reader. Each requirement
+ * keeps its own type number and its serialized body.
  */
 
-import { eLootAction } from './enums'
+import { eLootAction, eLootRuleType } from './enums'
 import { LineReader } from './reader'
 import { CountedWriter } from './writer'
 
@@ -28,13 +29,37 @@ export interface UnsupportedRequirement {
   data: string
 }
 
+/** Type 0, SpellNameMatch. The body is one line (LootRules.cs 311-315). */
+export interface SpellNameMatchRequirement {
+  type: 0
+  /** The regex pattern as text. It is never compiled here (see PLAN.md Traps). */
+  pattern: string
+}
+
+/** Type 1, StringValueMatch. The body is two lines (LootRules.cs 377-387). */
+export interface StringValueMatchRequirement {
+  type: 1
+  /** The regex pattern as text. */
+  pattern: string
+  /** StringValueKey, written base 10 as Convert.ToString does. */
+  key: number
+}
+
 /**
  * One reader per type number, keyed like eLootRuleType. A reader reads only
  * the body of the requirement, after the length prefix of a version 1 file.
- * Empty until T07-T13.
+ * Types 0 and 1 come from T07. T08-T13 add the rest.
  */
-export type Requirement = UnsupportedRequirement
-export const requirementReaders: Record<number, (reader: LineReader, version: number) => Requirement> = {}
+export type Requirement =
+  | UnsupportedRequirement
+  | SpellNameMatchRequirement
+  | StringValueMatchRequirement
+export const requirementReaders: Record<number, (reader: LineReader, version: number) => Requirement> = {
+  // LootRules.cs 312: rx = new Regex(inf.ReadLine()).
+  0: (reader) => ({ type: 0, pattern: reader.readLine() ?? '' }),
+  // LootRules.cs 378-380: pattern line, then the StringValueKey number.
+  1: (reader) => ({ type: 1, pattern: reader.readLine() ?? '', key: toInt(reader.readLine()) }),
+}
 
 export interface LootRule {
   name: string
@@ -128,10 +153,30 @@ export function readProfile(text: string): LootProfile {
   return { version, rules, extraBlocks: readExtraBlocks(reader) }
 }
 
+/** Writes the body of a requirement, as its Write method does in LootRules.cs. */
+function writeRequirementBody(body: CountedWriter, requirement: Requirement): void {
+  if ('data' in requirement) {
+    // Unsupported type: copy the raw body (LootRules.cs 250).
+    body.write(requirement.data)
+    return
+  }
+  switch (requirement.type) {
+    // SpellNameMatch (LootRules.cs 313): one line.
+    case eLootRuleType.SpellNameMatch:
+      body.writeLine(requirement.pattern)
+      break
+    // StringValueMatch (LootRules.cs 384-385): pattern line, then the key.
+    case eLootRuleType.StringValueMatch:
+      body.writeLine(requirement.pattern)
+      body.writeLine(String(requirement.key))
+      break
+  }
+}
+
 function writeRequirement(writer: CountedWriter, requirement: Requirement): void {
   // Build the body in a temp writer so the length prefix matches its size.
   const body = new CountedWriter()
-  body.write(requirement.data)
+  writeRequirementBody(body, requirement)
   writer.writeLine(String(body.count))
   writer.write(body.toString())
 }

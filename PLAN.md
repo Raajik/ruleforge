@@ -64,14 +64,19 @@ find one real example in a fixture (`rg -n -m3 '^<type number>$' fixtures/`) and
   - Verified `formatDouble` against explicit values (`0.1`, `0.5`, `1`, `100`, `1E-05`, `1.5E+20`, `0.333333333333333`) and real doubles from fixtures. JS `String()` agrees with .NET for values in `[0.0001, 1e15)`.
   - All tests pass (49 total).
 - [x] T06 File and rule records.
-  - Read version 0 and version 1 headers. Dispatch requirements by type number; each type stays raw text
+  - Read version 0 and version 1 headers. Dispatch requirements by type number. Each type stays raw text
     until T07–T13 add its reader. `src/core/format/profile.ts`, tested by `profile.test.ts`.
   - Read: `ref/shared/FileVersioning.cs` (65 lines), and in `LootRules.cs`: `cLootItemRule` (2873–3046),
     `cLootRules` (3047–3200), `iLootRule` (43–220), `cUnsupportedRequirement` (221–272).
   - Read version 0 and version 1 files. Dispatch requirements by type number.
   - Until T07–T13 are done, keep each type as unsupported raw data.
   - Test: `fixtures/vtclassic_editor_minimal.utl` round-trips.
-- [ ] T07 Types 0, 1: `SpellNameMatch` (273–345), `StringValueMatch` (346–420).
+- [x] T07 Types 0, 1: `SpellNameMatch` (273–345), `StringValueMatch` (346–420).
+  - Type 0 body: one line with the pattern. Type 1 body: the pattern line, then the `StringValueKey` number.
+    `src/core/format/profile.ts`, tested in `profile.test.ts`.
+  - Read `LootRules.cs` 313, 318, 379–386. The length prefix counts UTF-16 code units of the body.
+  - Round-trip in the test: `vtclassic_editor_minimal.utl` (type 0) and `UnfamilarShores.utl` (5 type 1
+    requirements, one raw type 7 in the same rule).
 - [ ] T08 Types 2, 3, 11, 12, 13: `LongValKeyLE` (421–537), `LongValKeyGE` (538–654), `LongValKeyFlagExists`
   (1154–1228), `LongValKeyE` (1379–1495), `LongValKeyNE` (1496–1612).
 - [ ] T09 Types 4, 5, 6, 10: `DoubleValKeyLE` (655–729), `DoubleValKeyGE` (730–804), `DamagePercentGE` (805–861),

@@ -14,4 +14,9 @@
 - [Observed] An unknown requirement is skipped by its count and kept as raw characters. `ref/shared/LootRules.cs:2987-2992`.
 - [Observed] The writer always saves version `MAX_PROFILE_VERSION` (1), whatever the input version was. `ref/shared/LootRules.cs:3181`.
 - [Observed] Extra blocks after the rules are `typeId`, `length`, then `length` raw characters. `ref/shared/UTLFileExtraBlockManager.cs:94-120`.
-- [Verified] `readProfile` then `writeProfile` gives the same bytes for `vtclassic_editor_minimal.utl`, `vtclassic_editor_rich.utl` and `BuffedLongBuffedDouble.utl`, while every requirement stays raw. Test: `src/core/format/profile.test.ts`.
+- [Verified] `readProfile` then `writeProfile` gives the same bytes for `vtclassic_editor_minimal.utl`, `vtclassic_editor_rich.utl`, `BuffedLongBuffedDouble.utl` and `UnfamilarShores.utl`, with types 0 and 1 parsed and the other types still raw. Test: `src/core/format/profile.test.ts`.
+
+### Requirement types
+- [Observed] Type 0 `SpellNameMatch` reads one line as the regex pattern (`inf.ReadLine()`) and writes it back as one line. The pattern stays text. `ref/shared/LootRules.cs:313,318`.
+- [Observed] Type 1 `StringValueMatch` reads two lines. The first line is the pattern. The second line is the `StringValueKey` number (`Convert.ToInt32`). It writes them back with `Convert.ToString((int)vk, InvariantCulture)`, so the key is base 10. `ref/shared/LootRules.cs:379-386`.
+- [Verified] A type 0 body is `pattern + CRLF`. A type 1 body is `pattern + CRLF + key + CRLF`. Both bodies round-trip through their length prefix. Test: `src/core/format/profile.test.ts`, "requirement type 0, SpellNameMatch" and "requirement type 1, StringValueMatch".
