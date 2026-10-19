@@ -107,12 +107,10 @@ find one real example in a fixture (`rg -n -m3 '^<type number>$' fixtures/`) and
     value mode map. The maps keep the file order. The fixture ids are not sorted, and the C# writes its .NET
     `Dictionary` in read order. Every other block type keeps its raw body, so it round-trips, while the C# drops
     it on save. `src/core/format/profile.ts`, tested in `profile.test.ts`. All 8 fixtures round-trip byte for byte.
-- [ ] T15 Round-trip gate.
-  - Replace `src/core/fixtures.test.ts` with a test: for each fixture, read then write gives the same bytes.
-  - Also check that no requirement in a fixture stays unsupported.
-  - If a file does not match, find the first different line, and fix the type that wrote it.
-  - Some fixtures maybe came from another writer (see `fixtures/README.md`). For those, a difference can be
-    correct. Record it in `docs/format.md` as a fact.
+- [x] T15 Round-trip gate.
+  - `src/core/fixtures.test.ts` reads each fixture, writes it back and compares bytes, and checks that no
+    requirement stays unsupported. All 8 fixtures round-trip byte for byte, including the three with an unknown
+    writer. Recorded in `docs/format.md`.
 
 ## Phase D: game data (`src/core/gamedata/`)
 - [ ] T16 Game data generator.
