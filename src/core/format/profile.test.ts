@@ -1,5 +1,5 @@
 // Tests for readProfile and writeProfile.
-// Types 0-10 are parsed (T07-T10). Every other type
+// Types 0-13 and 1000-1004 are parsed (T07-T11). Every other type
 // stays raw text, so a fixture round-trips only when each requirement's
 // length prefix is exact.
 
@@ -316,5 +316,69 @@ describe('requirement type 9, SpellMatch', () => {
       rxDoesNotMatch: 'Epic|Major|Minor',
       count: 2,
     })
+  })
+})
+
+describe('requirement type 1000, CharacterSkillGE', () => {
+  it('writes the skill value and the skill id, and reads them back', () => {
+    const profile = literalProfile([{ type: 1000, keyval: 350, vk: 23 }])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 1264-1273: keyval line, then the VTCSkillID line as (int)vk.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;1000\r\n9\r\n350\r\n23\r\n')
+    expect(readProfile(text)).toEqual(profile)
+  })
+
+  it('reads the real example of ILT_Legendary.utl', () => {
+    const text = readFileSync('fixtures/ILT_Legendary.utl', 'latin1')
+    const rule = readProfile(text).rules.find((r) => r.name === '    (T) Shattered Mana Forge Key')!
+    expect(rule.requirements[1]).toEqual({ type: 1000, keyval: 350, vk: 23 })
+  })
+})
+
+describe('requirement type 1001, CharacterMainPackEmptySlotsGE', () => {
+  it('writes one keyval line and reads it back', () => {
+    const profile = literalProfile([{ type: 1001, keyval: 12 }])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 1344-1351: one Convert.ToInt32 keyval line.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;1001\r\n4\r\n12\r\n')
+    expect(readProfile(text)).toEqual(profile)
+  })
+
+  it('reads the real example of IAC_Level_NoCash.utl', () => {
+    const text = readFileSync('fixtures/IAC_Level_NoCash.utl', 'latin1')
+    const rule = readProfile(text).rules.find((r) => r.name === '($) Veteran')!
+    expect(rule.requirements[2]).toEqual({ type: 1001, keyval: 12 })
+  })
+})
+
+describe('requirement types 1002 and 1003, CharacterLevelGE and CharacterLevelLE', () => {
+  it('write one keyval line each and read them back', () => {
+    const profile = literalProfile([
+      { type: 1002, keyval: 100 },
+      { type: 1003, keyval: 27 },
+    ])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 1635-1642 and 1692-1699: one Convert.ToInt32 keyval line each.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;1002;1003\r\n5\r\n100\r\n4\r\n27\r\n')
+    expect(readProfile(text)).toEqual(profile)
+  })
+
+  it('reads a negative keyval back with its sign', () => {
+    const profile = literalProfile([{ type: 1002, keyval: -1 }])
+    expect(readProfile(writeProfile(profile))).toEqual(profile)
+  })
+})
+
+describe('requirement type 1004, CharacterBaseSkill', () => {
+  it('writes the skill id, the minimum and the maximum, and reads them back', () => {
+    const profile = literalProfile([{ type: 1004, vk: 1, minskill: 50, maxskill: 999 }])
+    const text = writeProfile(profile)
+
+    // LootRules.cs 1763-1774: vk line, minskill line, maxskill line.
+    expect(text).toBe('UTL\r\n1\r\n1\r\nrule\r\n\r\n0;1;1004\r\n12\r\n1\r\n50\r\n999\r\n')
+    expect(readProfile(text)).toEqual(profile)
   })
 })

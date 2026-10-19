@@ -2,9 +2,9 @@
  * Reads and writes the rule section of a .utl profile, as cLootRules,
  * cLootItemRule and cUnsupportedRequirement do in ref/shared/LootRules.cs.
  *
- * Requirement types 0 to 13 have their own reader and writer (T07-T10). Every
- * other type stays raw text until T11-T13 add its reader. Each requirement
- * keeps its own type number and its serialized body.
+ * Requirement types 0 to 13 and 1000 to 1004 have their own reader and
+ * writer (T07-T11). Every other type stays raw text until T12-T13 add its
+ * reader. Each requirement keeps its own type number and its serialized body.
  */
 
 import { eLootAction, eLootRuleType } from './enums'
@@ -137,10 +137,46 @@ export interface SpellMatchRequirement {
   count: number
 }
 
+/** Type 1000, CharacterSkillGE. The body is two lines (LootRules.cs 1264-1273). */
+export interface CharacterSkillGERequirement {
+  type: 1000
+  keyval: number
+  /** VTCSkillID, written base 10 as Convert.ToString((int)vk) does. */
+  vk: number
+}
+
+/** Type 1001, CharacterMainPackEmptySlotsGE. The body is one line (LootRules.cs 1344-1351). */
+export interface CharacterMainPackEmptySlotsGERequirement {
+  type: 1001
+  keyval: number
+}
+
+/** Type 1002, CharacterLevelGE. The body is one line (LootRules.cs 1635-1642). */
+export interface CharacterLevelGERequirement {
+  type: 1002
+  keyval: number
+}
+
+/** Type 1003, CharacterLevelLE. The body is one line (LootRules.cs 1692-1699). */
+export interface CharacterLevelLERequirement {
+  type: 1003
+  keyval: number
+}
+
+/** Type 1004, CharacterBaseSkill. The body is three lines (LootRules.cs 1763-1774). */
+export interface CharacterBaseSkillRequirement {
+  type: 1004
+  /** VTCSkillID, written base 10 as Convert.ToString((int)vk) does. */
+  vk: number
+  minskill: number
+  maxskill: number
+}
+
 /**
  * One reader per type number, keyed like eLootRuleType. A reader reads only
  * the body of the requirement, after the length prefix of a version 1 file.
- * Types 0 to 13 come from T07-T10. T11-T13 add the rest.
+ * Types 0 to 13 come from T07-T10, types 1000 to 1004 from T11. T12-T13 add
+ * the rest.
  */
 export type Requirement =
   | UnsupportedRequirement
@@ -158,6 +194,11 @@ export type Requirement =
   | ObjectClassERequirement
   | SpellCountGERequirement
   | SpellMatchRequirement
+  | CharacterSkillGERequirement
+  | CharacterMainPackEmptySlotsGERequirement
+  | CharacterLevelGERequirement
+  | CharacterLevelLERequirement
+  | CharacterBaseSkillRequirement
 export const requirementReaders: Record<number, (reader: LineReader, version: number) => Requirement> = {
   // LootRules.cs 312: rx = new Regex(inf.ReadLine()).
   0: (reader) => ({ type: 0, pattern: reader.readLine() ?? '' }),
@@ -191,6 +232,21 @@ export const requirementReaders: Record<number, (reader: LineReader, version: nu
     rxDoesMatch: reader.readLine() ?? '',
     rxDoesNotMatch: reader.readLine() ?? '',
     count: toInt(reader.readLine()),
+  }),
+  // LootRules.cs 1264-1267: keyval line, then the VTCSkillID number.
+  1000: (reader) => ({ type: 1000, keyval: toInt(reader.readLine()), vk: toInt(reader.readLine()) }),
+  // LootRules.cs 1344-1346: one keyval line.
+  1001: (reader) => ({ type: 1001, keyval: toInt(reader.readLine()) }),
+  // LootRules.cs 1635-1637: one keyval line.
+  1002: (reader) => ({ type: 1002, keyval: toInt(reader.readLine()) }),
+  // LootRules.cs 1692-1694: one keyval line.
+  1003: (reader) => ({ type: 1003, keyval: toInt(reader.readLine()) }),
+  // LootRules.cs 1763-1766: VTCSkillID line, minskill line, maxskill line.
+  1004: (reader) => ({
+    type: 1004,
+    vk: toInt(reader.readLine()),
+    minskill: toInt(reader.readLine()),
+    maxskill: toInt(reader.readLine()),
   }),
 }
 
@@ -359,6 +415,29 @@ function writeRequirementBody(body: CountedWriter, requirement: Requirement): vo
       body.writeLine(requirement.rxDoesMatch)
       body.writeLine(requirement.rxDoesNotMatch)
       body.writeLine(String(requirement.count))
+      break
+    // LootRules.cs 1271-1272: keyval line, then the VTCSkillID number.
+    case eLootRuleType.CharacterSkillGE:
+      body.writeLine(String(requirement.keyval))
+      body.writeLine(String(requirement.vk))
+      break
+    // LootRules.cs 1350: one keyval line.
+    case eLootRuleType.CharacterMainPackEmptySlotsGE:
+      body.writeLine(String(requirement.keyval))
+      break
+    // LootRules.cs 1641: one keyval line.
+    case eLootRuleType.CharacterLevelGE:
+      body.writeLine(String(requirement.keyval))
+      break
+    // LootRules.cs 1698: one keyval line.
+    case eLootRuleType.CharacterLevelLE:
+      body.writeLine(String(requirement.keyval))
+      break
+    // LootRules.cs 1771-1773: VTCSkillID line, minskill line, maxskill line.
+    case eLootRuleType.CharacterBaseSkill:
+      body.writeLine(String(requirement.vk))
+      body.writeLine(String(requirement.minskill))
+      body.writeLine(String(requirement.maxskill))
       break
   }
 }
