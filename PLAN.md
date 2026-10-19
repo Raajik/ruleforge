@@ -225,3 +225,5 @@ Ideas, not tasks. Do not start these.
 - Plain-language rule summaries ("Keep: armor with Epic Strength").
 - A check that warns about rules that never match, because a rule above them matches first.
 - Diff two profiles. Merge rules from another profile.
+- "Update workmanship" changes every DoubleValKeyGE/LE of the action, not only SalvageWorkmanship (T24). Offer a
+  workmanship-only option.
