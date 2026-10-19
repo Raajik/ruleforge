@@ -72,3 +72,16 @@ export class LineReader {
     return this.buffer.length - this.pos
   }
 }
+
+/**
+ * Parses text the way C# `int.TryParse` with the default styles does
+ * (NumberStyles.Integer): surrounding whitespace, an optional sign, ASCII
+ * digits, and the Int32 range. Gives undefined where C# gives false.
+ */
+export function parseInt32(text: string): number | undefined {
+  const s = text.trim()
+  if (!/^[+-]?[0-9]+$/.test(s)) return undefined
+  const n = Number(s)
+  if (n < -2147483648 || n > 2147483647) return undefined
+  return n === 0 ? 0 : n // C# int has no negative zero, so "-0" reads as 0.
+}

@@ -149,7 +149,7 @@
 - [Observed] "OK" and "Yes" both run the change. It walks every rule and keeps the rules whose `Action()` equals the
   chosen action exactly, so a `KeepUpTo` rule does not match `Keep`. A rule without a
   `CharacterMainPackEmptySlotsGE` gets one with the chosen value at the end of its requirement list. A rule with one
-  keeps its value on "OK". On "Yes" the first one takes the new value; the loop breaks after the first match, so a
+  keeps its value on "OK". On "Yes" the first one takes the new value. The loop breaks after the first match, so a
   second one keeps its value. `ref/editor/Form1.cs:856-899`, `ref/shared/LootRules.cs:1312-1313`.
 - [Observed] Both `Keep` and `Salvage` rules in the fixtures have a `CharacterMainPackEmptySlotsGE`, so the action
   match matters: `IAC_Level_NoCash.utl` has 2 Keep rules with value 12 and 14 Salvage rules with values 7 to 48.
@@ -222,3 +222,54 @@
 - [Verified] On `LootSnobV4.utl` the 36 `DoubleValKeyGE` of the `Keep` rules move from 1.03 and 1.04 to 4.03 and
   4.04, the one `DoubleValKeyLE` floors at 1, and the result round-trips. Test:
   `src/core/ops/workmanship.test.ts`, "changes the unrelated DoubleValueKeys of LootSnobV4 too".
+
+## Salvage combine edits (T25)
+
+- [Observed] The tab works on the first `SalvageCombine` block of the file. The default range text box writes
+  `DefaultCombineString` and returns early when the text is already stored. `ref/editor/Form_SalvageTab.cs:9,198-205`.
+- [Observed] "New" walks the material combo list (`GameInfo.getMaterialInfo()`, a `SortedDictionary` sorted by name),
+  takes the first material without an entry, stores the default range for it and appends it at the end of the list.
+  When every material has an entry it does nothing.
+  `ref/editor/Form_SalvageTab.cs:14-25,207-233`, `ref/shared/Constants.cs:665-669`.
+- [Observed] "Delete" removes only the `MaterialCombineStrings` entry of the selected index. A value mode of that
+  material stays in the block. The list then selects the previous entry (the UI part of T30).
+  `ref/editor/Form_SalvageTab.cs:235-256`.
+- [Observed] The range text box writes `MaterialCombineStrings[material]` and returns early for the same text.
+  `ref/editor/Form_SalvageTab.cs:124-140`.
+- [Observed] The value mode checkbox stores `DEFAULT_VALUECOMBINE_VALUE` (390000, line 11) when it turns on: the
+  handler sets the text box to that value first (line 152). Turning it off removes the material from
+  `MaterialValueModeValues` (166-167). The value text box only writes while the checkbox is on (187), and a failed
+  `int.TryParse` falls back to 390000 (183-184). `ref/editor/Form_SalvageTab.cs:142-196`.
+- [Observed] "Export Ranges" opens a `*.ucr` dialog and writes `SalvageBlock.Write`, so the file is the
+  `SalvageCombine` body alone (version line, default, material count, pairs, value mode count, pairs) with CRLF
+  lines: no UTL header and no block header. "Import Ranges" reads the file with `StreamReader` and
+  `SalvageBlock.Read(pf, 0)`, which replaces the content of the first block in place.
+  `ref/editor/Form_SalvageTab.cs:258-293`, `ref/shared/UTLBlock_SalvageCombine.cs:272-321`.
+- [Observed] The C# always has the block: the `cLootRules` constructor and every read end with
+  `CreateDefaultBlocks`, so the tab, the import and the export never see a profile without one.
+  `ref/shared/LootRules.cs:3053-3056`, `ref/shared/UTLFileExtraBlockManager.cs:76-83,118-125`. `readProfile` does
+  not create the block (`src/core/format/profile.ts:508-535`), and all 8 fixtures have one.
+
+- [Verified] `setDefaultRange` and `setRange` store the text and give the same profile back for unchanged text or
+  an index outside the list. Test: `src/core/ops/salvagecombine.test.ts`, "setDefaultRange" and "setRange".
+- [Verified] `addMaterialEntry` takes the first material of `materialIds` that has no entry, stores the default
+  range and appends it. The combo order is the culture sort of the material names (checked against
+  `Intl.Collator('en')`). A profile where every material has an entry comes back unchanged. On
+  `vtclassic_editor_minimal.utl` it adds Alabaster (66) and the file round-trips. Test:
+  `src/core/ops/salvagecombine.test.ts`, "addMaterialEntry".
+- [Verified] `deleteMaterialEntry` removes only the combine entry, so the value mode of the material stays. A bad
+  index gives the same profile back. Test: `src/core/ops/salvagecombine.test.ts`, "deleteMaterialEntry".
+- [Verified] `setValueMode` stores 390000 on and drops the value off. `setValueModeValue` parses like C#
+  `int.TryParse` (whitespace, sign, Int32 range) with the 390000 fallback, and writes only while the material has a
+  value mode. Test: `src/core/ops/salvagecombine.test.ts`, "setValueMode" and "setValueModeValue", and
+  `src/core/format/reader.test.ts`, "parseInt32".
+- [Verified] `exportRanges` writes the block body with CRLF lines. `importRanges` replaces the first block in place
+  and appends the block when the profile has none. It reads LF-only text. Text that is not a .ucr file throws, and
+  the profile keeps its stored ranges. An export then an import round-trips. Test:
+  `src/core/ops/salvagecombine.test.ts`, "exportRanges" and "importRanges".
+- [Verified] Every edit leaves the input profile unchanged, and six edits of one run on `vtclassic_editor_minimal.utl`
+  round-trip through `writeProfile` and `readProfile`. Test: `src/core/ops/salvagecombine.test.ts`, "the tab edits
+  together on a real fixture" and the input checks of each test.
+- [Unknown] A delete followed by "New" may order the file lines differently than the legacy editor. A run on
+  .NET 10 shows that `Dictionary` reuses the freed slot, so the new material lands at the deleted position.
+  This editor appends at the end instead. The legacy .NET Framework app was not run.

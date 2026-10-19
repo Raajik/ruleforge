@@ -679,4 +679,15 @@ describe('extra block, SalvageCombine', () => {
       'UTL\r\n1\r\n0\r\nSalvageCombine\r\n35\r\n1\r\n1-6, 7-8, 9, 10\r\n1\r\n5\r\n1-10\r\n0\r\n',
     )
   })
+
+  it('throws on a bad integer line, as the C# int.Parse does', () => {
+    // UTLBlock_SalvageCombine.cs 281: int.Parse of the material count throws
+    // on a missing or a non-numeric line, so a bad block fails to load
+    // instead of reading a wrong one.
+    const badCount = 'UTL\r\n1\r\n0\r\nSalvageCombine\r\n25\r\n1\r\n1-6, 7-8, 9, 10\r\nabc\r\n'
+    expect(() => readProfile(badCount)).toThrow(/material count/)
+
+    const missingLine = 'UTL\r\n1\r\n0\r\nSalvageCombine\r\n3\r\n1\r\n'
+    expect(() => readProfile(missingLine)).toThrow(/material count/)
+  })
 })

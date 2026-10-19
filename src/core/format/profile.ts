@@ -11,7 +11,7 @@
 
 import { eLootAction, eLootRuleType } from './enums'
 import { formatDouble, haxConvertDouble } from './doubles'
-import { LineReader } from './reader'
+import { LineReader, parseInt32 } from './reader'
 import { CountedWriter } from './writer'
 
 // ref/shared/FileVersioning.cs line 49.
@@ -540,29 +540,44 @@ const SALVAGE_COMBINE = 'SalvageCombine'
 // UTLBlock_SalvageCombine.cs line 42: the writer saves this version.
 const SALVAGE_BLOCK_FORMAT_VERSION = 1
 
-/** Reads a SalvageCombine body, as UTLBlock_SalvageCombine.Read does (272-299). */
-function readSalvageCombine(data: string): SalvageCombineBlock {
+/**
+ * Reads a SalvageCombine body, as UTLBlock_SalvageCombine.Read does
+ * (272-299). The .ucr "Export Ranges" file is this body alone
+ * (Form_SalvageTab.cs 268-271), so the import reads it with the same
+ * function. It throws on a missing or non-numeric integer line, as the C#
+ * int.Parse does (lines 281-297).
+ */
+export function readSalvageCombine(data: string): SalvageCombineBlock {
   const body = new LineReader(data)
   body.readLine() // The format version line is read, then ignored (line 276).
   const defaultCombineString = body.readLine() ?? ''
 
   const materialCombineStrings = new Map<number, string>()
-  const materialCount = toInt(body.readLine())
+  const materialCount = readBlockInt(body, 'material count')
   for (let i = 0; i < materialCount; ++i) {
-    materialCombineStrings.set(toInt(body.readLine()), body.readLine() ?? '')
+    materialCombineStrings.set(readBlockInt(body, 'material id'), body.readLine() ?? '')
   }
 
   const materialValueModeValues = new Map<number, number>()
   // This is all there is for older blocks (lines 289-290).
   if (body.posRemaining > 0) {
-    const valueModeCount = toInt(body.readLine())
+    const valueModeCount = readBlockInt(body, 'value mode count')
     for (let i = 0; i < valueModeCount; ++i) {
-      const material = toInt(body.readLine())
-      materialValueModeValues.set(material, toInt(body.readLine()))
+      const material = readBlockInt(body, 'value mode material id')
+      materialValueModeValues.set(material, readBlockInt(body, 'value mode value'))
     }
   }
 
   return { kind: 'salvageCombine', defaultCombineString, materialCombineStrings, materialValueModeValues }
+}
+
+// C# int.Parse(ReadLine()) throws on a missing or a non-numeric line
+// (UTLBlock_SalvageCombine.cs 281-297), so a bad block fails instead of
+// reading a wrong one.
+function readBlockInt(reader: LineReader, what: string): number {
+  const value = parseInt32(reader.readLine() ?? '')
+  if (value === undefined) throw new Error(`SalvageCombine block: ${what} is not an integer`)
+  return value
 }
 
 /** Writes the body of a requirement, as its Write method does in LootRules.cs. */
@@ -759,8 +774,12 @@ function writeRule(writer: CountedWriter, rule: LootRule): void {
   }
 }
 
-/** Writes a SalvageCombine body, as UTLBlock_SalvageCombine.Write does (302-321). */
-function writeSalvageCombine(block: SalvageCombineBlock, body: CountedWriter): void {
+/**
+ * Writes a SalvageCombine body, as UTLBlock_SalvageCombine.Write does
+ * (302-321). The .ucr "Export Ranges" file is this body alone
+ * (Form_SalvageTab.cs 268-271).
+ */
+export function writeSalvageCombine(block: SalvageCombineBlock, body: CountedWriter): void {
   // The writer saves the current version, whatever the block had.
   body.writeLine(String(SALVAGE_BLOCK_FORMAT_VERSION))
   body.writeLine(block.defaultCombineString)

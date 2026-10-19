@@ -168,8 +168,8 @@ for each task. The C# is in `ref/editor/`.
   `CharacterMainPackEmptySlotsGE` to rules with the chosen action that do not have one. "Yes" also updates the
   value in rules that have one.
   - `src/core/ops/packslots.ts`: `addPackslotRequirements(profile, action, slots, updateExisting)` matches the
-    action exactly (`KeepUpTo` is not `Keep`), appends the requirement at the end, and on `updateExisting` updates
-    only the first existing one, as the C# breaks after the first match. Tested by `packslots.test.ts` (9 tests,
+    action exactly (`KeepUpTo` is not `Keep`) and appends the requirement at the end. On `updateExisting` it
+    updates only the first existing one, as the C# breaks after the first match. Tested by `packslots.test.ts` (9 tests,
     250 total), including the real Keep and Salvage examples of `IAC_Level_NoCash.utl`. Facts: `docs/ops.md`.
 - [x] T23 Add or update salvage rules: `Form1.cs` 790–805, `Macros.cs` 66–118, `AddSalvageRulesForm.cs`, and
   `GameInfo.getMaterialGroups` (`Constants.cs` 695).
@@ -184,9 +184,16 @@ for each task. The C# is in `ref/editor/`.
     then gives each `DoubleValKeyGE` of a rule of that action `Math.Min(10, keyval + by)` and each
     `DoubleValKeyLE` `Math.Max(1, keyval - by)`. The key is not checked, so every DoubleValueKey changes. Tested
     by `workmanship.test.ts` (10 tests, 268 total). Facts: `docs/ops.md`.
-- [ ] T25 Salvage combine edits: `Form_SalvageTab.cs` (295 lines).
+- [x] T25 Salvage combine edits: `Form_SalvageTab.cs` (295 lines).
   - Default range. Add and delete a material entry. Range. Value mode.
   - Import and export of ranges (258–295). Find the file format they use.
+  - `src/core/ops/salvagecombine.ts`: `setDefaultRange`, `addMaterialEntry` (first free material of the combo
+    order), `deleteMaterialEntry` (keeps the value mode, as the C# does), `setRange`, `setValueMode` (390000 on,
+    remove off), `setValueModeValue` (C# `int.TryParse`, fallback 390000), `importRanges` and `exportRanges`. The
+    `.ucr` file is the SalvageCombine body alone: export writes it with CRLF, import reads it into the first block
+    in place. `readSalvageCombine` now throws on a bad integer line, as the C# `int.Parse` does. Tested by
+    `salvagecombine.test.ts` plus `parseInt32` and the bad-block tests (297 total). Facts: `docs/ops.md`,
+    `docs/format.md`.
 - [ ] T26 File operations, all in `Form1.cs`.
   - New (292–307). The default VT profile folder (308–318). Load (360–387).
   - Unsaved-changes check (388–428). Save (429–464).
