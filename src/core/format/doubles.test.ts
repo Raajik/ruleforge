@@ -125,3 +125,24 @@ describe('formatDouble', () => {
     expect(formatDouble(1e-5).charAt(formatDouble(1e-5).indexOf('E') - 1)).not.toBe('e')
   })
 })
+
+// Real .NET output: x.ToString("G15", InvariantCulture) from a dotnet run on 2026-10-19 (the orchestrator's check).
+describe('formatDouble against .NET G15 output', () => {
+  const cases: [number, string][] = [
+    [0.1 + 0.2, '0.3'],
+    [1 / 3, '0.333333333333333'],
+    [2 / 3, '0.666666666666667'],
+    [1000, '1000'],
+    [1e15, '1E+15'],
+    [9.99999999999999999e14, '1E+15'],
+    [123456789012345678, '1.23456789012346E+17'],
+    [1e-5 * 3, '3E-05'],
+    [-0.00012345, '-0.00012345'],
+    [0.0001, '0.0001'],
+    [1234.5678, '1234.5678'],
+    [1e100, '1E+100'],
+  ]
+  for (const [value, want] of cases) {
+    it(`${value} -> ${want}`, () => expect(formatDouble(value)).toBe(want))
+  }
+})

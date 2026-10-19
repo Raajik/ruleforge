@@ -1,43 +1,25 @@
-// formatDouble copies .NET double formatting into JavaScript.
-// .NET uses Convert.ToString(x, InvariantCulture) for doubles.
-// Differences from JS String(x):
-//   - Upper case E instead of lower case e for scientific notation
-//   - 2-digit padded exponent with explicit sign
-//   - Different boundary for switching between fixed-point and scientific
+// formatDouble copies .NET Framework double formatting: Convert.ToString(x, InvariantCulture), which is "G15".
+// 15 significant digits, upper case E, a sign and at least 2 digits in the exponent.
+// Scientific notation when the exponent is below -4 or 15 and above (Verified: doubles.test.ts, .NET values).
 
 export function formatDouble(value: number): string {
-  if (!Number.isFinite(value)) {
-    return String(value)
-  }
-  if (value === 0 || value === -0) {
-    return '0'
-  }
+  if (Number.isNaN(value)) return 'NaN'
+  if (value === Infinity) return 'Infinity'
+  if (value === -Infinity) return '-Infinity'
+  if (value === 0) return '0' // .NET Framework also writes -0 as "0"
 
-  const absVal = Math.abs(value)
-  const exp = Math.floor(Math.log10(absVal))
+  // toExponential(14) rounds to 15 significant digits and gives the exponent after the rounding.
+  const [mantissa = '', expText = ''] = value.toExponential(14).split('e')
+  const exp = Number(expText)
+  const digits = mantissa.replace('-', '').replace('.', '').replace(/0+$/, '')
+  const sign = value < 0 ? '-' : ''
 
-  // .NET G15 format uses scientific notation when exponent < -4 or >= 15
-  // See Traps: 0.00001 becomes 1E-05 in .NET but 0.00001 in JS
-  // Traps: 1.5E+20 is the .NET style (uppercase E, 2-digit padding)
   if (exp < -4 || exp >= 15) {
-    return formatAsScientific(value, exp)
+    const m = digits.length > 1 ? `${digits[0]}.${digits.slice(1)}` : digits
+    return `${sign}${m}E${exp < 0 ? '-' : '+'}${String(Math.abs(exp)).padStart(2, '0')}`
   }
-
-  return String(value)
-}
-
-function formatAsScientific(value: number, exp: number): string {
-  const absVal = Math.abs(value)
-  const mantissa = absVal / Math.pow(10, exp)
-  // Round to 15 significant digits (matching .NET G15 precision)
-  let mantissaStr = parseFloat(mantissa.toPrecision(15)).toString()
-
-  // Format exponent: 2-digit padded with explicit sign
-  const expStr = Math.abs(exp).toString().padStart(2, '0')
-  const sign = exp >= 0 ? '+' : '-'
-
-  // Add value sign prefix for negative numbers
-  const prefix = value < 0 ? '-' : ''
-
-  return prefix + mantissaStr + 'E' + sign + expStr
+  if (exp < 0) return `${sign}0.${'0'.repeat(-exp - 1)}${digits}`
+  const intLen = exp + 1
+  if (digits.length <= intLen) return sign + digits.padEnd(intLen, '0')
+  return `${sign}${digits.slice(0, intLen)}.${digits.slice(intLen)}`
 }
