@@ -48,7 +48,8 @@ page.
 
 ### H2 design decisions
 
-- The Customize page replaces the "Loot Rules" tab of the top bar. The page shows the category list
+- The Customize page is a new tab beside "Loot Rules". "Edit rules in detail" opens the Loot Rules tab. The
+  page shows the category list
   on the left, the rules of one category in the middle, and one number box per rule. It has no loot
   preview panel. That panel is H3.
 - The number box of a rule edits the first value field of the rule, the one `requirementFields`
