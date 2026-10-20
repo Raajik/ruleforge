@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { eLootAction, eLootRuleType } from './enums'
+import { eLootAction, eLootRuleType, friendlyActionName, ruleTypeName } from './enums'
 
 describe('eLootAction', () => {
   it('matches C# ref/shared/Constants.cs line 314', () => {
@@ -51,5 +51,35 @@ describe('eLootRuleType', () => {
     expect(eLootRuleType.TotalRatingsGE).toBe(2007)
     expect(eLootRuleType.CalcedBuffedTinkedTargetMeleeGE).toBe(2008)
     expect(eLootRuleType.DisabledRule).toBe(9999)
+  })
+})
+
+describe('friendlyActionName', () => {
+  // ref/shared/Constants.cs 329-347: eLootActionTool.FriendlyName. The other
+  // actions (NoLoot, User1-5) return string.Empty and are not in the combo.
+  it('gives the five names the action combo shows', () => {
+    expect(friendlyActionName(eLootAction.Keep)).toBe('Keep')
+    expect(friendlyActionName(eLootAction.Salvage)).toBe('Salvage')
+    expect(friendlyActionName(eLootAction.Sell)).toBe('Sell')
+    expect(friendlyActionName(eLootAction.Read)).toBe('Read')
+    expect(friendlyActionName(eLootAction.KeepUpTo)).toBe('Keep #')
+  })
+
+  it('gives an empty string for the actions the combo hides', () => {
+    expect(friendlyActionName(eLootAction.NoLoot)).toBe('')
+    expect(friendlyActionName(eLootAction.User1)).toBe('')
+    expect(friendlyActionName(42)).toBe('')
+  })
+})
+
+describe('ruleTypeName', () => {
+  it('gives the enum name for every type in the fixtures and the plan', () => {
+    expect(ruleTypeName(eLootRuleType.DisabledRule)).toBe('DisabledRule')
+    expect(ruleTypeName(eLootRuleType.StringValueMatch)).toBe('StringValueMatch')
+    expect(ruleTypeName(eLootRuleType.CalcedBuffedTinkedTargetMeleeGE)).toBe('CalcedBuffedTinkedTargetMeleeGE')
+  })
+
+  it('gives the number for an unknown type', () => {
+    expect(ruleTypeName(12345)).toBe('12345')
   })
 })

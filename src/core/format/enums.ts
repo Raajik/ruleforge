@@ -52,3 +52,33 @@ export const eLootRuleType = {
 
 export type LootAction = (typeof eLootAction)[keyof typeof eLootAction]
 export type LootRuleType = (typeof eLootRuleType)[keyof typeof eLootRuleType]
+
+/**
+ * ref/shared/Constants.cs 329-347: `eLootActionTool.FriendlyName`. The other
+ * actions (NoLoot, User1-5) give string.Empty. The action combo lists only
+ * the five names that are not empty (Constants.cs 350-364).
+ */
+export function friendlyActionName(action: number): string {
+  switch (action) {
+    case eLootAction.Keep:
+      return 'Keep'
+    case eLootAction.Salvage:
+      return 'Salvage'
+    case eLootAction.Sell:
+      return 'Sell'
+    case eLootAction.Read:
+      return 'Read'
+    case eLootAction.KeepUpTo:
+      return 'Keep #'
+    default:
+      return ''
+  }
+}
+
+/** The enum name of a requirement type, or the number for an unknown type. */
+export function ruleTypeName(type: number): string {
+  for (const [name, value] of Object.entries(eLootRuleType)) {
+    if (value === type) return name
+  }
+  return String(type)
+}

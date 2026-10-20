@@ -202,7 +202,12 @@ for each task. The C# is in `ref/editor/`.
 ## Phase F: the UI (`src/ui/`)
 Read `ref/editor/Form1.Designer.cs` with `rg -n 'Text = |Name = '` to get the controls. Do not read the whole file.
 Copy the layout of the legacy editor first. Improvements come later.
-- [ ] T27 Main layout. Add `@testing-library/react` and `jsdom` first.
+- [x] T27 Main layout. Add `@testing-library/react` and `jsdom` first.
+  - `src/ui/App.tsx`: menu bar (File, Edit, Rule, Combine), toolbar (copy, paste, search box, next match) and
+    the two tabs. The Loot Rules tab shows the rule list on the left. For the selected rule it shows the rule
+    fields, the requirement list and a placeholder for the requirement fields. `src/core/format/enums.ts` gains
+    `friendlyActionName` and `ruleTypeName`. Tested by `App.test.tsx` plus the enum helper tests (315 total).
+    Facts: `docs/ui.md`.
   - Menu bar. Toolbar: copy, paste, search box, "next match".
   - Tabs: "Loot Rules" and "Salvage Combination".
   - Loot Rules tab: the rule list on the left. The rule fields (name, action, keep count) and the requirement list
