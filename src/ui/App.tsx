@@ -41,6 +41,7 @@ import { updateWorkmanshipRequirements } from '../core/ops/workmanship'
 import { ACTION_COMBO, PackslotsDialog, SalvageRulesDialog, WorkmanshipDialog } from './dialogs'
 import { MenuBar, type MenuName } from './MenuBar'
 import { ReqEditor } from './ReqEditor'
+import { SalvageCombineTab } from './SalvageCombineTab'
 
 type DialogKind = 'salvage' | 'workmanship' | 'packslots'
 
@@ -448,9 +449,7 @@ export function App({
           )}
         </div>
       ) : (
-        <div role="tabpanel" aria-label="Salvage Combination">
-          <p>Salvage Combination comes in T30.</p>
-        </div>
+        <SalvageCombineTab profile={profile} onChange={setProfile} />
       )}
 
       {dialog === 'salvage' && (
