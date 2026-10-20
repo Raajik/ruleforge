@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ruleforge overview</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#121419}
+a{color:#F0A23B}a:hover{color:#FFC071}
+input,select,button{font:inherit}
+</style>
+</helmet>
+<div style="min-height: 960px; background: #121419; color: #E7E9EE; font-family: Inter, system-ui, sans-serif; font-size: 14px; display: flex; flex-direction: column">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 20px; padding: 12px 20px; background: #181B21; border-bottom: 1px solid #2A2E37">
+<div style="display: flex; align-items: center; gap: 10px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F0A23B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18h18"></path><path d="M6 18v-4h12v4"></path><path d="M8 14V9h8v5"></path><path d="M12 9V4"></path></svg>
+<span style="font-weight: 700; font-size: 16px">Ruleforge</span>
+</div>
+<nav aria-label="Main" style="display: flex; flex-wrap: wrap; gap: 4px">
+<a href="Overview.dc.html" aria-current="page" style="text-decoration: none; padding: 8px 14px; border-radius: 6px; background: #2A2E37; color: #E7E9EE; font-weight: 600">Overview</a>
+<a href="Customize.dc.html" style="text-decoration: none; padding: 8px 14px; border-radius: 6px; color: #A9B1BF">Customize</a>
+<a href="#" style="text-decoration: none; padding: 8px 14px; border-radius: 6px; color: #A9B1BF">Loot preview</a>
+<a href="#" style="text-decoration: none; padding: 8px 14px; border-radius: 6px; color: #A9B1BF">Salvage</a>
+<a href="#" style="text-decoration: none; padding: 8px 14px; border-radius: 6px; color: #A9B1BF">Review changes</a>
+</nav>
+<span style="flex: 1"></span>
+<button type="button" style="border: 0; background: #F0A23B; color: #1A1206; border-radius: 8px; padding: 9px 18px; font-weight: 600">Export .utl</button>
+</header>
+
+<main style="flex: 1; padding: 28px; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+
+<div style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+
+<section aria-labelledby="s1" style="background: #181B21; border: 1px solid #2A2E37; border-radius: 12px; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="s1" style="margin: 0; font-size: 16px"><span style="color: #F0A23B">1</span> · Start from a base profile</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px">
+<sc-for list="{{bases}}" as="b" hint-placeholder-count="4">
+<button type="button" style="{{b.style}}">
+<span style="font-weight: 600">{{b.name}}</span>
+<span style="font-size: 13px; color: #A9B1BF">{{b.note}}</span>
+</button>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="s2" style="background: #181B21; border: 1px solid #2A2E37; border-radius: 12px; padding: 20px 22px; display: flex; flex-direction: column; gap: 16px">
+<h2 id="s2" style="margin: 0; font-size: 16px"><span style="color: #F0A23B">2</span> · Strictness</h2>
+<div role="radiogroup" aria-label="Strictness" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; background: #121419; border: 1px solid #2A2E37; border-radius: 10px; padding: 4px">
+<sc-for list="{{levels}}" as="l" hint-placeholder-count="5">
+<button type="button" role="radio" aria-checked="{{l.on}}" style="{{l.style}}">{{l.name}}</button>
+</sc-for>
+</div>
+<p style="margin: 0; color: #A9B1BF; line-height: 1.5">Regular keeps your build's gear, salvage of workmanship 6 and more, and items worth 5,000 pyreals or more. Move right to keep less.</p>
+</section>
+
+<section aria-labelledby="s3" style="background: #181B21; border: 1px solid #2A2E37; border-radius: 12px; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="s3" style="margin: 0; font-size: 16px"><span style="color: #F0A23B">3</span> · Your character</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #A9B1BF; flex: 1 1 200px">Main skill
+<select style="background: #121419; border: 1px solid #343944; border-radius: 8px; color: #E7E9EE; padding: 9px 10px"><option>Two-handed combat</option></select>
+</label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #A9B1BF; flex: 1 1 140px">Level
+<input value="126" style="background: #121419; border: 1px solid #343944; border-radius: 8px; color: #E7E9EE; padding: 9px 10px; font-family: 'JetBrains Mono', monospace">
+</label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #A9B1BF; flex: 1 1 140px">Free pack slots to keep
+<input value="12" style="background: #121419; border: 1px solid #343944; border-radius: 8px; color: #E7E9EE; padding: 9px 10px; font-family: 'JetBrains Mono', monospace">
+</label>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px" role="group" aria-label="Also keep">
+<sc-for list="{{extras}}" as="e" hint-placeholder-count="5">
+<button type="button" aria-pressed="{{e.on}}" style="{{e.style}}">{{e.label}}</button>
+</sc-for>
+</div>
+</section>
+</div>
+
+<aside aria-label="Preview" style="flex: 1 1 380px; max-width: 460px; background: #181B21; border: 1px solid #2A2E37; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px">
+<h2 style="margin: 0; font-size: 16px">What drops look like</h2>
+<button type="button" style="border: 1px solid #343944; background: transparent; color: #E7E9EE; border-radius: 8px; padding: 6px 12px; font-size: 13px">New sample</button>
+</div>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{items}}" as="i" hint-placeholder-count="8">
+<li style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; background: #1E2128">
+<span style="{{i.badge}}">{{i.result}}</span>
+<span style="flex: 1; min-width: 0">{{i.name}}</span>
+<span style="font-size: 12px; color: #A9B1BF">{{i.rule}}</span>
+</li>
+</sc-for>
+</ul>
+<a href="Customize.dc.html" style="font-size: 13px">Open the full loot preview</a>
+</aside>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const card = (on) => 'display: flex; flex-direction: column; align-items: flex-start; gap: 6px; text-align: left; cursor: pointer; border-radius: 10px; padding: 14px; color: #E7E9EE; border: 1px solid ' + (on ? '#F0A23B' : '#343944') + '; background: ' + (on ? 'rgba(240,162,59,0.10)' : '#121419');
+    const bases = [
+      { name: 'LootSnob v4', note: '1,627 rules, endgame', on: true },
+      { name: 'ILT Legendary', note: '1,632 rules, legendary gear', on: false },
+      { name: 'IAC Leveling', note: '56 rules, levels 1 to 275', on: false },
+      { name: 'Empty profile', note: 'Build your own', on: false }
+    ].map((b) => ({ ...b, style: card(b.on) }));
+    const levels = ['Leveling', 'Soft', 'Regular', 'Strict', 'Very strict'].map((name, i) => ({ name, on: i === 2 ? 'true' : 'false', style: 'border: 0; border-radius: 7px; padding: 10px 6px; cursor: pointer; font-weight: 600; background: ' + (i === 2 ? '#F0A23B' : 'transparent') + '; color: ' + (i === 2 ? '#1A1206' : '#A9B1BF') }));
+    const pill = (on) => 'border: 1px solid ' + (on ? '#F0A23B' : '#343944') + '; background: ' + (on ? 'rgba(240,162,59,0.14)' : 'transparent') + '; color: ' + (on ? '#FFC071' : '#A9B1BF') + '; border-radius: 999px; padding: 6px 12px; font-size: 13px; cursor: pointer';
+    const extras = [['Trade notes', true], ['Mana stones', true], ['Spell components', false], ['Keys', true], ['Legendary keys', true]].map(([label, on]) => ({ label, on: on ? 'true' : 'false', style: pill(on) }));
+    const colors = { Keep: ['#22402C', '#8EE0A8'], Salvage: ['#3A3220', '#F2C46B'], Sell: ['#23344A', '#9CC4F2'], Ignore: ['#2A2E37', '#A9B1BF'] };
+    const item = (result, name, rule) => ({ result, name, rule, badge: 'flex: 0 0 64px; text-align: center; font-size: 11px; font-weight: 700; padding: 3px 0; border-radius: 5px; background: ' + colors[result][0] + '; color: ' + colors[result][1] });
+    const items = [item('Keep', 'Gold Pea', '($) Peas'), item('Keep', 'Shashqa', '(2H+) Cleaving'), item('Salvage', 'Aquamarine Ring, work 7', 'S: Aquamarine'), item('Sell', 'Assagai, no spells', 'Sell: low value'), item('Ignore', 'Smock', 'no rule'), item('Keep', 'Assagai of Fire', '(2H+) Spear'), item('Keep', 'Iron Pea', '($) Peas'), item('Salvage', 'Amuli Coat, work 6', 'S: Wool')];
+    return { bases, levels, extras, items };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ruleforge customize</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#121419}
+a{color:#F0A23B}a:hover{color:#FFC071}
+input,select,button{font:inherit}
+</style>
+</helmet>
+<div style="min-height: 960px; background: #121419; color: #E7E9EE; font-family: Inter, system-ui, sans-serif; font-size: 14px; display: flex; flex-direction: column">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 20px; padding: 12px 20px; background: #181B21; border-bottom: 1px solid #2A2E37">
+<div style="display: flex; align-items: center; gap: 10px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F0A23B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18h18"></path><path d="M6 18v-4h12v4"></path><path d="M8 14V9h8v5"></path><path d="M12 9V4"></path></svg>
+<span style="font-weight: 700; font-size: 16px">Ruleforge</span>
+</div>
+<nav aria-label="Main" style="display: flex; flex-wrap: wrap; gap: 4px">
+<a href="Overview.dc.html" style="text-decoration: none; padding: 8px 14px; border-radius: 6px; color: #A9B1BF">Overview</a>
+<a href="Customize.dc.html" aria-current="page" style="text-decoration: none; padding: 8px 14px; border-radius: 6px; background: #2A2E37; color: #E7E9EE; font-weight: 600">Customize</a>
+<a href="#" style="text-decoration: none; padding: 8px 14px; border-radius: 6px; color: #A9B1BF">Loot preview</a>
+<a href="#" style="text-decoration: none; padding: 8px 14px; border-radius: 6px; color: #A9B1BF">Salvage</a>
+<a href="#" style="text-decoration: none; padding: 8px 14px; border-radius: 6px; color: #A9B1BF">Review changes <span style="background: #F0A23B; color: #1A1206; border-radius: 999px; padding: 1px 7px; font-size: 12px; font-weight: 700">3</span></a>
+</nav>
+<span style="flex: 1"></span>
+<label style="display: flex; align-items: center; gap: 8px; background: #121419; border: 1px solid #2A2E37; border-radius: 8px; padding: 0 10px; min-width: 240px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A9B1BF" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+<span style="position: absolute; left: -9999px">Search rules and items</span>
+<input type="search" placeholder="Search rules, items, spells" style="flex: 1; min-width: 0; border: 0; background: transparent; color: #E7E9EE; padding: 9px 0; outline: none">
+</label>
+<button type="button" style="border: 0; background: #F0A23B; color: #1A1206; border-radius: 8px; padding: 9px 18px; font-weight: 600">Export .utl</button>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; flex: 1">
+
+<nav aria-label="Categories" style="flex: 1 1 240px; max-width: 280px; background: #16181D; border-right: 1px solid #2A2E37; padding: 16px 10px; display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{cats}}" as="c" hint-placeholder-count="8">
+<button type="button" style="{{c.style}}">
+<span style="flex: 1; text-align: left">{{c.name}}</span>
+<span style="font-size: 12px; color: #8B94A3">{{c.count}}</span>
+</button>
+</sc-for>
+</nav>
+
+<main style="flex: 999 1 520px; min-width: 0; padding: 22px 26px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<div>
+<h1 style="margin: 0; font-size: 20px">Leveling weapons</h1>
+<p style="margin: 4px 0 0; color: #A9B1BF">Weapons with XP to level them. The rules for your main skill are on.</p>
+</div>
+<div style="display: flex; gap: 8px">
+<button type="button" style="border: 1px solid #343944; background: transparent; color: #E7E9EE; border-radius: 8px; padding: 8px 12px">Turn all off</button>
+<button type="button" style="border: 1px solid #343944; background: transparent; color: #E7E9EE; border-radius: 8px; padding: 8px 12px">Edit rules in detail</button>
+</div>
+</div>
+
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{rules}}" as="r" hint-placeholder-count="6">
+<li style="{{r.style}}">
+<label style="display: flex; align-items: center; gap: 10px; flex: 1 1 220px; min-width: 0">
+<input type="checkbox" checked="{{r.on}}" style="width: 18px; height: 18px; accent-color: #F0A23B">
+<span style="font-weight: 600">{{r.name}}</span>
+</label>
+<span style="flex: 2 1 260px; min-width: 0; color: #A9B1BF; font-size: 13px">{{r.summary}}</span>
+<label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #A9B1BF">{{r.knob}}
+<input value="{{r.knobValue}}" style="width: 64px; background: #121419; border: 1px solid #343944; border-radius: 6px; color: #E7E9EE; padding: 5px 8px; font-family: 'JetBrains Mono', monospace">
+</label>
+</li>
+</sc-for>
+</ul>
+</main>
+
+<aside aria-label="Loot preview" style="flex: 1 1 360px; max-width: 420px; background: #16181D; border-left: 1px solid #2A2E37; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px">
+<h2 style="margin: 0; font-size: 16px">Loot preview</h2>
+<button type="button" style="border: 1px solid #343944; background: transparent; color: #E7E9EE; border-radius: 8px; padding: 6px 12px; font-size: 13px">New sample</button>
+</div>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px">
+<sc-for list="{{items}}" as="i" hint-placeholder-count="7">
+<li><button type="button" style="{{i.style}}">
+<span style="{{i.badge}}">{{i.result}}</span>
+<span style="flex: 1; min-width: 0; text-align: left">{{i.name}}</span>
+</button></li>
+</sc-for>
+</ul>
+<section aria-label="Why" style="background: #1E2128; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px">
+<h3 style="margin: 0; font-size: 14px">Why Ruleforge keeps this bow</h3>
+<p style="margin: 0; color: #A9B1BF; font-size: 13px">Rule <a href="Main.dc.html">(W+) Bow</a> matches. All 6 requirements are true:</p>
+<ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 13px">
+<li>Weapon mastery category is 8</li>
+<li>It is a missile weapon</li>
+<li>Wield requirement attribute is 47</li>
+<li>Buffed melee defense bonus 1.12 ≥ 1.1</li>
+<li>Full description has "-->"</li>
+<li>Full description has "->"</li>
+</ul>
+<p style="margin: 0; color: #8B94A3; font-size: 12px">Rules above it: none matched. Rules below it do not run.</p>
+</section>
+</aside>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const cat = (name, count, sel) => ({ name, count, style: 'display: flex; align-items: center; gap: 8px; width: 100%; border: 0; border-radius: 8px; padding: 9px 10px; cursor: pointer; color: ' + (sel ? '#E7E9EE' : '#A9B1BF') + '; background: ' + (sel ? '#2A2E37' : 'transparent') + (sel ? '; box-shadow: inset 3px 0 0 #F0A23B; font-weight: 600' : '') });
+    const cats = [cat('Leveling weapons', 8, true), cat('Leveling armor', 4), cat('Money', 3), cat('Spells and cloaks', 1), cat('Salvage', 25), cat('Sell', 0), cat('Keys and trade notes', 0), cat('Uncategorized', 15)];
+    const row = (name, summary, knob, knobValue, on) => ({ name, summary, knob, knobValue, on: on ? 'true' : null, style: 'display: flex; flex-wrap: wrap; align-items: center; gap: 12px; background: #181B21; border: 1px solid #2A2E37; border-radius: 10px; padding: 12px 14px' + (on ? '' : '; opacity: 0.72') });
+    const rules = [
+      row('(W+) Bow', 'Missile weapon, bow mastery, with XP', 'Min. melee defense', '1.1', true),
+      row('(W+) Crossbow', 'Missile weapon, crossbow mastery, with XP', 'Min. melee defense', '1.1', false),
+      row('(W+) Wand', 'Wand, staff or orb with XP', 'Min. level', '0', true),
+      row('(W+) Weapon', 'Any weapon with XP, except thrown', 'Min. level', '0', false),
+      row('(2H+) Cleaving', 'Nodachi, Shashqa, Spadone, Greataxe and more', 'Min. buffed damage', '32', true),
+      row('(2H+) Spear', 'Assagai, Pike, Magari, Corsesca', 'Min. buffed damage', '32', true)
+    ];
+    const colors = { Keep: ['#22402C', '#8EE0A8'], Salvage: ['#3A3220', '#F2C46B'], Sell: ['#23344A', '#9CC4F2'], Ignore: ['#2A2E37', '#A9B1BF'] };
+    const item = (result, name, sel) => ({ result, name, badge: 'flex: 0 0 64px; text-align: center; font-size: 11px; font-weight: 700; padding: 3px 0; border-radius: 5px; background: ' + colors[result][0] + '; color: ' + colors[result][1], style: 'width: 100%; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 8px; padding: 8px 10px; cursor: pointer; color: #E7E9EE; background: ' + (sel ? '#2A2E37' : 'transparent') + (sel ? '; box-shadow: inset 0 0 0 1px #F0A23B' : '') });
+    const items = [item('Keep', 'Yumi with XP', true), item('Keep', 'Shashqa with XP'), item('Ignore', 'Crossbow with XP'), item('Keep', 'Gold Pea'), item('Salvage', 'Aquamarine Ring, work 7'), item('Sell', 'Assagai, no spells'), item('Ignore', 'Smock')];
+    return { cats, rules, items };
+  }
+}
+</script>
+</body>
+</html>

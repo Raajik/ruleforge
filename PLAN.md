@@ -262,6 +262,31 @@ Copy the layout of the legacy editor first. Improvements come later.
     `TAURI_ENV_PLATFORM`). Proved with `nice -n 19 npx tauri build --no-bundle`.
   - Tested by `src/ui/desktopio.test.ts`. Facts: `docs/ui.md`.
 
+## Phase H: the FilterBlade-style interface (`specs/ruleforge-ui.md`)
+Read `specs/ruleforge-ui.md` first. The approved mockups are in `design/`: open each HTML file as text. Copy the
+colors, fonts, spacing and layout from them. The `{{...}}` parts and the `<script type="text/x-dc">` block are
+mockup data, not app code. Keep every T27-T31 test green: change test queries only when a label really changes.
+- [ ] H1 The Forge look for the current app.
+  - Put the colors of `design/A-rule-editor.html` in CSS custom properties in one file, `src/ui/theme.css`.
+    Load Inter and JetBrains Mono from Google Fonts, with system fonts as the fallback.
+  - Restyle the top bar, the Loot Rules tab and the Salvage Combination tab to the layout of
+    `design/A-rule-editor.html`: the rule list on the left, the rule and its requirements in the middle, the
+    requirement fields on the right. Keep every current control and keyboard key.
+  - The action badge of a rule shows "Off" when the rule has a `DisabledRule` with `b` true.
+  - No new behavior. Test: the current tests pass, plus a test for the "Off" badge.
+- [ ] H2 Categories and the Customize page.
+  - `src/core/ops/categories.ts`: split the rules into sections. A name that is two or more `*`, text, then two
+    or more `*` (after a trim) starts a section. It is a sub-section when the untrimmed name starts with a space,
+    or when it has exactly two `*` at the start. Else it is a top section. Keep the rule index of each rule.
+    Test: `LootSnobV4.utl` has 16 top sections and 50 sub-sections, and `IAC_Level_NoCash.utl` has 3 top
+    sections and no sub-section (counted by Wren, 2026-10-19).
+  - `setRuleEnabled(profile, index, on)`: on removes every `DisabledRule`, off adds one with `b` true.
+  - The Customize page of `design/A3-customize.html`, without the loot preview panel (that is H3).
+  - A one-line rule summary from its requirements, for example "Missile weapon, Weapon mastery category = 8".
+- [ ] H3 The evaluator and the loot preview. Split it in more tasks before you start.
+- [ ] H4 Review changes against the base profile.
+- [ ] H5 The Overview page (needs the user's strictness content).
+
 ## Later: "better" (only when the user picks)
 Ideas, not tasks. Do not start these.
 - Undo and redo. Multi-select. Drag to reorder rules.

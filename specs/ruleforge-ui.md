@@ -24,8 +24,9 @@ page.
 ## Constraints
 
 - The file format code in `src/core/format` does not change. The `.utl` round-trip gate stays green.
-- Categories come from the profile itself: a rule whose name starts and ends with `***` starts a category.
-  Rules before the first one go in "Uncategorized". A file never gets new marker rules unless the user adds a
+- Categories come from the profile itself: a rule whose name starts and ends with two or more `*` starts a
+  category. A name with leading spaces, or with exactly two `*`, is a sub-category. Rules before the first one go
+  in "Uncategorized". A file never gets new marker rules unless the user adds a
   category.
 - The loot preview ports the match logic of the C#: each requirement's `Match` (`ref/shared/LootRules.cs`, 32
   methods, `#if VTC_PLUGIN`), `cLootItemRule.Match` (2902-2907), and the first-match rule order in

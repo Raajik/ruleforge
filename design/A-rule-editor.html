@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ruleforge, Forge direction</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#121419}
+a{color:#F0A23B}a:hover{color:#FFC071}
+input,select,button{font:inherit}
+</style>
+</helmet>
+<div style="min-height: 900px; background: #121419; color: #E7E9EE; font-family: Inter, system-ui, sans-serif; font-size: 14px; display: flex; flex-direction: column">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 12px 20px; background: #181B21; border-bottom: 1px solid #2A2E37">
+<div style="display: flex; align-items: center; gap: 10px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F0A23B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18h18"></path><path d="M6 18v-4h12v4"></path><path d="M8 14V9h8v5"></path><path d="M12 9V4"></path></svg>
+<span style="font-weight: 700; font-size: 16px; letter-spacing: 0.2px">Ruleforge</span>
+</div>
+<nav aria-label="Main" style="display: flex; gap: 4px; background: #121419; border: 1px solid #2A2E37; border-radius: 8px; padding: 3px">
+<button type="button" style="border: 0; border-radius: 6px; padding: 7px 14px; background: #2A2E37; color: #E7E9EE; font-weight: 600">Loot Rules</button>
+<button type="button" style="border: 0; border-radius: 6px; padding: 7px 14px; background: transparent; color: #A9B1BF">Salvage Combination</button>
+</nav>
+<div style="display: flex; align-items: center; gap: 8px; color: #A9B1BF; flex: 1 1 200px; min-width: 0">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">IAC_Level_NoCash.utl</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #F0A23B"><span style="width: 8px; height: 8px; border-radius: 4px; background: #F0A23B" aria-hidden="true"></span>Unsaved changes</span>
+</div>
+<div style="display: flex; gap: 8px">
+<button type="button" style="border: 1px solid #343944; background: transparent; color: #E7E9EE; border-radius: 8px; padding: 8px 14px">Open</button>
+<button type="button" style="border: 0; background: #F0A23B; color: #1A1206; border-radius: 8px; padding: 8px 16px; font-weight: 600">Save</button>
+<button type="button" aria-label="More file actions" style="border: 1px solid #343944; background: transparent; color: #E7E9EE; border-radius: 8px; width: 38px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle></svg></button>
+</div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; flex: 1 1 auto; min-height: 0">
+
+<aside aria-label="Rules" style="flex: 1 1 300px; max-width: 340px; min-width: 260px; background: #16181D; border-right: 1px solid #2A2E37; display: flex; flex-direction: column">
+<div style="padding: 16px 16px 12px; display: flex; flex-direction: column; gap: 12px">
+<label style="display: flex; align-items: center; gap: 8px; background: #121419; border: 1px solid #2A2E37; border-radius: 8px; padding: 0 10px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A9B1BF" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+<span style="position: absolute; left: -9999px">Search rules</span>
+<input type="search" placeholder="Search 56 rules" style="flex: 1; min-width: 0; border: 0; background: transparent; color: #E7E9EE; padding: 9px 0; outline: none">
+</label>
+<div style="display: flex; flex-wrap: wrap; gap: 6px" role="group" aria-label="Filter by action">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="5">
+<button type="button" style="{{f.style}}">{{f.label}}</button>
+</sc-for>
+</div>
+</div>
+<div style="flex: 1; overflow: auto; padding: 0 8px 12px">
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+<div style="padding: 14px 10px 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #8B94A3">{{g.title}}</div>
+<sc-for list="{{g.rules}}" as="r" hint-placeholder-count="4">
+<button type="button" style="{{r.style}}">
+<span style="{{r.badge}}">{{r.action}}</span>
+<span style="flex: 1; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{r.name}}</span>
+<span style="font-size: 12px; color: #8B94A3">{{r.meta}}</span>
+</button>
+</sc-for>
+</sc-for>
+</div>
+<div style="display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #2A2E37">
+<button type="button" style="flex: 1; border: 1px solid #343944; background: transparent; color: #E7E9EE; border-radius: 8px; padding: 8px">New rule</button>
+<button type="button" style="border: 1px solid #343944; background: transparent; color: #E7E9EE; border-radius: 8px; padding: 8px 12px">Sort</button>
+</div>
+</aside>
+
+<main style="flex: 999 1 520px; min-width: 0; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px">
+<label style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #A9B1BF">Rule name
+<input value="(W+) Bow" style="background: #181B21; border: 1px solid #343944; border-radius: 8px; color: #E7E9EE; padding: 10px 12px; font-size: 18px; font-weight: 600">
+</label>
+<div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #A9B1BF">Action
+<div role="group" aria-label="Action" style="display: flex; background: #181B21; border: 1px solid #343944; border-radius: 8px; padding: 3px; gap: 2px">
+<button type="button" aria-pressed="true" style="border: 0; border-radius: 6px; padding: 8px 12px; background: #2E5E3E; color: #E9FBEF; font-weight: 600">Keep</button>
+<button type="button" aria-pressed="false" style="border: 0; border-radius: 6px; padding: 8px 12px; background: transparent; color: #A9B1BF">Keep up to</button>
+<button type="button" aria-pressed="false" style="border: 0; border-radius: 6px; padding: 8px 12px; background: transparent; color: #A9B1BF">Salvage</button>
+<button type="button" aria-pressed="false" style="border: 0; border-radius: 6px; padding: 8px 12px; background: transparent; color: #A9B1BF">Sell</button>
+<button type="button" aria-pressed="false" style="border: 0; border-radius: 6px; padding: 8px 12px; background: transparent; color: #A9B1BF">Read</button>
+</div>
+</div>
+<label style="display: flex; align-items: center; gap: 10px; padding: 10px 0; color: #E7E9EE">
+<span style="width: 40px; height: 22px; border-radius: 11px; background: #F0A23B; position: relative; display: inline-block" aria-hidden="true"><span style="position: absolute; right: 3px; top: 3px; width: 16px; height: 16px; border-radius: 8px; background: #1A1206"></span></span>
+<input type="checkbox" checked style="position: absolute; left: -9999px">Enabled
+</label>
+</div>
+
+<section aria-label="Requirements" style="background: #181B21; border: 1px solid #2A2E37; border-radius: 12px; overflow: hidden">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid #2A2E37">
+<h2 style="margin: 0; font-size: 14px; font-weight: 600">Requirements <span style="color: #8B94A3; font-weight: 400">· all must match</span></h2>
+<div style="display: flex; gap: 8px">
+<button type="button" style="border: 0; background: #2A2E37; color: #E7E9EE; border-radius: 8px; padding: 7px 12px">Add requirement</button>
+<button type="button" aria-label="Clone requirement" style="border: 1px solid #343944; background: transparent; color: #E7E9EE; border-radius: 8px; width: 34px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg></button>
+<button type="button" aria-label="Delete requirement" style="border: 1px solid #343944; background: transparent; color: #E7E9EE; border-radius: 8px; width: 34px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16"></path><path d="M10 11v6M14 11v6"></path><path d="M6 7l1 13h10l1-13"></path><path d="M9 7V4h6v3"></path></svg></button>
+</div>
+</div>
+<ol style="list-style: none; margin: 0; padding: 6px">
+<sc-for list="{{reqs}}" as="q" hint-placeholder-count="6">
+<li>
+<button type="button" style="{{q.style}}">
+<span style="width: 22px; color: #8B94A3; font-size: 12px">{{q.n}}</span>
+<span style="flex: 0 0 210px; color: #A9B1BF; font-size: 13px">{{q.kind}}</span>
+<span style="flex: 1; min-width: 0">{{q.key}}</span>
+<span style="font-family: 'JetBrains Mono', monospace; color: #F0A23B; width: 32px; text-align: center">{{q.op}}</span>
+<span style="font-family: 'JetBrains Mono', monospace; min-width: 120px; text-align: right">{{q.value}}</span>
+</button>
+</li>
+</sc-for>
+</ol>
+</section>
+</main>
+
+<aside aria-label="Requirement editor" style="flex: 1 1 300px; max-width: 360px; min-width: 260px; background: #16181D; border-left: 1px solid #2A2E37; padding: 24px 20px; display: flex; flex-direction: column; gap: 18px">
+<h2 style="margin: 0; font-size: 14px; font-weight: 600">Requirement 4</h2>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #A9B1BF">Type
+<select style="background: #121419; border: 1px solid #343944; border-radius: 8px; color: #E7E9EE; padding: 9px 10px"><option>Buffed double value ≥</option></select>
+</label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #A9B1BF">Acts on
+<select style="background: #121419; border: 1px solid #343944; border-radius: 8px; color: #E7E9EE; padding: 9px 10px"><option>Melee defense bonus</option></select>
+</label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #A9B1BF">Minimum value
+<input value="1.1" style="background: #121419; border: 1px solid #343944; border-radius: 8px; color: #E7E9EE; padding: 9px 10px; font-family: 'JetBrains Mono', monospace">
+</label>
+<p style="margin: 0; padding: 12px 14px; background: #1E2128; border-radius: 8px; color: #A9B1BF; font-size: 13px; line-height: 1.5">Matches when the item's melee defense bonus, with buffs, is 1.1 or more.</p>
+</aside>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const chip = (on) => 'border: 1px solid ' + (on ? '#F0A23B' : '#343944') + '; background: ' + (on ? 'rgba(240,162,59,0.14)' : 'transparent') + '; color: ' + (on ? '#FFC071' : '#A9B1BF') + '; border-radius: 999px; padding: 5px 11px; font-size: 12px';
+    const filters = [['All', true], ['Keep', false], ['Salvage', false], ['Sell', false], ['Read', false]].map(([label, on]) => ({ label, style: chip(on) }));
+    const badgeStyle = (off) => 'flex: 0 0 auto; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 5px; background: ' + (off ? '#2A2E37' : '#22402C') + '; color: ' + (off ? '#8B94A3' : '#8EE0A8');
+    const row = (name, reqs, off, sel) => ({
+      name, action: off ? 'Off' : 'Keep', meta: reqs + ' req',
+      badge: badgeStyle(off),
+      style: 'width: 100%; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 8px; padding: 9px 10px; cursor: pointer; text-align: left; background: ' + (sel ? '#2A2E37' : 'transparent') + '; color: ' + (off ? '#8B94A3' : '#E7E9EE') + (sel ? '; box-shadow: inset 3px 0 0 #F0A23B' : '')
+    });
+    const groups = [
+      { title: 'Leveling weapons', rules: [row('(W+) Bow', 6, false, true), row('(W+) Crossbow', 7, true), row('(W+) Wand', 2, false), row('(W+) Weapon', 4, true), row('(2H) Cleaving', 5, true), row('(2H+) Cleaving', 6, false), row('(2H) Spear', 5, true), row('(2H+) Spear', 6, false)] },
+      { title: 'Leveling armor', rules: [row('(A+) Armor', 6, true), row('(A+) Shirt', 5, true), row('(A+) Pants', 5, true), row('(A+) Clothing', 5, true)] },
+      { title: 'Money', rules: [row('($) Peas', 1, false), row('($) Veteran', 4, true), row('($) Newbie', 4, true)] }
+    ];
+    const req = (n, kind, key, op, value, sel) => ({ n, kind, key, op, value, style: 'width: 100%; display: flex; align-items: center; gap: 12px; border: 0; border-radius: 8px; padding: 12px; cursor: pointer; text-align: left; color: #E7E9EE; background: ' + (sel ? '#262A33' : 'transparent') + (sel ? '; box-shadow: inset 0 0 0 1px #F0A23B' : '') });
+    const reqs = [
+      req(1, 'Long value =', 'Weapon mastery category', '=', '8'),
+      req(2, 'Object class', 'Missile weapon', '=', ''),
+      req(3, 'Long value =', 'Wield requirement attribute', '=', '47'),
+      req(4, 'Buffed double value ≥', 'Melee defense bonus', '≥', '1.1', true),
+      req(5, 'String value matches', 'Full description', '~', '/-->/'),
+      req(6, 'String value matches', 'Full description', '~', '/->/')
+    ];
+    return { filters, groups, reqs };
+  }
+}
+</script>
+</body>
+</html>
