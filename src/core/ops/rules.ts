@@ -53,7 +53,7 @@ export function defaultRequirement(type: number): Requirement | null {
     case eLootRuleType.AnySimilarColor:
       return { type: 14, r: 255, g: 255, b: 255, maxDifferenceH: 10, maxDifferenceSV: 0.1 }
     case eLootRuleType.SimilarColorArmorType:
-      return { type: 15, r: 255, g: 255, b: 255, maxDifferenceH: 10, maxDifferenceSV: 0.1, armorGroup: '' }
+      return { type: 15, r: 255, g: 255, b: 255, maxDifferenceH: 10, maxDifferenceSV: 0.1, armorGroup: 'None' } // LootRules.cs 2016: ArmorGroups()[0], and ColorXML.cs 74 adds "None" first.
     case eLootRuleType.SlotSimilarColor:
       return { type: 16, r: 255, g: 255, b: 255, maxDifferenceH: 10, maxDifferenceSV: 0.1, slot: 0 }
     case eLootRuleType.SlotExactPalette:

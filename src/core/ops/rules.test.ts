@@ -101,7 +101,7 @@ describe('defaultRequirement', () => {
     // System.Drawing.Color.White is R 255, G 255, B 255.
     const color = { r: 255, g: 255, b: 255, maxDifferenceH: 10, maxDifferenceSV: 0.1 }
     expect(defaultRequirement(eLootRuleType.AnySimilarColor)).toEqual({ type: 14, ...color })
-    expect(defaultRequirement(eLootRuleType.SimilarColorArmorType)).toEqual({ type: 15, ...color, armorGroup: '' })
+    expect(defaultRequirement(eLootRuleType.SimilarColorArmorType)).toEqual({ type: 15, ...color, armorGroup: 'None' })
     expect(defaultRequirement(eLootRuleType.SlotSimilarColor)).toEqual({ type: 16, ...color, slot: 0 })
     expect(defaultRequirement(eLootRuleType.SlotExactPalette)).toEqual({ type: 17, slot: 0, palette: 0 })
 
