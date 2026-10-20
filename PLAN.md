@@ -291,7 +291,7 @@ mockup data, not app code. Keep every T27-T31 test green: change test queries on
     name. `ruleSummary` reads the requirement fields, and `mainValueField` gives the number box of a rule. The
     number box edits the first value field of the rule, as the spec says. Verified: `src/core/ops/categories.test.ts`
     (19) and `src/ui/CustomizePage.test.tsx` (7), 445 total. Facts: `docs/ops.md`, `docs/ui.md`.
-- [ ] H3a The item evaluator, for item types.
+- [x] H3a The item evaluator, for item types.
   - `src/core/eval/item.ts`: a `LootItem` type that holds what `GameItemInfo` gives the C# Match methods:
     `ObjectClass`, int, double and string values keyed by the enum names of `generated.ts`, spells (names), and
     palettes. Read the inputs from each `Match(GameItemInfo id)` in `ref/shared/LootRules.cs` (`#if VTC_PLUGIN`).
@@ -299,6 +299,16 @@ mockup data, not app code. Keep every T27-T31 test green: change test queries on
     item)`, a port of `LootRules.Classify`: the first rule that matches gives the action and the rule name.
     Copy the C# exactly, including the defaults of `GetValueInt(vk, 0)` for a missing value.
   - Types 1000-1004 and 2000-2008 return "unknown" for now (H3b). Test each type with a match and a miss.
+  - `LootItem` keeps the values in records keyed by the enum name. `getValueInt`, `getValueDouble` and
+    `getValueString` fall back to the default of the C# call. `colorToHSV` copies `ColorToHSV` with the float
+    math of `Color.GetHue` inside (LootRules.cs 1887-1895).
+  - `matchRequirement` copies the Match method of each type. Types 4 and 5 compare both sides as `float`.
+    Type 6 returns false for every item, as the C# does. Type 15 reads its palette slots from an optional
+    `SlotDefinitions` map, the parsed ColorSlots XML. Types 1000-1004, 2000-2008 and raw unsupported
+    requirements answer "unknown". `classify` copies `Classify` (LootRules.cs 3059-3073). It gives `known`
+    false when an unknown requirement comes before a miss.
+  - Tested by `src/core/eval/item.test.ts` and `src/core/eval/match.test.ts` (51 tests, 496 total).
+    Facts: `docs/eval.md`.
 - [ ] H3b Character and buffed types.
   - A `Character` input (level, skills, main pack free slots) for types 1000-1004.
   - Port `ref/plugin/ComputedItemInfo.cs` for types 2000-2008 (buffed values, damage over time, ratings). Test
