@@ -16,6 +16,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { eLootAction, ruleTypeName } from '../core/format/enums'
 import type { LootProfile, Requirement } from '../core/format/profile'
+import { parseInt32 } from '../core/format/reader'
 import { copyRuleText, pasteRuleText } from '../core/ops/clipboard'
 import { newFile } from '../core/ops/file'
 import {
@@ -26,6 +27,9 @@ import {
   moveRule,
   newRequirement,
   newRule,
+  setKeepCount,
+  setRuleAction,
+  setRuleName,
   toggleDisabled,
 } from '../core/ops/rules'
 import { addPackslotRequirements } from '../core/ops/packslots'
@@ -369,11 +373,19 @@ export function App({
                 <legend>Rule</legend>
                 <label>
                   Rule Name
-                  <input aria-label="Rule Name" value={rule.name} readOnly />
+                  <input
+                    aria-label="Rule Name"
+                    value={rule.name}
+                    onChange={(e) => setProfile(setRuleName(profile, selectedRule, e.target.value))}
+                  />
                 </label>
                 <label>
                   Action
-                  <select aria-label="Action" value={rule.action} disabled>
+                  <select
+                    aria-label="Action"
+                    value={rule.action}
+                    onChange={(e) => setProfile(setRuleAction(profile, selectedRule, Number(e.target.value)))}
+                  >
                     {!ACTION_COMBO.some(([value]) => value === rule.action) && (
                       <option value={rule.action}>{rule.action}</option>
                     )}
@@ -387,7 +399,14 @@ export function App({
                 {rule.action === eLootAction.KeepUpTo && (
                   <label>
                     Keep Count
-                    <input aria-label="Keep Count" value={rule.lootActionData} readOnly />
+                    <input
+                      aria-label="Keep Count"
+                      value={rule.lootActionData}
+                      // Form1.cs 619-629: int.TryParse, so bad text stores 0.
+                      onChange={(e) =>
+                        setProfile(setKeepCount(profile, selectedRule, parseInt32(e.target.value) ?? 0))
+                      }
+                    />
                   </label>
                 )}
                 <button type="button" onClick={toggleDisabledClick}>

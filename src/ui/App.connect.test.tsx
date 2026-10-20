@@ -354,3 +354,24 @@ describe('App keyboard', () => {
     expect(ruleNames()).toEqual(['Alpha'])
   })
 })
+
+describe('App rule fields', () => {
+  it('edits the rule name, the action and the keep count', () => {
+    render(<App initialProfile={smallProfile()} />)
+    fireEvent.click(ruleButton(0))
+
+    // Form1.cs 577-587: the list shows the new name at once.
+    fireEvent.change(screen.getByLabelText('Rule Name'), { target: { value: 'Renamed' } })
+    expect(ruleNames()[0]).toBe('Renamed')
+
+    // Form1.cs 589-617: only KeepUpTo shows the keep count box.
+    expect(screen.queryByLabelText('Keep Count')).toBeNull()
+    fireEvent.change(screen.getByLabelText('Action'), { target: { value: String(eLootAction.KeepUpTo) } })
+    const keep = screen.getByLabelText('Keep Count') as HTMLInputElement
+    fireEvent.change(keep, { target: { value: '7' } })
+    expect(keep.value).toBe('7')
+    // Form1.cs 619-629: int.TryParse stores 0 for bad text.
+    fireEvent.change(keep, { target: { value: 'abc' } })
+    expect(keep.value).toBe('0')
+  })
+})
