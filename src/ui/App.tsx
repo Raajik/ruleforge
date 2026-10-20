@@ -54,6 +54,7 @@ import {
 } from './desktopio'
 import { MenuBar, type MenuName } from './MenuBar'
 import { CustomizePage } from './CustomizePage'
+import { OverviewPage } from './OverviewPage'
 import { LootPreview } from './LootPreview'
 import { ReqEditor } from './ReqEditor'
 import { ReviewChanges } from './ReviewChanges'
@@ -92,7 +93,7 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
    * can review every change of the session.
    */
   const [baseProfile, setBaseProfile] = useState(initialProfile)
-  const [tab, setTab] = useState<'rules' | 'customize' | 'preview' | 'salvage' | 'review'>('rules')
+  const [tab, setTab] = useState<'overview' | 'rules' | 'customize' | 'preview' | 'salvage' | 'review'>('rules')
   const [selectedRule, setSelectedRule] = useState(-1)
   const [selectedReq, setSelectedReq] = useState(-1)
   const [search, setSearch] = useState('')
@@ -467,6 +468,14 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
           <span>Ruleforge</span>
         </div>
         <div role="tablist" aria-label="Editor tabs" className="tabs">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'overview'}
+            onClick={() => setTab('overview')}
+          >
+            Overview
+          </button>
           <button type="button" role="tab" aria-selected={tab === 'rules'} onClick={() => setTab('rules')}>
             Loot Rules
           </button>
@@ -559,7 +568,15 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
 
       {fileError !== '' && <p role="alert">{fileError}</p>}
 
-      {tab === 'customize' ? (
+      {tab === 'overview' ? (
+        <OverviewPage
+          profile={profile}
+          fileName={fileName}
+          onChange={setProfile}
+          onLoadBase={(loaded, name) => loadProfile(loaded, name, null)}
+          onOpenPreview={() => setTab('preview')}
+        />
+      ) : tab === 'customize' ? (
         <CustomizePage profile={profile} onChange={setProfile} onEditInDetail={() => setTab('rules')} />
       ) : tab === 'preview' ? (
         <div role="tabpanel" aria-label="Loot preview" className="preview-tab">

@@ -17,7 +17,7 @@ const ITEMS = samples.items as unknown as SampleItem[]
 const CHARACTER = samples.character as Character
 
 /** The name of the action on the badge. The C# has no name for NoLoot. */
-function actionName(action: number): string {
+export function actionName(action: number): string {
   if (action === eLootAction.NoLoot) return 'Ignore'
   return friendlyActionName(action) || String(action)
 }
@@ -103,7 +103,7 @@ function noteText(decision: ItemDecision): string {
 }
 
 /** The color class of the badge, as the mockup gives each action a color. */
-function actionClass(action: number): string {
+export function actionClass(action: number): string {
   switch (action) {
     case eLootAction.Keep:
     case eLootAction.KeepUpTo:

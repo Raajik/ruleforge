@@ -1,0 +1,53 @@
+{
+  "levels": [
+    {
+      "id": "veryStrict",
+      "name": "Very strict",
+      "note": "The best two rungs of every ladder stay on. Only the Legendary gear stays on.",
+      "rungs": 2,
+      "valueRungs": 0,
+      "gearTiers": ["legendary"]
+    },
+    {
+      "id": "strict",
+      "name": "Strict",
+      "note": "The best four rungs of every ladder stay on. The Ward and Impen gear stays on too.",
+      "rungs": 4,
+      "valueRungs": 0,
+      "gearTiers": ["legendary", "ward"]
+    },
+    {
+      "id": "regular",
+      "name": "Regular",
+      "note": "The best six rungs of every ladder stay on. The Epic gear and the value rules stay on too.",
+      "rungs": 6,
+      "valueRungs": 6,
+      "gearTiers": ["legendary", "ward", "epic"]
+    },
+    {
+      "id": "soft",
+      "name": "Soft",
+      "note": "Every rung of every ladder stays on. All the gear and the value rules stay on too.",
+      "rungs": null,
+      "valueRungs": null,
+      "gearTiers": ["legendary", "ward", "epic", "major"]
+    }
+  ],
+  "ladderSections": ["Melee Weapons", "Missile Weapons", "Wands"],
+  "wholeLadderSections": ["Cloaks"],
+  "valueLadderSections": ["Death Items", "Value"],
+  "gearSections": ["Armor", "Cloth Armor", "Clothing", "Jewelry"],
+  "gearTiers": {
+    "legendary": ["Legendary", "Legendary Sets"],
+    "ward": ["Ward", "Ward/Impen"],
+    "epic": ["Epic", "Epic Sets"],
+    "major": ["Major", "Major Sets", "Other Sets", "Other"]
+  },
+  "weapons": [
+    { "id": "heavy", "name": "Heavy", "prefix": "(H)" },
+    { "id": "light", "name": "Light", "prefix": "(L)" },
+    { "id": "finesse", "name": "Finesse", "prefix": "(F)" },
+    { "id": "missile", "name": "Missile", "prefix": "(M)" },
+    { "id": "wand", "name": "Wand", "prefix": "(W)" }
+  ]
+}

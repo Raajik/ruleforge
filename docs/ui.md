@@ -218,3 +218,35 @@
 - **Verified** (`npm run dev`, a headless Chromium tab): the page shows one row per change, with the badge, the
   rule name, the details and the Undo button. The tab badge counts the changes. The Undo of the last change
   removes its row.
+
+## The Overview page (H5)
+
+- **Observed** (`design/A2-overview.html` 40-115): the page has three numbered parts. Part 1 is the base
+  profile, with one card per profile. Part 2 is the strictness, with a radio group and a line of text under it.
+  Part 3 is the character, with a main skill combo, a level box, a free pack slots box and a group of pills.
+  The aside on the right lists the sample drops with their badge and their rule.
+- **Observed** (`design/A2-overview.html` 113): the mockup shows five level buttons: Leveling, Soft, Regular,
+  Strict and Very strict. The spec has four strictness levels and no Leveling level, so the rebuild shows the
+  four levels of the spec (`specs/ruleforge-ui.md`, "Strictness").
+- **Verified** (`src/ui/OverviewPage.test.tsx`): `App` has an "Overview" tab before "Loot Rules". The tab shows
+  the four base profile cards, the four strictness radio buttons, the three character fields and the Trophies
+  pills. Only one panel renders at a time.
+- **Verified** (`src/core/ops/baseprofiles.test.ts`): the base profiles are the three sample files of `fixtures`
+  and an empty profile. The files are read as text at build time, so the page works without a server. Their rule
+  counts are 1627, 1632 and 56.
+- **Verified** (`src/ui/OverviewPage.test.tsx`, "applies the strictness level and the weapon choice to the base
+  profile"): picking a base profile loads it and applies the strictness level and the weapon choice to it. So the
+  page always shows the state of the profile.
+- **Verified** (`src/ui/OverviewPage.test.tsx`, "shows the character fields and the Trophies groups"): the
+  character has the main skill, the level and the free pack slots. The Trophies group has one pill per
+  sub-section of the Trophies section, with the count of the rules that are on. A pill turns the whole group on
+  or off.
+- **Verified** (`src/ui/OverviewPage.test.tsx`, "shows the sample items with the action of the profile"): the
+  aside lists the 20 sample items with the badge of the action and the name of the rule that matched. The level
+  and the free pack slots of the character go to the evaluator.
+- **Verified** (`npm run dev`, a headless Chromium tab): the page shows the cards, the level buttons, the
+  character fields, the Trophies pills and the list of the sample drops. Picking "LootSnob v4" gives the file
+  with 1627 rules and 19 Trophies pills. Picking "Very strict" changes the rules of the profile and the
+  Review changes tab counts the changes.
+- **Unknown** The mockup has a "New sample" button in the aside. The spec says that a real item import needs a
+  data source, and the sample items are made up (`docs/eval.md`), so the page has no such button.

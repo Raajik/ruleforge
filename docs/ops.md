@@ -389,3 +389,54 @@
   different rules named "(A) 70k" in its Value section. A delete of the first one shows the second as "changed"
   and one rule as "removed". A sequence alignment, as in `diff`, would show one "removed" only.
   `src/core/ops/review.ts:153-178`.
+
+## Strictness and the character step (H5)
+
+- [Observed] The level table is data in `src/core/ops/strictness.json`. It holds the four levels, the rung
+  depths 2, 4, 6 and all, the value depths 0, 0, 6 and all, the gear tier groups, the names of the ladder
+  sections, the gear sections and the value sections, and the five weapon prefixes `(H)`, `(L)`, `(F)`, `(M)`
+  and `(W)`. `specs/ruleforge-ui.md`, "Strictness" (user, 2026-10-19).
+- [Observed] A ladder is a run of rules next to each other in one section whose names are the same after every
+  digit run becomes a hash. The Cloaks section is one ladder in file order. `specs/ruleforge-ui.md`, "Strictness".
+- [Observed] A rule with an empty name holds a `StringValueMatch` with the pattern "leave this disabled" or
+  "do not edit". `LootSnobV4.utl` has 152 of them, and 45 hold "leave this disabled".
+  `fixtures/LootSnobV4.utl`.
+- [Verified] `ladderKey` trims the name of the rule and makes every digit run a hash. So `(H) Axe (OD +10)` and
+  `(H) Axe (OD +1)` have the same key, and the indent of a rule does not make a new ladder. Test:
+  `src/core/ops/strictness.test.ts`, "ladderKey".
+- [Verified] `findLadders` finds 180 ladders in the Melee Weapons section of `LootSnobV4.utl`, and 120 of them
+  have one rung. The ladder of "(H) Axe (OD +10)" has 10 rungs, the best one first. A rule with an empty name
+  is in no ladder. Test: `src/core/ops/strictness.test.ts`, "findLadders".
+- [Verified] `applyStrictness` keeps 808 rules of `LootSnobV4.utl` on at Very strict, 945 at Strict, 1078 at
+  Regular and 1259 at Soft. The file itself has 537 rules on. Test: `src/core/ops/strictness.test.ts`,
+  "keeps 808 rules on at Very strict ...".
+- [Verified] The gear tiers follow the table of the spec. The Legendary and Legendary Sets rules stay on at
+  every level. The Ward and Ward/Impen rules come on at Strict, the Epic and Epic Sets rules at Regular, and
+  the Major, Major Sets, Other Sets and Other rules at Soft. Test: `src/core/ops/strictness.test.ts`,
+  "turns on the gear tiers of the level ..." and "keeps the Ward tier off at Very strict ...".
+- [Verified] The Value and Death Items sections stay off at Strict and at Very strict. At Regular the best six
+  rungs of each ladder stay on, and at Soft every rung. Test: `src/core/ops/strictness.test.ts`,
+  "keeps the Value and Death Items off at Strict ..." and "keeps the top six rungs of the Value ladders at
+  Regular".
+- [Verified] The sections that strictness does not touch keep their state: Trophies, Item Only, Shields,
+  Tailoring, Tailoring (Special) and Salvage. Test: `src/core/ops/strictness.test.ts`, "leaves the sections
+  that strictness does not touch as the file has them".
+- [Verified] Strictness never turns a rule with an empty name on or off. It is a separator, so it holds its
+  place in the rule order. Test: `src/core/ops/strictness.test.ts`, "keeps the rule with an empty name as the
+  file has it".
+- [Verified] `applyWeaponChoice` turns the rules of the other weapon types off. It uses the whole prefix, so
+  "(ME) 40k" is a melee value rule and not a missile rule. The rules of the chosen type keep their state, so
+  the strictness level stays the master of the ladder. Test: `src/core/ops/strictness.test.ts`,
+  "applyWeaponChoice".
+- [Observed] The wand rules of `IAC_Level_NoCash.utl` use the prefix "(W+)", so they are no wand rules of the
+  table. LootSnob v4 and ILT Legendary use the five prefixes of the table. `fixtures/IAC_Level_NoCash.utl`,
+  `fixtures/ILT_Legendary.utl`.
+- [Verified] `applySettings` runs the level first and the weapon choice after it. Test:
+  `src/core/ops/strictness.test.ts`, "applySettings".
+- [Verified] `trophyGroups` gives the 19 sub-sections of the Trophies section of `LootSnobV4.utl`, and
+  `setGroupEnabled` turns the rules of a group on or off. A rule with an empty name keeps its state. Test:
+  `src/core/ops/strictness.test.ts`, "trophyGroups".
+- [Verified] A sub-section of a gear section that is no tier of the table keeps its state. Test:
+  `src/core/ops/strictness.test.ts`, "leaves a gear sub-section that is no tier of the table alone".
+- [Unknown] The Cloaks section is one ladder in file order. The spec assumes that LootSnob lists the best
+  cloaks first. The file gives no other sign of the order.

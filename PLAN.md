@@ -348,7 +348,23 @@ mockup data, not app code. Keep every T27-T31 test green: change test queries on
     keeps it.
   - Tested by `src/core/ops/review.test.ts` and `src/ui/ReviewChanges.test.tsx` (27 and 7 tests, 566 total).
     Facts: `docs/ops.md`, `docs/ui.md`.
-- [ ] H5 The Overview page. The strictness, ladder and character rules are in `specs/ruleforge-ui.md`, "Strictness".
+- [x] H5 The Overview page. The strictness, ladder and character rules are in `specs/ruleforge-ui.md`, "Strictness".
+  - `src/core/ops/strictness.json` holds the level table: the four levels, the rung depths 2, 4, 6 and all, the
+    value depths 0, 0, 6 and all, the gear tier groups, the names of the ladder, gear and value sections, and
+    the five weapon prefixes.
+  - `src/core/ops/strictness.ts`: the ladder key is the trimmed name of the rule with every digit run as a hash.
+    `findLadders` groups the rules of a section by that key. `applyStrictness` keeps the top rungs of every
+    ladder, turns the gear tiers on or off, and keeps the Value and Death Items off at Strict and at Very
+    strict. `applyWeaponChoice` turns the rules of the other weapon types off. `applySettings` runs the level
+    first and the weapon choice after it. `trophyGroups` and `setGroupEnabled` hold the Trophies choices.
+  - A rule with an empty name is a separator. It is in no ladder, and strictness never turns it on or off.
+  - `src/core/ops/baseprofiles.ts` holds the three sample files of `fixtures` and an empty profile. The files are
+    read as text at build time, so the page works without a server.
+  - `src/ui/OverviewPage.tsx` is the page of `design/A2-overview.html`. It is the "Overview" tab of the App, before
+    "Loot Rules". Picking a base profile loads it and applies the strictness level and the weapon choice to it.
+  - The "New sample" button of the mockup has no data source, so the page has no such button.
+  - Tested by `src/core/ops/strictness.test.ts` (32), `src/core/ops/baseprofiles.test.ts` (3) and
+    `src/ui/OverviewPage.test.tsx` (12), 613 total. Facts: `docs/ops.md`, `docs/ui.md`.
 
 ## Later: "better" (only when the user picks)
 Ideas, not tasks. Do not start these.
