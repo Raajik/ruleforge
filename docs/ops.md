@@ -385,3 +385,7 @@
   requirement uses its `requirementSummary` line. Test: `src/core/ops/review.test.ts`, "requirementText".
 - [Unknown] The diff covers the rules only. The extra blocks, such as the salvage combine ranges, are not in the
   diff. The legacy editor has no such page.
+- [Observed] The review diff matches rules by name, and repeated names by their order. LootSnob v4 has two
+  different rules named "(A) 70k" in its Value section. A delete of the first one shows the second as "changed"
+  and one rule as "removed". A sequence alignment, as in `diff`, would show one "removed" only.
+  `src/core/ops/review.ts:153-178`.

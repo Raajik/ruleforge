@@ -352,6 +352,8 @@ mockup data, not app code. Keep every T27-T31 test green: change test queries on
 
 ## Later: "better" (only when the user picks)
 Ideas, not tasks. Do not start these.
+- Review changes: align the rule lists like `diff`, so a delete among rules with the same name shows one
+  "removed" only (see `docs/ops.md`).
 - Undo and redo. Multi-select. Drag to reorder rules.
 - Plain-language rule summaries ("Keep: armor with Epic Strength").
 - A check that warns about rules that never match, because a rule above them matches first.
