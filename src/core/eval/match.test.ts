@@ -188,6 +188,12 @@ describe('matchRequirement types 0 to 17 and 9999', () => {
     expect(matchRequirement({ type: 9999, b: true }, item())).toBe(false)
   })
 
+  it('gives "error" for a rule with an invalid regex pattern, not a crash', () => {
+    const req: Requirement = { type: 1, pattern: '[unclosed', key: stringValueKey.Name }
+    expect(matchRequirement(req, item({ stringValues: { Name: 'Iron Blade' } }))).toBe('error')
+    expect(matchRequirement({ type: 0, pattern: '(' }, item({ spells: ['Fire Ball'] }))).toBe('error')
+  })
+
   it('a missing value gives the default of the C# call: 0, 0.0 and ""', () => {
     const empty = item()
     expect(matchRequirement({ type: 2, keyval: 0, vk: intValueKey.Material }, empty)).toBe(true)
@@ -366,6 +372,19 @@ describe('classify', () => {
     expect(classify(p, item())).toEqual({
       action: eLootAction.NoLoot,
       ruleName: 'undecided',
+      lootActionData: 0,
+      known: false,
+    })
+  })
+
+  it('stops with known false on a rule with an invalid regex pattern', () => {
+    const p = profile(
+      rule('broken', eLootAction.Keep, [{ type: 1, pattern: '[unclosed', key: stringValueKey.Name }]),
+      rule('never reached', eLootAction.Salvage, []),
+    )
+    expect(classify(p, item({ stringValues: { Name: 'Iron Blade' } }))).toEqual({
+      action: eLootAction.NoLoot,
+      ruleName: 'broken',
       lootActionData: 0,
       known: false,
     })

@@ -653,3 +653,168 @@ p.req-fields {
   width: 96px;
   font-family: var(--font-mono);
 }
+
+/* --- Loot preview (H3c, design/A3-customize.html) --- */
+
+.customize {
+  /* The mockup has the loot preview panel on the right. */
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) minmax(300px, 400px);
+}
+
+.loot-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  overflow: auto;
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+}
+
+.loot-panel h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.loot-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.loot-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.loot-items button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-align: left;
+  color: var(--text);
+  background: transparent;
+}
+
+.loot-items button[aria-pressed='true'] {
+  background: var(--line);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.loot-badge {
+  flex: 0 0 64px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 0;
+  border-radius: 5px;
+  background: var(--line);
+  color: var(--text-faint);
+}
+
+.loot-badge.keep {
+  background: #22402c;
+  color: #8ee0a8;
+}
+
+.loot-badge.salvage {
+  background: #3a3220;
+  color: #f2c46b;
+}
+
+.loot-badge.sell {
+  background: #23344a;
+  color: #9cc4f2;
+}
+
+.loot-item-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loot-why {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: var(--surface-2);
+  border-radius: 10px;
+}
+
+.loot-why h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.loot-why p {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.loot-why .loot-why-note {
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.loot-requirements {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.loot-requirement {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.loot-outcome {
+  flex: 0 0 52px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.loot-requirement.yes .loot-outcome {
+  color: var(--badge-text);
+}
+
+.loot-requirement.error .loot-outcome,
+.loot-error-text {
+  color: #f28b82;
+}
+
+/* The Loot preview tab: the items on the left, the why panel on the right. */
+.preview-tab {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  overflow: auto;
+  background: var(--bg);
+}
+
+.preview-tab .loot-preview {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  align-content: start;
+  gap: 20px;
+  padding: 22px 26px;
+}

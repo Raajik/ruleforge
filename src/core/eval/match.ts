@@ -21,9 +21,16 @@ import {
 /**
  * true: the requirement matches. false: it does not. "unknown": an
  * unsupported raw requirement, or a character type (1000-1004) without a
- * Character, or without a value for the skill.
+ * Character or a skill value. "error": the rule holds an invalid regex
+ * pattern, so the evaluator cannot decide it.
  */
-export type MatchResult = boolean | 'unknown'
+export type MatchResult = boolean | 'unknown' | 'error'
+
+/** The result of one requirement of a rule. */
+export interface RequirementOutcome {
+  req: Requirement
+  result: MatchResult
+}
 
 /** The color slot definitions of a ColorSlots XML file, like the C# ColorXML.SlotDefinitions. */
 export type SlotDefinitions = ReadonlyMap<string, readonly number[]>
@@ -31,14 +38,53 @@ export type SlotDefinitions = ReadonlyMap<string, readonly number[]>
 /**
  * `cLootItemRule.Match` (LootRules.cs 2901-2908): every requirement must
  * match, in order. It gives false at the first miss. It gives "unknown" when an undecided requirement comes
- * before a miss.
+ * before a miss. The list stops at the first requirement that is not true.
  */
-function matchRule(rule: LootRule, item: LootItem, slots?: SlotDefinitions, character?: Character): MatchResult {
+function evaluateRule(
+  rule: LootRule,
+  item: LootItem,
+  slots?: SlotDefinitions,
+  character?: Character,
+): RequirementOutcome[] {
+  const outcomes: RequirementOutcome[] = []
   for (const req of rule.requirements) {
     const result = matchRequirement(req, item, slots, character)
-    if (result !== true) return result
+    outcomes.push({ req, result })
+    if (result !== true) break
   }
-  return true
+  return outcomes
+}
+
+/** The rule that decides an item. */
+export interface RuleDecision {
+  /** The index of the rule in the profile. */
+  index: number
+  rule: LootRule
+  /** The requirements of the rule, with their results. */
+  outcomes: RequirementOutcome[]
+  /** The result of the rule: true, 'unknown' or 'error'. */
+  result: MatchResult
+}
+
+/**
+ * The first rule that decides the item is the first rule that matches. It is
+ * also the first rule with an unknown or broken requirement. A rule that
+ * misses does not decide, so the search goes on. Null when no rule decides.
+ */
+export function decideRule(
+  profile: LootProfile,
+  item: LootItem,
+  slots?: SlotDefinitions,
+  character?: Character,
+): RuleDecision | null {
+  for (let index = 0; index < profile.rules.length; index++) {
+    const rule = profile.rules[index]!
+    const outcomes = evaluateRule(rule, item, slots, character)
+    const last = outcomes[outcomes.length - 1]
+    const result: MatchResult = last ? last.result : true
+    if (result !== false) return { index, rule, outcomes, result }
+  }
+  return null
 }
 
 /** The result of `cLootRules.Classify` (LootRules.cs 3059-3073). */
@@ -62,12 +108,19 @@ export interface ClassifyResult {
  * name and data 0 when no rule matches.
  */
 export function classify(profile: LootProfile, item: LootItem, slots?: SlotDefinitions, character?: Character): ClassifyResult {
-  for (const rule of profile.rules) {
-    const result = matchRule(rule, item, slots, character)
-    if (result === 'unknown') return { action: eLootAction.NoLoot, ruleName: rule.name, lootActionData: 0, known: false }
-    if (result) return { action: rule.action, ruleName: rule.name, lootActionData: rule.lootActionData, known: true }
+  const decision = decideRule(profile, item, slots, character)
+  if (!decision) return { action: eLootAction.NoLoot, ruleName: '', lootActionData: 0, known: true }
+  // An unknown or broken requirement stops the search: the rule above may
+  // match, so the item has no known action.
+  if (decision.result === 'unknown' || decision.result === 'error') {
+    return { action: eLootAction.NoLoot, ruleName: decision.rule.name, lootActionData: 0, known: false }
   }
-  return { action: eLootAction.NoLoot, ruleName: '', lootActionData: 0, known: true }
+  return {
+    action: decision.rule.action,
+    ruleName: decision.rule.name,
+    lootActionData: decision.rule.lootActionData,
+    known: true,
+  }
 }
 
 /**
@@ -80,12 +133,18 @@ export function matchRequirement(req: Requirement, item: LootItem, slots?: SlotD
   // "unknown" when no character, or no value for the skill, is given.
   if ('data' in req) return 'unknown'
   switch (req.type) {
-    case eLootRuleType.SpellNameMatch:
+    case eLootRuleType.SpellNameMatch: {
       // LootRules.cs 283-292: any spell name that matches the regex.
-      return item.spells.some((name) => new RegExp(req.pattern).test(name))
-    case eLootRuleType.StringValueMatch:
+      const rx = compilePattern(req.pattern)
+      if (!rx) return 'error'
+      return item.spells.some((name) => rx.test(name))
+    }
+    case eLootRuleType.StringValueMatch: {
       // LootRules.cs 357-360.
-      return new RegExp(req.pattern).test(getValueString(item, req.key, ''))
+      const rx = compilePattern(req.pattern)
+      if (!rx) return 'error'
+      return rx.test(getValueString(item, req.key, ''))
+    }
     case eLootRuleType.LongValKeyLE:
       // LootRules.cs 432-435.
       return getValueInt(item, req.vk, 0) <= req.keyval
@@ -110,8 +169,13 @@ export function matchRequirement(req: Requirement, item: LootItem, slots?: SlotD
     case eLootRuleType.SpellMatch: {
       // LootRules.cs 999-1013: count the spells that match rxDoesMatch and,
       // when rxDoesNotMatch is not empty after a trim, do not match it.
-      const doesNot = req.rxDoesNotMatch.trim() === '' ? null : new RegExp(req.rxDoesNotMatch)
-      const does = new RegExp(req.rxDoesMatch)
+      let doesNot: RegExp | null = null
+      if (req.rxDoesNotMatch.trim() !== '') {
+        doesNot = compilePattern(req.rxDoesNotMatch)
+        if (!doesNot) return 'error'
+      }
+      const does = compilePattern(req.rxDoesMatch)
+      if (!does) return 'error'
       let count = 0
       for (const name of item.spells) {
         if (does.test(name) && (doesNot === null || !doesNot.test(name))) {
@@ -234,6 +298,18 @@ export function matchRequirement(req: Requirement, item: LootItem, slots?: SlotD
     }
     default:
       return 'unknown'
+  }
+}
+
+// The regex of a pattern, or null when the pattern is invalid. The pattern
+// fields stay text in the core (PLAN.md Traps), and the C# compiles them
+// when it reads the file (LootRules.cs 311-313). A bad pattern then gives
+// the result "error" on that rule, not a crash.
+function compilePattern(pattern: string): RegExp | null {
+  try {
+    return new RegExp(pattern)
+  } catch {
+    return null
   }
 }
 

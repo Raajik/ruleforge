@@ -2,7 +2,7 @@
  * The Customize page (PLAN.md H2, design/A3-customize.html). The categories of
  * the profile on the left, the rules of one category in the middle. Each row
  * has an on/off box, a one-line summary and one number box. The loot preview
- * panel of the mockup is H3, so it is absent.
+ * panel of the mockup is on the right (H3c).
  *
  * "Edit rules in detail" opens the Loot Rules tab, which the C# calls
  * `Main.dc.html` in the mockup.
@@ -12,6 +12,7 @@ import type { LootProfile } from '../core/format/profile'
 import { categorizeRules, mainValueField, ruleSummary, setRuleEnabled } from '../core/ops/categories'
 import { isRuleDisabled } from '../core/ops/rules'
 import { setTextValue } from '../core/ops/reqfields'
+import { LootPreview } from './LootPreview'
 
 export function CustomizePage({
   profile,
@@ -94,6 +95,10 @@ export function CustomizePage({
           })}
         </ul>
       </main>
+      <aside aria-label="Loot preview" className="loot-panel">
+        <h2>Loot preview</h2>
+        <LootPreview profile={profile} />
+      </aside>
     </div>
   )
 }

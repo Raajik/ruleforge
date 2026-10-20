@@ -53,6 +53,7 @@ import {
 } from './desktopio'
 import { MenuBar, type MenuName } from './MenuBar'
 import { CustomizePage } from './CustomizePage'
+import { LootPreview } from './LootPreview'
 import { ReqEditor } from './ReqEditor'
 import { SalvageCombineTab } from './SalvageCombineTab'
 import './theme.css'
@@ -83,7 +84,7 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
   desktop?: boolean
 }) {
   const [profile, setProfileState] = useState(initialProfile)
-  const [tab, setTab] = useState<'rules' | 'customize' | 'salvage'>('rules')
+  const [tab, setTab] = useState<'rules' | 'customize' | 'preview' | 'salvage'>('rules')
   const [selectedRule, setSelectedRule] = useState(-1)
   const [selectedReq, setSelectedReq] = useState(-1)
   const [search, setSearch] = useState('')
@@ -467,6 +468,14 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
           <button
             type="button"
             role="tab"
+            aria-selected={tab === 'preview'}
+            onClick={() => setTab('preview')}
+          >
+            Loot preview
+          </button>
+          <button
+            type="button"
+            role="tab"
             aria-selected={tab === 'salvage'}
             onClick={() => setTab('salvage')}
           >
@@ -530,6 +539,10 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
 
       {tab === 'customize' ? (
         <CustomizePage profile={profile} onChange={setProfile} onEditInDetail={() => setTab('rules')} />
+      ) : tab === 'preview' ? (
+        <div role="tabpanel" aria-label="Loot preview" className="preview-tab">
+          <LootPreview profile={profile} />
+        </div>
       ) : tab === 'salvage' ? (
         <SalvageCombineTab profile={profile} onChange={setProfile} />
       ) : (

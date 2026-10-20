@@ -75,6 +75,15 @@ describe('CustomizePage', () => {
     )
     expect(screen.getByRole('heading', { name: '*** Leveling Armor ***' })).toBeTruthy()
   })
+
+  it('shows the loot preview panel on the right', () => {
+    render(<CustomizePage profile={iac()} onChange={() => {}} onEditInDetail={() => {}} />)
+    const panel = screen.getByRole('complementary', { name: 'Loot preview' })
+    const items = within(within(panel).getByRole('list', { name: 'Loot preview items' })).getAllByRole('listitem')
+    expect(items.length).toBe(20)
+    // The "Yumi with XP" item hits the rule "(W+) Bow", which keeps.
+    expect(items.find((li) => li.textContent?.includes('Yumi with XP'))?.textContent).toContain('Keep')
+  })
 })
 
 describe('App Customize tab', () => {

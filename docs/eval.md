@@ -73,3 +73,22 @@
   `ref/shared/LootRules.cs:1988,1887-1895`.
 - [Unknown] The JS RegExp engine and .NET Regex agree on the patterns of the shipped profiles. This repo only ran
   the JS engine.
+
+## The loot preview (H3c)
+
+- [Observed] The C# compiles the regex pattern of the types 0 and 1 when it reads the file. A bad pattern then
+  throws, and the file does not load. The rebuild keeps the pattern as text (PLAN.md Traps), so the evaluator
+  compiles it. `ref/shared/LootRules.cs:311-313,377-380`.
+- [Verified] `matchRequirement` gives "error" for a bad pattern instead of throwing. `classify` stops on that
+  rule with `known` false, as it does for an unknown requirement. `src/core/eval/match.test.ts`.
+- [Verified] The 20 sample items of `src/core/eval/samples.json` are hand-made. They are not items from the game.
+  Each one hits the same rule of `LootSnobV4.utl` and `IAC_Level_NoCash.utl` on every run.
+  `src/core/eval/samples.test.ts`.
+- [Verified] The spell ids of an item are in `LootItem.spellIds`. The axe sample needs its spell id to reach the
+  buffed max damage of the rule "(H) Axe (OD +10)". `src/core/eval/samples.test.ts`.
+- [Verified] `previewItem` gives the action, the name and the index of the deciding rule. It also gives the
+  number of rules above it. It gives the result of each requirement up to the first one that is not true.
+  `src/core/eval/preview.test.ts`.
+- [Observed] The made-up character of `samples.json` gives the character types their values. It has a free main
+  pack of 60 slots. It has a buffed Healing skill of 160 and a buffed Lockpick skill of 360. The rules that read
+  it need only lower bounds. `src/core/eval/samples.json`.

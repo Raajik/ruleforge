@@ -324,11 +324,18 @@ mockup data, not app code. Keep every T27-T31 test green: change test queries on
   - Done by Wren after two free workers hit rate limits. Tested by `src/core/eval/computed.test.ts` and
     `src/core/eval/match.test.ts`, every formula with hand-computed numbers (DoT 49.375, average damage 43.75,
     missile damage 55, tinked damage 84.4344). Facts: `docs/eval.md`.
-- [ ] H3c The loot preview.
+- [x] H3c The loot preview.
   - `src/core/eval/samples.json`: about 20 sample items, made by hand to hit real rules of `LootSnobV4.utl` and
     `IAC_Level_NoCash.utl`. Say in `docs/` that they are made up, not taken from the game.
   - The loot preview panel of `design/A3-customize.html` on the Customize page, and a Loot preview tab: each
     item with its action badge. A click shows the rule that matched and the result of each requirement.
+  - `src/core/eval/samples.json` holds the 20 items and a made-up character. The spell ids of an item are in
+    `LootItem.spellIds`. The axe sample needs its spell id to reach the buffed max damage of its rule.
+  - `src/core/eval/preview.ts`: `previewItem` gives the action, the rule and the result of each requirement.
+  - An invalid regex pattern in a rule gives the result "error" on that rule. `compilePattern` gives null for a
+    bad pattern, and `classify` stops on that rule with `known` false.
+  - Tested by `src/core/eval/preview.test.ts`, `src/core/eval/samples.test.ts` and `src/ui/LootPreview.test.tsx`
+    (530 tests pass). Facts: `docs/eval.md`, `docs/ui.md`.
 - [ ] H4 Review changes against the base profile.
 - [ ] H5 The Overview page. The strictness, ladder and character rules are in `specs/ruleforge-ui.md`, "Strictness".
 

@@ -1,0 +1,230 @@
+{
+  "character": {
+    "level": 60,
+    "baseSkills": { "21": 150, "23": 340 },
+    "buffedSkills": { "21": 160, "23": 360 },
+    "mainPackFreeSlots": 60
+  },
+  "items": [
+    {
+      "name": "Health Philtre",
+      "objectClass": 29,
+      "intValues": { "Value": 120 },
+      "doubleValues": {},
+      "stringValues": { "Name": "Health Philtre" },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    },
+    {
+      "name": "Aged Legendary Key",
+      "objectClass": 13,
+      "intValues": {},
+      "doubleValues": {},
+      "stringValues": { "Name": "Aged Legendary Key" },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    },
+    {
+      "name": "Coconut",
+      "objectClass": 18,
+      "intValues": {},
+      "doubleValues": {},
+      "stringValues": { "Name": "Coconut" },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    },
+    {
+      "name": "Rynthid Masks",
+      "objectClass": 2,
+      "intValues": { "ArmorLevel": 12 },
+      "doubleValues": { "MeleeDefenseBonus": 1.04 },
+      "stringValues": { "Name": "Rynthid Masks" },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    },
+    {
+      "name": "Mote",
+      "objectClass": 8,
+      "intValues": {},
+      "doubleValues": {},
+      "stringValues": { "Name": "Mote" },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    },
+    {
+      "name": "Phyntos Essence",
+      "objectClass": 8,
+      "intValues": {
+        "IconOverlay": 29736,
+        "DamRating": 15,
+        "DamResistRating": 10,
+        "CritRating": 10,
+        "CritResistRating": 10,
+        "CritDamRating": 5,
+        "CritDamResistRating": 5
+      },
+      "doubleValues": {},
+      "stringValues": { "Name": "Phyntos Essence" },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    },
+    {
+      "name": "Lugian War Axe",
+      "objectClass": 1,
+      "intValues": { "WeaponMasteryCategory": 3, "WieldReqAttribute": 44, "MaxDamage": 80 },
+      "doubleValues": { "Variance": 0.25 },
+      "stringValues": { "Name": "Lugian War Axe" },
+      "spells": ["Major Blood Thirst"],
+      "spellIds": [2586],
+      "palettes": []
+    },
+    {
+      "name": "Snow Tusker Blood",
+      "objectClass": 8,
+      "intValues": { "Value": 5000 },
+      "doubleValues": {},
+      "stringValues": { "Name": "Snow Tusker Blood" },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    },
+    {
+      "name": "Aetheria",
+      "objectClass": 8,
+      "intValues": { "IconOverlay": 27704 },
+      "doubleValues": {},
+      "stringValues": { "Name": "Aetheria" },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    },
+    {
+      "name": "Shattered Legendary Key",
+      "objectClass": 13,
+      "intValues": {},
+      "doubleValues": {},
+      "stringValues": { "Name": "Shattered Legendary Key" },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    },
+    {
+      "name": "Yumi with XP",
+      "objectClass": 9,
+      "intValues": { "WeaponMasteryCategory": 8, "WieldReqAttribute": 47, "MaxDamage": 40 },
+      "doubleValues": { "MeleeDefenseBonus": 1.12, "Variance": 0.25 },
+      "stringValues": {
+        "Name": "Yumi with XP",
+        "FullDescription": "A yumi bow with XP. Upgrades: --> and ->"
+      },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    },
+    {
+      "name": "Wand with XP",
+      "objectClass": 31,
+      "intValues": { "MaxDamage": 30 },
+      "doubleValues": { "Variance": 0.25 },
+      "stringValues": { "Name": "Wand with XP", "FullDescription": "A wand with XP: ready to use" },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    },
+    {
+      "name": "Shashqa with XP",
+      "objectClass": 1,
+      "intValues": { "WieldReqAttribute": 41, "MaxDamage": 35 },
+      "doubleValues": { "Variance": 0.25 },
+      "stringValues": {
+        "Name": "Shashqa with XP",
+        "FullDescription": "A shashqa with XP. Upgrades: --> and ->"
+      },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    },
+    {
+      "name": "Assagai with XP",
+      "objectClass": 1,
+      "intValues": { "WieldReqAttribute": 41, "MaxDamage": 35 },
+      "doubleValues": { "Variance": 0.25 },
+      "stringValues": {
+        "Name": "Assagai with XP",
+        "FullDescription": "An assagai with XP. Upgrades: --> and ->"
+      },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    },
+    {
+      "name": "Gold Pea",
+      "objectClass": 8,
+      "intValues": { "Value": 5000 },
+      "doubleValues": {},
+      "stringValues": { "Name": "Gold Pea" },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    },
+    {
+      "name": "Major Mana Stone",
+      "objectClass": 16,
+      "intValues": { "Value": 20000 },
+      "doubleValues": {},
+      "stringValues": { "Name": "Major Mana Stone" },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    },
+    {
+      "name": "Peerless Healing Kit",
+      "objectClass": 29,
+      "intValues": { "Value": 1000 },
+      "doubleValues": {},
+      "stringValues": { "Name": "Peerless Healing Kit" },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    },
+    {
+      "name": "Aquamarine",
+      "objectClass": 11,
+      "intValues": { "Material": 13, "Workmanship": 5 },
+      "doubleValues": {},
+      "stringValues": { "Name": "Aquamarine" },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    },
+    {
+      "name": "Emerald",
+      "objectClass": 11,
+      "intValues": { "Material": 21, "Workmanship": 8 },
+      "doubleValues": {},
+      "stringValues": { "Name": "Emerald" },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    },
+    {
+      "name": "Crossbow with XP",
+      "objectClass": 9,
+      "intValues": { "WeaponMasteryCategory": 9, "WieldReqAttribute": 47, "MaxDamage": 42 },
+      "doubleValues": { "MeleeDefenseBonus": 1.05, "Variance": 0.25 },
+      "stringValues": {
+        "Name": "Crossbow with XP",
+        "FullDescription": "A crossbow with XP. Upgrades: --> and ->"
+      },
+      "spells": [],
+      "spellIds": [],
+      "palettes": []
+    }
+  ]
+}

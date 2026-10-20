@@ -187,3 +187,17 @@
   Rules tab. Only one panel renders at a time, so the "Rules" list of the App tests is absent on this tab.
 - **Verified** (`src/ui/CustomizePage.test.tsx`, "shows the top sections ..."): on `IAC_Level_NoCash.utl` the
   sections hold 10, 16 and 27 rules, because each section is the run of rules after its marker rule.
+
+## The loot preview (H3c)
+
+- **Observed** (`design/A3-customize.html` 81-107): the mockup has a loot preview panel on the right of the
+  Customize page. It lists the sample items, each with a badge of the action. Below the list, the "Why" panel
+  names the rule that matched. It lists the requirements of that rule. It says that the rules below it do not run.
+- **Verified** (`src/ui/LootPreview.test.tsx`): the panel shows the 20 sample items with the action that the
+  profile gives them. A click on an item shows the rule that matched and the result of each requirement that
+  the panel checked.
+- **Verified** (`src/ui/LootPreview.test.tsx`, "shows an error on a rule with an invalid regex pattern, not a
+  crash"): a rule with an invalid regex pattern shows the error on that rule. The panel does not crash.
+- **Verified** (`src/ui/App.test.tsx`, "the Loot preview tab shows the sample items with the action of the
+  profile"): `App` has a "Loot preview" tab beside "Customize" and "Salvage Combination". The tab shows the
+  items on the left and the why panel on the right. The Customize page shows the same panel on the right.

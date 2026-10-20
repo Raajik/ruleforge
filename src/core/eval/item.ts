@@ -43,6 +43,14 @@ export interface LootItem {
   palettes: ItemPalette[]
 }
 
+/**
+ * A sample item of `samples.json`. The name is the name that the preview
+ * shows. The LootItem itself has no name.
+ */
+export interface SampleItem extends LootItem {
+  name: string
+}
+
 // Number to enum name. Every value of the three generated enums is unique
 // (checked in item.test.ts), so the reverse map is unambiguous.
 const intValueKeyName = reverse(intValueKey)

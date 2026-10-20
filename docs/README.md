@@ -8,4 +8,4 @@ One file for each area. Each fact is tagged **Verified** (name the test), **Obse
 - [gamedata.md](gamedata.md): game data tables and their sources (T16–T17).
 - [ops.md](ops.md): editor operations and the legacy behavior they copy (T18–T28).
 - [ui.md](ui.md): the main window layout and its legacy controls (T27+).
-- [eval.md](eval.md): the item evaluator and the C# Match methods it ports (H3a).
+- [eval.md](eval.md): the item evaluator and the C# Match methods it ports (H3a–H3c).

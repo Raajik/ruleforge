@@ -23,7 +23,7 @@ describe('App layout', () => {
     expect(within(list).getAllByRole('listitem')).toHaveLength(1627)
   })
 
-  it('has the menu bar, the toolbar and the two tabs', () => {
+  it('has the menu bar, the toolbar and the tabs', () => {
     render(<App initialProfile={lootSnob()} />)
     for (const menu of ['File', 'Edit', 'Rule', 'Combine']) {
       expect(screen.getByRole('button', { name: menu })).toBeTruthy()
@@ -33,7 +33,18 @@ describe('App layout', () => {
     }
     expect(screen.getByPlaceholderText('Search for rule by name')).toBeTruthy()
     expect(screen.getByRole('tab', { name: 'Loot Rules' })).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'Loot preview' })).toBeTruthy()
     expect(screen.getByRole('tab', { name: 'Salvage Combination' })).toBeTruthy()
+  })
+
+  it('the Loot preview tab shows the sample items with the action of the profile', () => {
+    render(<App initialProfile={lootSnob()} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Loot preview' }))
+    const items = within(screen.getByRole('list', { name: 'Loot preview items' })).getAllByRole('listitem')
+    expect(items.length).toBe(20)
+    // LootSnobV4 keeps the health philtre.
+    expect(items[0]!.textContent).toContain('Health Philtre')
+    expect(items[0]!.textContent).toContain('Keep')
   })
 
   it('clicking a rule shows its name, action and requirements', () => {
