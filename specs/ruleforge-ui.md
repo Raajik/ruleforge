@@ -61,10 +61,43 @@ What the file holds (Observed, `fixtures/LootSnobV4.utl`, 1,627 rules):
 So the Customize page groups rules by both section levels, and a rule's on/off box is its `DisabledRule`.
 Strictness and character choices turn whole sections or rules on and off. They do not change thresholds.
 
-## Open (needs the user)
+## Strictness (user, 2026-10-19)
 
-- **Strictness content:** what each strictness level turns on in LootSnob v4. Until the user decides, H5 shows
-  the base profile and the character choices only.
+Four levels: Very strict, Strict, Regular, Soft. A level turns LootSnob v4 rules on and off. It never changes a
+threshold. The level table is data in one JSON file.
+
+**Gear tiers** (the sub-sections of Armor, Cloth Armor, Clothing and Jewelry):
+
+| Level | Legendary, Legendary Sets | Ward/Impen, Ward | Epic, Epic Sets | Major, Major Sets, Other Sets, Other |
+|---|---|---|---|---|
+| Very strict | on | off | off | off |
+| Strict | on | on | off | off |
+| Regular | on | on | on | off |
+| Soft | on | on | on | on |
+
+**Ladders:** a ladder is a run of rules next to each other in one section whose names are the same after every
+digit run becomes `#`. Examples: `(H) Axe (OD +10)` to `(H) Axe (OD +1)`, `(W) No Wield (29MD)` to `(21MD)`,
+`(ME) 40k` and `(ME) 30k`. The first rule is the best rung. A level keeps the top rungs and turns the rest off:
+
+| Level | Rungs on |
+|---|---|
+| Very strict | top 2 |
+| Strict | top 4 |
+| Regular | top 6 |
+| Soft | all |
+
+Ladders apply in Melee Weapons, Missile Weapons and Wands, and in Cloaks. In Cloaks, the whole section is one
+ladder in file order (an assumption: LootSnob lists the best cloaks first).
+
+**Value and Death Items** (off in LootSnob): Soft turns on all rungs, Regular the top 6 rungs of each ladder.
+Strict and Very strict keep them off.
+
+**Not touched by strictness:** Trophies stay separate on/off choices in the character step. Tailoring,
+Tailoring (Special) and Salvage stay as the file has them, and the user turns them on by hand. Item Only and
+Shields follow the ladder rule.
+
+**Character:** the weapon choice keeps only the matching weapon rules on, by name prefix: `(H)` heavy, `(L)`
+light, `(F)` finesse, `(M)` missile, `(W)` wand. Rules of other weapon types go off.
 - **Sample items:** H3 starts with a small set made by hand from the fixtures' rules. A real item import needs a
   data source.
 
