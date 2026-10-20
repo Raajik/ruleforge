@@ -10,6 +10,7 @@ import {
   addMaterialEntry,
   deleteMaterialEntry,
   setDefaultRange,
+  setMaterial,
   setRange,
   setValueMode,
   setValueModeValue,
@@ -51,19 +52,17 @@ export function SalvageCombineTab({
 }) {
   const block = salvageBlock(profile)
   const [selected, setSelected] = useState(-1)
-  const [working, setWorking] = useState(false)
 
   const materialList = block ? [...block.materialCombineStrings.keys()] : []
 
   useEffect(() => {
-    if (working) return
     // Keep the selection in bounds when the list changes.
     if (selected >= materialList.length && materialList.length > 0) {
       setSelected(materialList.length - 1)
     } else if (materialList.length === 0 && selected !== -1) {
       setSelected(-1)
     }
-  }, [working, selected, materialList.length])
+  }, [selected, materialList.length])
 
   if (!block) {
     return <p>Salvage Combination tab.</p>
@@ -73,49 +72,30 @@ export function SalvageCombineTab({
   const showSettings = matSelected !== undefined
 
   function select(index: number) {
-    if (working) return
     setSelected(index)
   }
 
   function onMaterialChange(value: string) {
-    if (working) return
-    const newmat = Number(value)
-    if (selected < 0) return
-    if (isNaN(newmat)) return
-    // See if we can do this - there can only be one entry for each mat
-    const oldmat = materialList[selected]
-    if (oldmat === undefined) return
-    if (materialList.includes(newmat)) return
-    // Perform the switch: update the block maps
-    const next = { ...profile }
-    const b = salvageBlock(next)!
-    const range = b.materialCombineStrings.get(oldmat)
-    const vmode = b.materialValueModeValues.get(oldmat)
-    b.materialCombineStrings.delete(oldmat)
-    if (range !== undefined) b.materialCombineStrings.set(newmat, range)
-    b.materialValueModeValues.delete(oldmat)
-    if (vmode !== undefined) b.materialValueModeValues.set(newmat, vmode)
+    const next = setMaterial(profile, selected, Number(value))
+    if (next === profile) return
     onChange(next)
-    // Selection index stays the same
+    // The moved entry is now the last one (Form_SalvageTab.cs 114-115).
+    setSelected(materialList.length - 1)
   }
 
   function onDefaultChange(text: string) {
-    if (working) return
     onChange(setDefaultRange(profile, text))
   }
 
   function onRangeChange(text: string) {
-    if (working) return
     onChange(setRange(profile, selected, text))
   }
 
   function onValueModeChange(checked: boolean) {
-    if (working) return
     onChange(setValueMode(profile, selected, checked))
   }
 
   function onValueModeTextChange(text: string) {
-    if (working) return
     onChange(setValueModeValue(profile, selected, text))
   }
 

@@ -80,3 +80,4 @@
   Ctrl+V replaces it in place. Ctrl+S and Ctrl+O call the T31 callbacks. Delete removes the selected rule.
   Ctrl+C in a text box leaves the text box alone.
 - [Verified] The rule name, action and keep count boxes edit the rule. Bad keep count text stores 0, as `int.TryParse` does (`Form1.cs` 577-629). Test: `src/ui/App.connect.test.tsx`, "edits the rule name, the action and the keep count".
+- [Verified] The Salvage Combination tab edits the selected range, adds and deletes entries, and keeps the selection on an entry after its material changes. Test: `src/ui/SalvageCombineTab.test.tsx`.

@@ -92,6 +92,22 @@ export function deleteMaterialEntry(profile: LootProfile, index: number): LootPr
   })
 }
 
+/**
+ * Form_SalvageTab.cs 95-122: the material combo of the selected entry. A
+ * material that has an entry already is rejected (104-109). The range moves
+ * to the new material, which goes to the end of the dictionary (114-115).
+ * The value mode stays under the old material, as for "Delete".
+ */
+export function setMaterial(profile: LootProfile, index: number, material: number): LootProfile {
+  return withSalvageBlock(profile, (block) => {
+    const old = materialAt(block, index)
+    if (old === undefined || block.materialCombineStrings.has(material)) return false
+    block.materialCombineStrings.set(material, block.materialCombineStrings.get(old) ?? '')
+    block.materialCombineStrings.delete(old)
+    return true
+  })
+}
+
 /** Form_SalvageTab.cs 124-140: the combine range of the selected entry. */
 export function setRange(profile: LootProfile, index: number, text: string): LootProfile {
   return withSalvageBlock(profile, (block) => {

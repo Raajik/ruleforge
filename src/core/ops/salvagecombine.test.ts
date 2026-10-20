@@ -17,6 +17,7 @@ import {
   exportRanges,
   importRanges,
   setDefaultRange,
+  setMaterial,
   setRange,
   setValueMode,
   setValueModeValue,
@@ -295,5 +296,27 @@ describe('the tab edits together on a real fixture', () => {
 
     // The input profile does not change.
     expect(p).toEqual(readProfile(readFileSync('fixtures/vtclassic_editor_minimal.utl', 'utf8')))
+  })
+})
+
+describe('setMaterial', () => {
+  it('moves the range to the new material at the end, and keeps the value mode under the old one', () => {
+    const before = profile(block())
+    const after = setMaterial(before, 0, 20)
+    const b = salvageOf(after)
+    // Form_SalvageTab.cs 114-115: set the new key, then remove the old one.
+    expect([...b.materialCombineStrings]).toEqual([
+      [13, '3-4'],
+      [20, '1-10'],
+    ])
+    expect([...b.materialValueModeValues]).toEqual([[10, 500]])
+    // The input profile does not change.
+    expect([...salvageOf(before).materialCombineStrings.keys()]).toEqual([10, 13])
+  })
+
+  it('rejects a material that has an entry already, and an index outside the list', () => {
+    const before = profile(block())
+    expect(setMaterial(before, 0, 13)).toBe(before)
+    expect(setMaterial(before, 5, 20)).toBe(before)
   })
 })

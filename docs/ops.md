@@ -328,3 +328,5 @@
 - [Verified] The real `LongValKey*` requirements of `IAC_Level_NoCash.utl` and the real `StringValueMatch`
   requirements of `UnfamilarShores.utl` show and re-set unchanged: reading a field and setting it back gives
   the same requirement. Test: `src/core/ops/reqfields.test.ts`, "real requirements".
+- [Observed] A material change in the salvage tab moves the combine range to the new material, and the new key goes to the end of the dictionary. The value mode stays under the old material. A material that has an entry already is rejected. `ref/editor/Form_SalvageTab.cs:95-122`.
+- [Verified] `setMaterial` copies that, and it never changes its input. Test: `src/core/ops/salvagecombine.test.ts`, "setMaterial".
