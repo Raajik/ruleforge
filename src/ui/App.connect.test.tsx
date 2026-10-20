@@ -116,19 +116,21 @@ describe('App menus', () => {
     expect(screen.getByText('Select a rule.')).toBeTruthy()
   })
 
-  it('File > Open, Save, Save As and Exit call the callbacks of T31', () => {
-    const onOpen = vi.fn()
-    const onSave = vi.fn()
-    const onSaveAs = vi.fn()
-    const onExit = vi.fn()
-    render(
-      <App initialProfile={iac()} onOpen={onOpen} onSave={onSave} onSaveAs={onSaveAs} onExit={onExit} />,
-    )
+  it('File > Open, Save and Save As use the browser file access, Exit closes the window', async () => {
+    const openPicker = vi.fn(async () => {
+      throw new DOMException('aborted', 'AbortError')
+    })
+    const savePicker = vi.fn(async () => {
+      throw new DOMException('aborted', 'AbortError')
+    })
+    vi.stubGlobal('showOpenFilePicker', openPicker)
+    vi.stubGlobal('showSaveFilePicker', savePicker)
+    const close = vi.spyOn(window, 'close').mockImplementation(() => {})
+    render(<App initialProfile={smallProfile()} />)
     for (const item of ['Open', 'Save', 'Save As', 'Exit']) pick('File', item)
-    expect(onOpen).toHaveBeenCalledTimes(1)
-    expect(onSave).toHaveBeenCalledTimes(1)
-    expect(onSaveAs).toHaveBeenCalledTimes(1)
-    expect(onExit).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(openPicker).toHaveBeenCalledTimes(1))
+    expect(savePicker).toHaveBeenCalledTimes(2)
+    expect(close).toHaveBeenCalledTimes(1)
   })
 
   it('Edit > Copy Rule and Paste Rule move a rule through the clipboard', async () => {
@@ -341,14 +343,20 @@ describe('App keyboard', () => {
     expect(writeText).not.toHaveBeenCalled()
   })
 
-  it('Ctrl+S and Ctrl+O call the file callbacks, Delete removes the selected rule', () => {
-    const onSave = vi.fn()
-    const onOpen = vi.fn()
-    render(<App initialProfile={smallProfile()} onSave={onSave} onOpen={onOpen} />)
+  it('Ctrl+S and Ctrl+O use the browser file access, Delete removes the selected rule', async () => {
+    const openPicker = vi.fn(async () => {
+      throw new DOMException('aborted', 'AbortError')
+    })
+    const savePicker = vi.fn(async () => {
+      throw new DOMException('aborted', 'AbortError')
+    })
+    vi.stubGlobal('showOpenFilePicker', openPicker)
+    vi.stubGlobal('showSaveFilePicker', savePicker)
+    render(<App initialProfile={smallProfile()} />)
     fireEvent.keyDown(document, { key: 's', ctrlKey: true })
     fireEvent.keyDown(document, { key: 'o', ctrlKey: true })
-    expect(onSave).toHaveBeenCalledTimes(1)
-    expect(onOpen).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(openPicker).toHaveBeenCalledTimes(1))
+    expect(savePicker).toHaveBeenCalledTimes(1)
     fireEvent.click(ruleButton(0))
     fireEvent.keyDown(document, { key: 'Delete' })
     expect(ruleNames()).toEqual(['Alpha'])

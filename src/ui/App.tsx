@@ -4,9 +4,9 @@
  *
  * T29 connects the menu bar, the toolbar and the buttons to the phase E ops.
  * It binds the keys Ctrl+C, Ctrl+V, Ctrl+S, Ctrl+O and Delete. A click on a
- * top-level menu item opens its dropdown, as a WinForms menu does. Open, Save,
- * Save As and Exit need the file system of T31, so they call the optional
- * `onOpen`, `onSave`, `onSaveAs` and `onExit` props. The C# has no Delete key
+ * top-level menu item opens its dropdown, as a WinForms menu does. T31 adds
+ * browser file access and the unsaved-changes prompt of `CheckSave`
+ * (Form1.cs 388-404) and `beforeunload`. The C# has no Delete key
  * binding (Form1.cs 900-908 tracks only the Ctrl state). The rebuild deletes
  * the selected rule with it.
  *
@@ -15,10 +15,10 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { eLootAction, ruleTypeName } from '../core/format/enums'
-import type { LootProfile, Requirement } from '../core/format/profile'
+import { readProfile, writeProfile, type LootProfile, type Requirement } from '../core/format/profile'
 import { parseInt32 } from '../core/format/reader'
 import { copyRuleText, pasteRuleText } from '../core/ops/clipboard'
-import { newFile } from '../core/ops/file'
+import { newFile, unsavedChangesPrompt } from '../core/ops/file'
 import {
   cloneRequirement,
   cloneRule,
@@ -39,11 +39,27 @@ import { exportRanges, importRanges } from '../core/ops/salvagecombine'
 import { autoSortRules } from '../core/ops/sort'
 import { updateWorkmanshipRequirements } from '../core/ops/workmanship'
 import { ACTION_COMBO, PackslotsDialog, SalvageRulesDialog, WorkmanshipDialog } from './dialogs'
+import {
+  downloadText,
+  hasFileSystemAccess,
+  newProfileFile,
+  pickProfileFile,
+  writeProfileHandle,
+} from './fileio'
 import { MenuBar, type MenuName } from './MenuBar'
 import { ReqEditor } from './ReqEditor'
 import { SalvageCombineTab } from './SalvageCombineTab'
 
 type DialogKind = 'salvage' | 'workmanship' | 'packslots'
+
+/** The File-menu actions that `CheckSave` can hold back (Form1.cs 388-404). */
+type FileAction = 'new' | 'open' | 'exit'
+
+/**
+ * The name the browser gives an untitled profile. The C# title says
+ * "New File" (Form1.cs 52, 298).
+ */
+const DEFAULT_FILE_NAME = 'New File.utl'
 
 /** True when a keystroke belongs to the focused text field, not the editor. */
 function isTextEntry(target: EventTarget | null): boolean {
@@ -52,30 +68,37 @@ function isTextEntry(target: EventTarget | null): boolean {
   return element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.tagName === 'SELECT'
 }
 
-export function App({
-  initialProfile,
-  armorGroups,
-  onOpen,
-  onSave,
-  onSaveAs,
-  onExit,
-}: {
+export function App({ initialProfile, armorGroups }: {
   initialProfile: LootProfile
   /** The color slot names of the ColorSlots XML file (type 15 only). */
   armorGroups?: readonly string[]
-  /** File access comes in T31; these are the seams for it. */
-  onOpen?: () => void
-  onSave?: () => void
-  onSaveAs?: () => void
-  onExit?: () => void
 }) {
-  const [profile, setProfile] = useState(initialProfile)
+  const [profile, setProfileState] = useState(initialProfile)
   const [tab, setTab] = useState<'rules' | 'salvage'>('rules')
   const [selectedRule, setSelectedRule] = useState(-1)
   const [selectedReq, setSelectedReq] = useState(-1)
   const [search, setSearch] = useState('')
   const [dialog, setDialog] = useState<DialogKind | null>(null)
   const importInput = useRef<HTMLInputElement>(null)
+
+  // --- The editor file state (Form1.cs 41-56: FileName, FileChanged) ---
+
+  const [fileName, setFileName] = useState('')
+  const [changed, setChanged] = useState(false)
+  const [pendingAction, setPendingAction] = useState<FileAction | null>(null)
+  const [fileError, setFileError] = useState('')
+  /** The open file of the File System Access API, to save back to. */
+  const handleRef = useRef<FileSystemFileHandle | null>(null)
+
+  /**
+   * Every profile edit marks the file changed, so the unsaved-changes box
+   * shows (Form1.cs 407-415, the `FileChanged` setter). A load and New clear
+   * the flag through `setProfileState`.
+   */
+  function setProfile(next: LootProfile | ((p: LootProfile) => LootProfile)) {
+    setProfileState(next)
+    setChanged(true)
+  }
 
   const rule = selectedRule >= 0 ? profile.rules[selectedRule] : undefined
   const req = rule && selectedReq >= 0 ? rule.requirements[selectedReq] : undefined
@@ -192,17 +215,95 @@ export function App({
     if (found !== -1) selectRule(found)
   }
 
+  // --- Open and save in the browser (T31; the C# is Form1.cs 292-464) ---
+
+  function loadProfile(loaded: LootProfile, name: string, handle: FileSystemFileHandle | null) {
+    setProfileState(loaded)
+    setFileName(name)
+    handleRef.current = handle
+    setChanged(false)
+    setFileError('')
+    selectRule(-1)
+  }
+
+  /** Form1.cs 319-331, 360-387. A bad file keeps the current profile. */
+  async function openFile() {
+    const picked = await pickProfileFile()
+    if (!picked) return
+    try {
+      loadProfile(readProfile(picked.text), picked.name, picked.handle)
+    } catch {
+      setFileError(`Could not read ${picked.name}.`)
+    }
+  }
+
+  /**
+   * Form1.cs 429-464. `pickNew` is Save As: it always asks for a new file.
+   * Save writes back to the open file. A browser without the File System
+   * Access API downloads the text. It gives false when the save did not
+   * happen, as `saveasres` does.
+   */
+  async function saveFile(pickNew: boolean): Promise<boolean> {
+    const text = writeProfile(profile)
+    const name = fileName === '' ? DEFAULT_FILE_NAME : fileName
+    let handle = pickNew ? null : handleRef.current
+    if (!handle && hasFileSystemAccess()) {
+      handle = await newProfileFile(name)
+      if (!handle) return false
+    }
+    if (handle) {
+      try {
+        await writeProfileHandle(handle, text)
+      } catch {
+        // The edit stays in the editor and the file keeps its old content.
+        setFileError(`Could not write ${name}.`)
+        return false
+      }
+      handleRef.current = handle
+      setFileName(handle.name)
+    } else {
+      downloadText(name, text)
+    }
+    setFileError('')
+    setChanged(false)
+    return true
+  }
+
+  /** Form1.cs 388-404 `CheckSave`. */
+  function checkSave(action: FileAction) {
+    if (unsavedChangesPrompt(changed) === 'ask') setPendingAction(action)
+    else runFileAction(action)
+  }
+
+  function runFileAction(action: FileAction) {
+    if (action === 'new') loadProfile(newFile().profile, '', null)
+    else if (action === 'open') void openFile()
+    else window.close()
+  }
+
+  /** Form1.cs 395-397: "Yes" saves first and continues only when it worked. */
+  async function promptSave() {
+    const action = pendingAction
+    setPendingAction(null)
+    if (action && (await saveFile(false))) runFileAction(action)
+  }
+
+  /** Form1.cs 398-399: "No" continues without saving. */
+  function promptDiscard() {
+    const action = pendingAction
+    setPendingAction(null)
+    if (action) runFileAction(action)
+  }
+
   // --- Menu items (Form1.Designer.cs 176-330) ---
 
   function menuPick(menu: MenuName, item: string) {
     if (menu === 'File') {
-      if (item === 'New') {
-        setProfile(newFile().profile)
-        selectRule(-1)
-      } else if (item === 'Open') onOpen?.()
-      else if (item === 'Save') onSave?.()
-      else if (item === 'Save As') onSaveAs?.()
-      else onExit?.()
+      if (item === 'New') checkSave('new')
+      else if (item === 'Open') checkSave('open')
+      else if (item === 'Save') void saveFile(false)
+      else if (item === 'Save As') void saveFile(true)
+      else checkSave('exit')
       return
     }
     if (menu === 'Edit') {
@@ -231,15 +332,7 @@ export function App({
   function exportRangesNow() {
     const text = exportRanges(profile)
     if (text === undefined) return
-    const url = URL.createObjectURL(new Blob([text]))
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'ranges.ucr'
-    // In the DOM, so every browser starts the download (the C# writes a file).
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    URL.revokeObjectURL(url)
+    downloadText('ranges.ucr', text)
   }
 
   // --- Keyboard (Form1.Designer.cs 193, 203, 216, 256, 264) ---
@@ -261,10 +354,10 @@ export function App({
         }
       } else if (event.ctrlKey && key === 's') {
         event.preventDefault()
-        onSave?.()
+        void saveFile(false)
       } else if (event.ctrlKey && key === 'o') {
         event.preventDefault()
-        onOpen?.()
+        checkSave('open')
       } else if (key === 'delete' && !typing) {
         deleteRuleClick()
       }
@@ -272,6 +365,19 @@ export function App({
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
   })
+
+  // The browser asks before the page closes a changed file (PLAN.md T31).
+  useEffect(() => {
+    function onBeforeUnload(event: BeforeUnloadEvent) {
+      if (unsavedChangesPrompt(changed) !== 'ask') return
+      event.preventDefault()
+      // The DOM lib types returnValue as a boolean; the HTML spec takes a
+      // string, and old Firefox wants one to ask at all.
+      Object.assign(event, { returnValue: 'File not saved. Save now?' })
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [changed])
 
   return (
     <div>
@@ -330,6 +436,8 @@ export function App({
           e.target.value = ''
         }}
       />
+
+      {fileError !== '' && <p role="alert">{fileError}</p>}
 
       {tab === 'rules' ? (
         <div role="tabpanel" aria-label="Loot Rules">
@@ -478,6 +586,23 @@ export function App({
           }}
           onCancel={() => setDialog(null)}
         />
+      )}
+
+      {/* The C# box of CheckSave (Form1.cs 392): Yes, No and Cancel. */}
+      {pendingAction && (
+        <fieldset role="dialog" aria-label="Save">
+          <legend>Save</legend>
+          <p>File not saved. Save now?</p>
+          <button type="button" onClick={() => void promptSave()}>
+            Yes
+          </button>
+          <button type="button" onClick={promptDiscard}>
+            No
+          </button>
+          <button type="button" onClick={() => setPendingAction(null)}>
+            Cancel
+          </button>
+        </fieldset>
       )}
     </div>
   )

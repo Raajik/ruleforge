@@ -238,10 +238,15 @@ Copy the layout of the legacy editor first. Improvements come later.
     selected rule in place. The Delete key is a rebuild addition. The C# has none (Form1.cs 900-908).
     Tested by `App.connect.test.tsx` (21 tests, 368 total). Facts: `docs/ui.md`.
 - [x] T30 Salvage Combination tab, connected to the T25 ops.
-- [ ] T31 Open and save in the browser.
+- [x] T31 Open and save in the browser.
   - Use the File System Access API when the browser has it (Chromium). Else use `<input type="file">` and a
     download.
   - Ask before New, Open and the page close with unsaved changes (`unsavedChangesPrompt`, `beforeunload`).
+  - `src/ui/fileio.ts`: `hasFileSystemAccess`, `pickProfileFile`, `newProfileFile`, `writeProfileHandle` and
+    `downloadText`. The TypeScript DOM lib misses the two pickers, so the file declares them.
+    `src/ui/App.tsx` holds `fileName` and `changed`, and its `setProfile` wrapper marks every profile edit
+    as changed. New, Open and Exit run through `checkSave` (`Form1.cs` 388-404), and the page close asks
+    with `beforeunload`. Tested by `fileio.test.ts` and `App.file.test.tsx` (396 total). Facts: `docs/ui.md`.
 
 ## Phase G: desktop (needs the user)
 - [ ] T32 USER: install Rust (`mise use -g rust`) and the Tauri packages:
