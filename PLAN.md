@@ -266,7 +266,7 @@ Copy the layout of the legacy editor first. Improvements come later.
 Read `specs/ruleforge-ui.md` first. The approved mockups are in `design/`: open each HTML file as text. Copy the
 colors, fonts, spacing and layout from them. The `{{...}}` parts and the `<script type="text/x-dc">` block are
 mockup data, not app code. Keep every T27-T31 test green: change test queries only when a label really changes.
-- [ ] H1 The Forge look for the current app.
+- [x] H1 The Forge look for the current app.
   - Put the colors of `design/A-rule-editor.html` in CSS custom properties in one file, `src/ui/theme.css`.
     Load Inter and JetBrains Mono from Google Fonts, with system fonts as the fallback.
   - Restyle the top bar, the Loot Rules tab and the Salvage Combination tab to the layout of
@@ -274,6 +274,10 @@ mockup data, not app code. Keep every T27-T31 test green: change test queries on
     requirement fields on the right. Keep every current control and keyboard key.
   - The action badge of a rule shows "Off" when the rule has a `DisabledRule` with `b` true.
   - No new behavior. Test: the current tests pass, plus a test for the "Off" badge.
+  - `src/ui/theme.css` holds the colors as custom properties and the fonts through one `@import`. The three
+    panels are a CSS grid on the existing controls, so no control and no key changed.
+  - `isRuleDisabled` (`src/core/ops/rules.ts`) drives the badge: `Off` for a true `DisabledRule`, else the
+    friendly action name. Tested by `rules.test.ts` and the badge test in `App.test.tsx` (419 tests pass).
 - [ ] H2 Categories and the Customize page.
   - `src/core/ops/categories.ts`: split the rules into sections. A name that is two or more `*`, text, then two
     or more `*` (after a trim) starts a section. It is a sub-section when the untrimmed name starts with a space,

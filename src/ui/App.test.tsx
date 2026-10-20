@@ -5,6 +5,8 @@
 import { readFileSync } from 'node:fs'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
+import { eLootAction } from '../core/format/enums'
+import type { LootProfile } from '../core/format/profile'
 import { readProfile } from '../core/format/profile'
 import { App } from './App'
 
@@ -38,7 +40,7 @@ describe('App layout', () => {
     render(<App initialProfile={lootSnob()} />)
     // Rule 0 is "***** Trophies *****" (Keep) with a DisabledRule and a
     // StringValueMatch requirement.
-    fireEvent.click(screen.getByRole('button', { name: '***** Trophies *****' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Off ***** Trophies *****' }))
     expect((screen.getByLabelText('Rule Name') as HTMLInputElement).value).toBe('***** Trophies *****')
     const action = screen.getByLabelText('Action') as HTMLSelectElement
     expect(action.selectedOptions[0]!.textContent).toBe('Keep')
@@ -61,7 +63,7 @@ describe('App layout', () => {
 
   it('clicking a requirement shows its fields, and typing updates the requirement', () => {
     render(<App initialProfile={lootSnob()} />)
-    fireEvent.click(screen.getByRole('button', { name: '***** Trophies *****' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Off ***** Trophies *****' }))
     fireEvent.click(screen.getByRole('button', { name: 'StringValueMatch' }))
     const pattern = screen.getByLabelText('String Value Pattern') as HTMLInputElement
     expect(pattern.value).toBeTruthy()
@@ -74,5 +76,43 @@ describe('App layout', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Salvage Combination' }))
     expect(screen.queryByRole('list', { name: 'Rules' })).toBeNull()
     expect(screen.getByRole('tabpanel')).toBeTruthy()
+  })
+
+  it('the action badge shows "Off" only for a rule with a true DisabledRule', () => {
+    const profile: LootProfile = {
+      version: 1,
+      extraBlocks: [],
+      rules: [
+        {
+          name: 'Off rule',
+          customExpression: '',
+          priority: 0,
+          action: eLootAction.Keep,
+          lootActionData: 0,
+          requirements: [{ type: 9999, b: true }],
+        },
+        {
+          name: 'Live rule',
+          customExpression: '',
+          priority: 0,
+          action: eLootAction.Sell,
+          lootActionData: 0,
+          requirements: [],
+        },
+        {
+          name: 'False rule',
+          customExpression: '',
+          priority: 0,
+          action: eLootAction.Salvage,
+          lootActionData: 0,
+          requirements: [{ type: 9999, b: false }],
+        },
+      ],
+    }
+    render(<App initialProfile={profile} />)
+    const items = within(screen.getByRole('list', { name: 'Rules' })).getAllByRole('listitem')
+    expect(within(items[0]!).getByText('Off')).toBeTruthy()
+    expect(within(items[1]!).getByText('Sell')).toBeTruthy()
+    expect(within(items[2]!).getByText('Salvage')).toBeTruthy()
   })
 })

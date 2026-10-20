@@ -14,7 +14,7 @@
  * 350-364). Any other action gets no combo entry (Form1.cs 127-141).
  */
 import { useEffect, useRef, useState } from 'react'
-import { eLootAction, ruleTypeName } from '../core/format/enums'
+import { eLootAction, friendlyActionName, ruleTypeName } from '../core/format/enums'
 import { readProfile, writeProfile, type LootProfile, type Requirement } from '../core/format/profile'
 import { parseInt32 } from '../core/format/reader'
 import { copyRuleText, pasteRuleText } from '../core/ops/clipboard'
@@ -24,6 +24,7 @@ import {
   cloneRule,
   deleteRequirement,
   deleteRule,
+  isRuleDisabled,
   moveRule,
   newRequirement,
   newRule,
@@ -53,6 +54,7 @@ import {
 import { MenuBar, type MenuName } from './MenuBar'
 import { ReqEditor } from './ReqEditor'
 import { SalvageCombineTab } from './SalvageCombineTab'
+import './theme.css'
 
 type DialogKind = 'salvage' | 'workmanship' | 'packslots'
 
@@ -427,41 +429,72 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
   }, [changed])
 
   return (
-    <div>
-      <MenuBar onPick={menuPick} />
-      <div role="toolbar" aria-label="Toolbar">
-        <button type="button" onClick={() => void copyCurrent()}>
-          Copy rule
-        </button>
-        <button
-          type="button"
-          onClick={(e) => void pasteCurrent(true, e.ctrlKey)}
-        >
-          Paste rule
-        </button>
-        <input
-          aria-label="Search for rule by name"
-          placeholder="Search for rule by name"
-          value={search}
-          onChange={(e) => searchChanged(e.target.value)}
-        />
-        <button type="button" onClick={goNextMatch}>
-          Go to next match
-        </button>
-      </div>
-      <div role="tablist" aria-label="Editor tabs">
-        <button type="button" role="tab" aria-selected={tab === 'rules'} onClick={() => setTab('rules')}>
-          Loot Rules
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'salvage'}
-          onClick={() => setTab('salvage')}
-        >
-          Salvage Combination
-        </button>
-      </div>
+    <div className="app">
+      <header className="topbar">
+        {/* The brand of design/A-rule-editor.html: the anvil mark and the name. */}
+        <div className="brand">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 18h18" />
+            <path d="M6 18v-4h12v4" />
+            <path d="M8 14V9h8v5" />
+            <path d="M12 9V4" />
+          </svg>
+          <span>Ruleforge</span>
+        </div>
+        <div role="tablist" aria-label="Editor tabs" className="tabs">
+          <button type="button" role="tab" aria-selected={tab === 'rules'} onClick={() => setTab('rules')}>
+            Loot Rules
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'salvage'}
+            onClick={() => setTab('salvage')}
+          >
+            Salvage Combination
+          </button>
+        </div>
+        <MenuBar onPick={menuPick} />
+        <div className="file-status">
+          {fileName !== '' && <span className="file-name">{fileName}</span>}
+          {changed && (
+            <span className="unsaved">
+              <span className="dot" aria-hidden="true" />
+              Unsaved changes
+            </span>
+          )}
+        </div>
+        <div role="toolbar" aria-label="Toolbar" className="toolbar">
+          <button type="button" onClick={() => void copyCurrent()}>
+            Copy rule
+          </button>
+          <button
+            type="button"
+            onClick={(e) => void pasteCurrent(true, e.ctrlKey)}
+          >
+            Paste rule
+          </button>
+          <input
+            aria-label="Search for rule by name"
+            placeholder="Search for rule by name"
+            value={search}
+            onChange={(e) => searchChanged(e.target.value)}
+          />
+          <button type="button" onClick={goNextMatch}>
+            Go to next match
+          </button>
+        </div>
+      </header>
       <input
         ref={importInput}
         type="file"
@@ -487,8 +520,8 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
       {fileError !== '' && <p role="alert">{fileError}</p>}
 
       {tab === 'rules' ? (
-        <div role="tabpanel" aria-label="Loot Rules">
-          <div>
+        <div role="tabpanel" aria-label="Loot Rules" className="editor">
+          <div className="rule-moves">
             <button type="button" onClick={(e) => moveRuleClick(-1, e.ctrlKey)}>
               Move Up
             </button>
@@ -496,22 +529,32 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
               Move Down
             </button>
           </div>
-          <ul aria-label="Rules" style={{ height: 400, overflow: 'auto' }}>
-            {profile.rules.map((r, i) => (
-              <li key={i}>
-                <button
-                  type="button"
-                  aria-pressed={i === selectedRule}
-                  onClick={() => selectRule(i)}
-                >
-                  {r.name}
-                </button>
-              </li>
-            ))}
+          <ul aria-label="Rules" className="rule-list">
+            {profile.rules.map((r, i) => {
+              // The badge is part of the button text, so a screen reader hears
+              // "Off" (or the action) before the rule name.
+              const off = isRuleDisabled(r)
+              const badge = off ? 'Off' : friendlyActionName(r.action)
+              return (
+                <li key={i}>
+                  <button
+                    type="button"
+                    aria-pressed={i === selectedRule}
+                    onClick={() => selectRule(i)}
+                  >
+                    {/* The space keeps badge and name apart in the accessible
+                        name: "Off ***** Trophies *****". */}
+                    {badge !== '' && <span className={off ? 'rule-badge off' : 'rule-badge'}>{badge}</span>}
+                    {' '}
+                    <span className="rule-name">{r.name}</span>
+                  </button>
+                </li>
+              )
+            })}
           </ul>
           {/* The same three texts sit on the requirement list below, so the
               row carries its own name for tests and screen readers. */}
-          <div role="group" aria-label="Rule actions">
+          <div role="group" aria-label="Rule actions" className="rule-actions">
             <button type="button" onClick={(e) => newRuleClick(e.ctrlKey)}>
               New
             </button>
@@ -525,7 +568,7 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
 
           {rule ? (
             <>
-              <fieldset>
+              <fieldset className="rule-fields">
                 <legend>Rule</legend>
                 <label>
                   Rule Name
@@ -596,11 +639,11 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
               {req ? (
                 <ReqEditor req={req} armorGroups={armorGroups} onChange={changeReq} />
               ) : (
-                <p>Select a requirement.</p>
+                <p className="req-fields">Select a requirement.</p>
               )}
             </>
           ) : (
-            <p>Select a rule.</p>
+            <p className="rule-fields">Select a rule.</p>
           )}
         </div>
       ) : (

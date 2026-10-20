@@ -242,6 +242,14 @@ export function setRequirementType(
 }
 
 /**
+ * True when the rule has a `DisabledRule` requirement with `b` true
+ * (LootRules.cs 1839-1844). The rule list badge and `toggleDisabled` use it.
+ */
+export function isRuleDisabled(rule: LootRule): boolean {
+  return rule.requirements.some((r) => r.type === eLootRuleType.DisabledRule && 'b' in r && r.b)
+}
+
+/**
  * Turns the rule off or on (Form1.cs 910-938). It removes every DisabledRule
  * requirement. It adds a true one at the end, unless one of them was true.
  */
@@ -249,9 +257,7 @@ export function toggleDisabled(profile: LootProfile, ruleIndex: number): LootPro
   const rule = profile.rules[ruleIndex]
   if (!rule) return profile
 
-  const wasDisabled = rule.requirements.some(
-    (r) => r.type === eLootRuleType.DisabledRule && 'b' in r && r.b,
-  )
+  const wasDisabled = isRuleDisabled(rule)
   const rest = rule.requirements.filter((r) => r.type !== eLootRuleType.DisabledRule)
   const requirements: Requirement[] = wasDisabled ? rest : [...rest, { type: eLootRuleType.DisabledRule, b: true }]
   return replaceRule(profile, ruleIndex, { ...rule, requirements })

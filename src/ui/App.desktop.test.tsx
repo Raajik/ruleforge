@@ -37,9 +37,10 @@ function smallProfile(): LootProfile {
 }
 
 function ruleNames(): string[] {
+  // The row also carries its action badge, so the name comes from its span.
   return within(screen.getByRole('list', { name: 'Rules' }))
     .queryAllByRole('listitem')
-    .map((li) => li.textContent ?? '')
+    .map((li) => li.querySelector('.rule-name')?.textContent ?? '')
 }
 
 function pick(menu: string, item: string) {

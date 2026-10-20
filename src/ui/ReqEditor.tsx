@@ -18,7 +18,7 @@ export function ReqEditor({
   onChange: (req: Requirement) => void
 }) {
   return (
-    <fieldset>
+    <fieldset className="req-fields">
       <legend>Requirement</legend>
       {requirementFields(req, armorGroups).map((field) => {
         if (field.kind === 'select') {

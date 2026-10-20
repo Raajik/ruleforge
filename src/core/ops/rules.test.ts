@@ -12,6 +12,7 @@ import {
   defaultRequirement,
   deleteRequirement,
   deleteRule,
+  isRuleDisabled,
   moveRule,
   newRequirement,
   newRule,
@@ -299,6 +300,16 @@ describe('setRequirementType', () => {
   it('does nothing for a bad index', () => {
     const before = profile(rule('A', [{ type: 7, vk: 2 }]))
     expect(setRequirementType(before, 0, 9, eLootRuleType.SpellMatch)).toEqual(before)
+  })
+})
+
+describe('isRuleDisabled', () => {
+  it('is true only when a DisabledRule requirement has b true', () => {
+    expect(isRuleDisabled(rule('A', [{ type: 9999, b: true }]))).toBe(true)
+    expect(isRuleDisabled(rule('A', [{ type: 9999, b: false }]))).toBe(false)
+    expect(isRuleDisabled(rule('A', [{ type: 9999, b: false }, { type: 9999, b: true }]))).toBe(true)
+    expect(isRuleDisabled(rule('A', [{ type: 7, vk: 2 }]))).toBe(false)
+    expect(isRuleDisabled(rule('A'))).toBe(false)
   })
 })
 

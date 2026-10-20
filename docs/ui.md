@@ -159,3 +159,17 @@
   live fs scope (`tauri-plugin-dialog 2.8.3`, `src/commands.rs` 188-215, 248-258. `tauri-plugin-fs` 2.7.1,
   `src/lib.rs` 534-565), so no folder scope is needed.
 
+## The Forge look (H1)
+
+- **Observed** (`design/A-rule-editor.html` 19-38, 43-131): the Forge look uses the background `#121419`,
+  the panels `#16181D` and `#181B21`, and the hairlines `#2A2E37`. The text color is `#E7E9EE` and the
+  accent is `#F0A23B`. The rule editor has three columns. The rule list sits on the left. The rule with
+  its requirements sits in the middle. The requirement fields sit on the right.
+- **Verified** (`npm run build`, `dist/assets/index-*.css`): `src/ui/theme.css` holds these colors as
+  custom properties. It lays the Loot Rules tab out as the three-column grid of the mockup. The Google
+  Fonts `@import` stays at the top of the built CSS. So the web entry and the desktop entry both load
+  Inter and JetBrains Mono.
+- **Verified** (`src/ui/App.test.tsx` badge test, `src/core/ops/rules.test.ts` `isRuleDisabled`): each
+  rule row shows an action badge. The badge reads `Off` when a `DisabledRule` has `b` true. Else it reads
+  `friendlyActionName(action)`. The badge text is part of the button text, so the accessible name is
+  `Off ***** Trophies *****`. The `ruleNames()` helpers of the App tests read the `.rule-name` span.

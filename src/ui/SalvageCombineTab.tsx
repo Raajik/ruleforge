@@ -115,8 +115,8 @@ export function SalvageCombineTab({
   }
 
   return (
-    <div role="tabpanel" aria-label="Salvage Combination">
-      <div>
+    <div role="tabpanel" aria-label="Salvage Combination" className="salvage">
+      <div className="salvage-default">
         <label>
           Default Combine Range:
           <input
@@ -126,7 +126,7 @@ export function SalvageCombineTab({
           />
         </label>
       </div>
-      <div>
+      <div className="salvage-list">
         <label>Combine Rules:</label>
         <ul aria-label="Combine rules list" style={{ height: 300, overflow: 'auto' }}>
           {materialList.map((mat, i) => (
@@ -145,7 +145,7 @@ export function SalvageCombineTab({
         </button>
       </div>
       {showSettings && (
-        <fieldset>
+        <fieldset className="salvage-settings">
           <legend>Combine Range Setting</legend>
           <label>
             Material
