@@ -4,8 +4,8 @@
 # shortcut: the 5-hour window is the user's estimate (2026-10-19), not a documented OpenCode limit.
 cd "$(dirname "$0")/.."
 now=$(date +%s)
-for m in opencode/big-pickle opencode/mimo-v2.6-flash-free opencode/longcat-2.5-preview-free \
-         opencode/deepseek-v4.1-flash-free opencode/nemotron-3.5-lightning-free; do
+for m in opencode/big-pickle opencode/mimo-v2.6-flash-free opencode/longcat-2.5-preview-free  \
+         opencode/deepseek-v4.1-flash-free; do
   last=$(awk -F'\t' -v m="$m" '$2 == m { t = $1 } END { print t + 0 }' ~/.local/state/opencode-limits.tsv 2>/dev/null)
   if [ $((now - ${last:-0})) -ge 18000 ]; then echo "$m"; exit 0; fi
 done
