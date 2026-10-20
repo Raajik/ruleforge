@@ -225,14 +225,23 @@ Copy the layout of the legacy editor first. Improvements come later.
   - `src/ui/ReqEditor.tsx` shows the fields of the selected requirement. The App holds the edited profile in
     state and updates the selected requirement on a field change. Tested by `ReqEditor.test.tsx` plus the App
     test (347 total). Facts: `docs/ops.md`, `docs/ui.md`.
-- [ ] T29 Connect the menus, toolbar and buttons to the ops from phase E.
+- [x] T29 Connect the menus, toolbar and buttons to the ops from phase E.
   - Keyboard: Ctrl+C, Ctrl+V, Ctrl+S, Ctrl+O, Delete.
   - Test: a click on "Auto-Sort Rules" changes the rule order.
+  - `src/ui/MenuBar.tsx` opens the four dropdowns with the C# item texts. `src/ui/dialogs.tsx` holds the
+    three Rule-menu dialogs with the C# defaults.
+  - `src/ui/App.tsx` runs the T18 buttons, the T19 search, the T20 clipboard, the T21 auto-sort and the
+    T26 File > New. It runs the T22 packslots, the T23 salvage and the T24 workmanship dialogs, and the
+    T25 combine ranges.
+  - Open, Save, Save As and Exit call the `onOpen`, `onSave`, `onSaveAs` and `onExit` props of T31. Ctrl+C
+    and Ctrl+V skip a focused text box, as the C# handlers do (Form1.cs 1054-1074). Ctrl+V replaces the
+    selected rule in place. The Delete key is a rebuild addition. The C# has none (Form1.cs 900-908).
+    Tested by `App.connect.test.tsx` (21 tests, 368 total). Facts: `docs/ui.md`.
 - [ ] T30 Salvage Combination tab, connected to the T25 ops.
 - [ ] T31 Open and save in the browser.
   - Use the File System Access API when the browser has it (Chromium). Else use `<input type="file">` and a
     download.
-  - Ask before the page closes with unsaved changes (`beforeunload`).
+  - Ask before New, Open and the page close with unsaved changes (`unsavedChangesPrompt`, `beforeunload`).
 
 ## Phase G: desktop (needs the user)
 - [ ] T32 USER: install Rust (`mise use -g rust`) and the Tauri packages:

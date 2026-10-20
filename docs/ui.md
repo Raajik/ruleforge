@@ -31,3 +31,51 @@
 - **Verified** (`src/ui/App.test.tsx`, "clicking a requirement shows its fields"): clicking a requirement in
   the list shows its fields, and typing in a field updates the requirement. The App keeps the edited profile
   in state. The ops of phase E connect in T29.
+
+## Menu bar, toolbar and keys (T29)
+
+- **Observed** (`ref/editor/Form1.Designer.cs` 176-330): the four menus hold these items. File: New, Open,
+  Save, Save As, Exit. Edit: Copy Rule, Paste Rule, Paste Rule Unchecked (Dangerous) (line 1008). Rule:
+  Add/Update Salvage Rules, Update Workmanship Requirements, Auto-Sort Rules, Add Packslot Requirements.
+  Combine: Export Ranges, Import Ranges.
+- **Observed** (`ref/editor/Form1.Designer.cs` 193, 203, 218, 255, 263): the shortcut keys are Ctrl+N on
+  New, Ctrl+O on Open, Ctrl+S on Save, Ctrl+C on Copy Rule and Ctrl+V on Paste Rule.
+- **Observed** (`ref/editor/Form1.cs` 900-908): the C# has no Delete key binding. `tabControl1_KeyDown` only
+  tracks the Ctrl state, and neither `Form1.cs` nor `Form1.Designer.cs` binds `Keys.Delete`. The rebuild
+  deletes the selected rule on Delete as an addition (PLAN.md T29).
+- **Observed** (`ref/editor/Form1.cs` 828-829): the auto-sort handler clears the requirement and the rule
+  selection before it sorts.
+- **Observed** (`ref/editor/AddSalvageRulesForm.Designer.cs` 145,155,165,
+  `ref/editor/UpdateWorkReqsForm.Designer.cs` 123,133, `ref/editor/SelectMinPackSlotsForm.Designer.cs` 71,81,118):
+  the dialog buttons are "Add rules" / "Add/Update rules" / "Cancel", "Update" / "Cancel" and
+  "Add missing" / "Add and Update" / "Cancel".
+- **Verified** (`src/ui/App.connect.test.tsx`, "a click on \"Auto-Sort Rules\" changes the rule order"):
+  clicking Auto-Sort Rules re-renders the list in `autoSortRules` order and clears the selection.
+- **Verified** (`src/ui/App.connect.test.tsx`, "File > New resets the profile to an empty one"): File > New
+  gives an empty profile.
+- **Verified** (`src/ui/App.connect.test.tsx`, "File > Open, Save, Save As and Exit call the callbacks of
+  T31"): the four items call the `onOpen`, `onSave`, `onSaveAs` and `onExit` props.
+- **Verified** (`src/ui/App.connect.test.tsx`, the Edit menu and toolbar tests): Copy Rule writes the
+  clipboard text of the selected rule. Paste Rule appends the pasted rule. It checks the hash.
+  "Paste Rule Unchecked (Dangerous)" skips the hash check.
+- **Verified** (`src/ui/App.connect.test.tsx`, the three dialog tests and the Cancel test): the Rule menu
+  opens three dialogs with the C# defaults. Apply runs the phase E op. The group starts at `Armor Imbues`,
+  the first sorted key. The boxes start at the C# values: workmanship 10, change 0, slots 1, action Keep.
+  The ranges match the C# controls too. Keep negates the change, so 3 on a value of 2 gives -1.
+- **Verified** (`src/ui/App.connect.test.tsx`, "the rule buttons add, clone and delete rules" and "the
+  requirement buttons add, clone and delete requirements"): the buttons run the T18 ops. A Ctrl click
+  inserts after the selected rule. The selection follows the new rule.
+- **Verified** (`src/ui/App.connect.test.tsx`, "Move Up and Move Down move the selected rule, three places
+  with Ctrl"): the buttons run `moveRule`. Ctrl moves the rule three places. The selection follows the
+  moved rule.
+- **Verified** (`src/ui/App.connect.test.tsx`, "\"Toggle this rule\" adds a DisabledRule requirement"):
+  the button runs `toggleDisabled`.
+- **Verified** (`src/ui/App.connect.test.tsx`, "typing in the search box selects the match"): typing
+  selects the first match from the selected rule. "Go to next match" starts after it.
+- **Verified** (`src/ui/App.connect.test.tsx`, "Combine > Export Ranges downloads the .ucr text"): export
+  downloads the `exportRanges` text as `ranges.ucr`.
+- **Verified** (`src/ui/App.connect.test.tsx`, "Combine > Import Ranges reads a .ucr file"): import reads
+  a file into `importRanges` through the hidden file input. A bad file keeps the rules.
+- **Verified** (`src/ui/App.connect.test.tsx`, the keyboard tests): Ctrl+C copies the selected rule.
+  Ctrl+V replaces it in place. Ctrl+S and Ctrl+O call the T31 callbacks. Delete removes the selected rule.
+  Ctrl+C in a text box leaves the text box alone.
