@@ -336,7 +336,18 @@ mockup data, not app code. Keep every T27-T31 test green: change test queries on
     bad pattern, and `classify` stops on that rule with `known` false.
   - Tested by `src/core/eval/preview.test.ts`, `src/core/eval/samples.test.ts` and `src/ui/LootPreview.test.tsx`
     (530 tests pass). Facts: `docs/eval.md`, `docs/ui.md`.
-- [ ] H4 Review changes against the base profile.
+- [x] H4 Review changes against the base profile.
+  - `src/core/ops/review.ts`: `diffProfiles` gives the changes of the current profile against the base profile.
+    The name of a rule is its key, so a rule that moved is no change. A renamed rule is one changed rule, when
+    one rule is free on each side.
+  - `undoChange` takes back one change. It removes an added rule. It puts a removed rule back at its place, and it
+    gives a changed rule its base rule back.
+  - `src/ui/ReviewChanges.tsx`: the page lists each change with the badge of its kind, the rule name, the changed
+    fields and the changed requirements. Every change has one Undo.
+  - The base profile is the file that the user opened. File > Open and File > New set a new base profile. A save
+    keeps it.
+  - Tested by `src/core/ops/review.test.ts` and `src/ui/ReviewChanges.test.tsx` (27 and 7 tests, 566 total).
+    Facts: `docs/ops.md`, `docs/ui.md`.
 - [ ] H5 The Overview page. The strictness, ladder and character rules are in `specs/ruleforge-ui.md`, "Strictness".
 
 ## Later: "better" (only when the user picks)

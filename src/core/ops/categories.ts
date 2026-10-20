@@ -60,22 +60,29 @@ export function categorizeRules(profile: LootProfile): Category[] {
 }
 
 /**
+ * One line for a requirement: the type name, its acts-on name and its value,
+ * joined with spaces. A `DisabledRule` has no part, so it gives an empty text.
+ */
+export function requirementSummary(req: Requirement): string {
+  if (req.type === eLootRuleType.DisabledRule) return ''
+  const fields = requirementFields(req)
+  const act = fields.find((f) => f.kind === 'select')
+  const value = fields.find((f) => f.kind === 'text')
+  const actName =
+    act && act.kind === 'select' ? (act.value >= 0 ? act.options[act.value] : undefined) : undefined
+  return [ruleTypeName(req.type), actName, value && value.value].filter(Boolean).join(' ')
+}
+
+/**
  * One line for a rule, for the Customize page. The parts are the requirement
  * type, its acts-on name and the value, joined with ", ". A `DisabledRule`
  * has no part. A rule with no other requirement gives an empty text.
  */
 export function ruleSummary(rule: LootRule): string {
-  const parts: string[] = []
-  for (const req of rule.requirements) {
-    if (req.type === eLootRuleType.DisabledRule) continue
-    const fields = requirementFields(req)
-    const act = fields.find((f) => f.kind === 'select')
-    const value = fields.find((f) => f.kind === 'text')
-    const actName =
-      act && act.kind === 'select' ? (act.value >= 0 ? act.options[act.value] : undefined) : undefined
-    parts.push([ruleTypeName(req.type), actName, value && value.value].filter(Boolean).join(' '))
-  }
-  return parts.join(', ')
+  return rule.requirements
+    .map((req) => requirementSummary(req))
+    .filter((part) => part !== '')
+    .join(', ')
 }
 
 /**

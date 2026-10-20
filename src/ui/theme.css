@@ -818,3 +818,114 @@ p.req-fields {
   gap: 20px;
   padding: 22px 26px;
 }
+
+/* The count of the changes, on the Review changes tab. */
+.tab-badge {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* The Review changes page (H4). */
+.review {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  background: var(--bg);
+}
+
+.review-main {
+  max-width: 900px;
+  padding: 22px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.review-head h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.review-head p {
+  margin: 4px 0 0;
+  color: var(--text-dim);
+}
+
+.change-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.change {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.change-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 1 240px;
+  min-width: 0;
+}
+
+.change-badge {
+  flex: 0 0 auto;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: var(--line);
+  color: var(--text-dim);
+}
+
+.change-badge.added {
+  background: #22402c;
+  color: #8ee0a8;
+}
+
+.change-badge.removed {
+  background: #3a3220;
+  color: #f2c46b;
+}
+
+.change-badge.changed {
+  background: #23344a;
+  color: #9cc4f2;
+}
+
+.change-details {
+  flex: 1 1 320px;
+  min-width: 0;
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.change-summary {
+  flex: 1 1 320px;
+  min-width: 0;
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 13px;
+}

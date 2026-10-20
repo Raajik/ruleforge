@@ -201,3 +201,20 @@
 - **Verified** (`src/ui/App.test.tsx`, "the Loot preview tab shows the sample items with the action of the
   profile"): `App` has a "Loot preview" tab beside "Customize" and "Salvage Combination". The tab shows the
   items on the left and the why panel on the right. The Customize page shows the same panel on the right.
+
+## The Review changes page (H4)
+
+- **Observed** (`design/A3-customize.html` 31): the top bar of the mockup has a "Review changes" item with a
+  count badge.
+- **Verified** (`src/ui/ReviewChanges.test.tsx`): `App` has a "Review changes" tab beside "Salvage Combination".
+  The tab shows the number of changes. The page lists each change with a badge of its kind and the rule name. It
+  shows the changed fields and the changed requirements. Every change has one Undo button. The Undo button names
+  the rule, so a screen reader gives the context: "Undo the change of <name>".
+- **Verified** (`src/ui/ReviewChanges.test.tsx`, "the base profile is the file that the user opened"): the base
+  profile is the file that the user opened. File > Open sets a new base profile, so the opened file has no changes.
+  A save keeps the base profile.
+- **Verified** (`src/ui/ReviewChanges.test.tsx`, "the Undo of a change gives the base rule back"): the Undo button
+  gives the base rule back and the change leaves the list.
+- **Verified** (`npm run dev`, a headless Chromium tab): the page shows one row per change, with the badge, the
+  rule name, the details and the Undo button. The tab badge counts the changes. The Undo of the last change
+  removes its row.

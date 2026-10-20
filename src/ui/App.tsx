@@ -13,7 +13,7 @@
  * The C# action combo lists only the five friendly names (Constants.cs
  * 350-364). Any other action gets no combo entry (Form1.cs 127-141).
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { eLootAction, friendlyActionName, ruleTypeName } from '../core/format/enums'
 import { readProfile, writeProfile, type LootProfile, type Requirement } from '../core/format/profile'
 import { parseInt32 } from '../core/format/reader'
@@ -38,6 +38,7 @@ import { goToNextMatchingRule } from '../core/ops/search'
 import { addSalvageRules } from '../core/ops/salvage'
 import { exportRanges, importRanges } from '../core/ops/salvagecombine'
 import { autoSortRules } from '../core/ops/sort'
+import { diffProfiles } from '../core/ops/review'
 import { updateWorkmanshipRequirements } from '../core/ops/workmanship'
 import { ACTION_COMBO, PackslotsDialog, SalvageRulesDialog, WorkmanshipDialog } from './dialogs'
 import {
@@ -55,6 +56,7 @@ import { MenuBar, type MenuName } from './MenuBar'
 import { CustomizePage } from './CustomizePage'
 import { LootPreview } from './LootPreview'
 import { ReqEditor } from './ReqEditor'
+import { ReviewChanges } from './ReviewChanges'
 import { SalvageCombineTab } from './SalvageCombineTab'
 import './theme.css'
 
@@ -84,7 +86,13 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
   desktop?: boolean
 }) {
   const [profile, setProfileState] = useState(initialProfile)
-  const [tab, setTab] = useState<'rules' | 'customize' | 'preview' | 'salvage'>('rules')
+  /**
+   * The base profile of the Review changes page (PLAN.md H4): the file as it
+   * was opened. A load and New set a new base. A save keeps it, so the user
+   * can review every change of the session.
+   */
+  const [baseProfile, setBaseProfile] = useState(initialProfile)
+  const [tab, setTab] = useState<'rules' | 'customize' | 'preview' | 'salvage' | 'review'>('rules')
   const [selectedRule, setSelectedRule] = useState(-1)
   const [selectedReq, setSelectedReq] = useState(-1)
   const [search, setSearch] = useState('')
@@ -118,6 +126,9 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
 
   const rule = selectedRule >= 0 ? profile.rules[selectedRule] : undefined
   const req = rule && selectedReq >= 0 ? rule.requirements[selectedReq] : undefined
+
+  // The changes of the Review changes page (PLAN.md H4).
+  const changes = useMemo(() => diffProfiles(baseProfile, profile), [baseProfile, profile])
 
   function selectRule(index: number) {
     setSelectedRule(index)
@@ -235,6 +246,8 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
 
   function loadProfile(loaded: LootProfile, name: string, handle: FileSystemFileHandle | null) {
     setProfileState(loaded)
+    // The file as it was opened is the base of the Review changes page.
+    setBaseProfile(loaded)
     setFileName(name)
     handleRef.current = handle
     // Form1.cs 365-368: a load clears the change flag and the backup clock.
@@ -481,6 +494,15 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
           >
             Salvage Combination
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'review'}
+            onClick={() => setTab('review')}
+          >
+            Review changes
+            {changes.length > 0 && <span className="tab-badge">{changes.length}</span>}
+          </button>
         </div>
         <MenuBar onPick={menuPick} />
         <div className="file-status">
@@ -545,6 +567,8 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
         </div>
       ) : tab === 'salvage' ? (
         <SalvageCombineTab profile={profile} onChange={setProfile} />
+      ) : tab === 'review' ? (
+        <ReviewChanges changes={changes} profile={profile} onChange={setProfile} />
       ) : (
         <div role="tabpanel" aria-label="Loot Rules" className="editor">          <div className="rule-moves">
             <button type="button" onClick={(e) => moveRuleClick(-1, e.ctrlKey)}>

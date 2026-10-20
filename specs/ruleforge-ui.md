@@ -58,6 +58,23 @@ page.
   the acts-on key name and the value. The parts join with `, `. It is a plain reading of the file,
   not the prose of the mockup. H3 replaces it with the evaluator text where the mockup shows it.
 
+### H4 design decisions
+
+- The base profile is the file that the user opened. File > Open and File > New set a new base profile. A save
+  does not change it, so the user can review every change of the session.
+- The diff covers the rules. The extra blocks, such as the salvage combine ranges, are not in the diff.
+- The name of a rule is its key. A rule with the same name in both profiles is the same rule, even when it
+  moved. A rule whose name changed is one changed rule. Its other fields and its requirements must be the
+  same, so the change is the name alone. This needs one free rule on each side, so the diff never guesses
+  which rule is which.
+- The list follows the order of the current profile. The removed rules come last, in the order of the base
+  profile.
+- Each change has one Undo. The undo of an added rule removes the rule. The undo of a removed rule puts the
+  base rule back at its place. The undo of a changed rule gives the base rule back.
+- The page shows the changed fields (name, action, keep count, priority, custom expression) and the changed
+  requirements. The tab shows the number of changes, as the mockup does.
+- The page is a tab beside "Salvage Combination".
+
 ## The base profile: LootSnob v4
 
 The user (2026-10-19): LootSnob v4 is the profile that almost everyone uses. Its Keep rules define the best

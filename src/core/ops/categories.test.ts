@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { eLootRuleType } from '../format/enums'
 import type { LootProfile, LootRule, Requirement } from '../format/profile'
 import { readProfile, writeProfile } from '../format/profile'
-import { categorizeRules, ruleSummary, setRuleEnabled } from './categories'
+import { categorizeRules, requirementSummary, ruleSummary, setRuleEnabled } from './categories'
 
 function rule(name: string, requirements: Requirement[] = []): LootRule {
   return { name, customExpression: '', priority: 0, action: 1, lootActionData: 0, requirements }
@@ -156,6 +156,18 @@ describe('ruleSummary', () => {
         'LongValKeyE WieldReqAttribute 47, BuffedDoubleValKeyGE MeleeDefenseBonus 1.1, ' +
         'StringValueMatch FullDescription -->, StringValueMatch FullDescription ->',
     )
+  })
+})
+
+describe('requirementSummary', () => {
+  it('names the type, the acts-on key and the value', () => {
+    expect(requirementSummary({ type: 12, keyval: 8, vk: 353 })).toBe(
+      'LongValKeyE WeaponMasteryCategory 8',
+    )
+  })
+
+  it('gives an empty text for a DisabledRule', () => {
+    expect(requirementSummary({ type: eLootRuleType.DisabledRule, b: true })).toBe('')
   })
 })
 

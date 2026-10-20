@@ -357,3 +357,31 @@
   requirement that has one, or undefined. Test: `src/core/ops/categories.test.ts`, "ruleSummary".
 - [Unknown] `ruleSummary` is a plain reading of the requirement fields, not the prose of `design/A3-customize.html`
   ("Missile weapon, Weapon mastery category = 8"). H3 rewrites it from the evaluator.
+
+## Review changes (H4)
+
+- [Verified] `diffProfiles(base, current)` gives the changes of the current profile against the base profile. The
+  name of a rule is its key, so a rule that moved is no change. A rule whose name is gone is a removed rule. A
+  rule whose name changed is one changed rule. This needs one rule free on each side, and the other fields and
+  the requirements must be the same. Test: `src/core/ops/review.test.ts`, "diffProfiles".
+- [Verified] The changed and the added rules follow the order of the current profile. The removed rules come
+  last, in the order of the base profile. Test: `src/core/ops/review.test.ts`, "lists the changes in the order
+  of the current profile, and the removed rules last".
+- [Verified] The changed fields of a rule are the name, the action, the keep count, the priority and the custom
+  expression. An action without a friendly name shows its number. Test: `src/core/ops/review.test.ts`,
+  "finds a changed action" and "finds a changed keep count, priority and custom expression".
+- [Verified] `diffRequirements` matches the equal requirements first, so an added requirement does not change the
+  ones after it. The diff pairs the rest in order. A pair is a changed requirement. A leftover is an added or a
+  removed one. Test: `src/core/ops/review.test.ts`, "finds an added requirement" and "finds a changed
+  requirement".
+- [Verified] `undoChange` removes an added rule, puts a removed rule back at its place among the kept rules,
+  and gives the base rule back for a changed rule. The place of a removed rule comes from the base order: the
+  rule goes back after the base rule before it, or before the base rule after it. It never changes its input.
+  Test: `src/core/ops/review.test.ts`, "undoChange".
+- [Verified] `requirementSummary` gives one line for a requirement: the type name, its acts-on name and its value.
+  `ruleSummary` joins these lines with ", ". A `DisabledRule` has no line. Test: `src/core/ops/categories.test.ts`,
+  "requirementSummary".
+- [Verified] `requirementText` names a `DisabledRule` by its state, "Disabled" or "Enabled". Every other
+  requirement uses its `requirementSummary` line. Test: `src/core/ops/review.test.ts`, "requirementText".
+- [Unknown] The diff covers the rules only. The extra blocks, such as the salvage combine ranges, are not in the
+  diff. The legacy editor has no such page.
