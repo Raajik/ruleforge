@@ -14,8 +14,8 @@
 import type { LootProfile } from '../format/profile'
 import { writeProfile } from '../format/profile'
 
-/** Form1.cs line 45. */
-export const APP_NAME = 'Virindi Tank Loot Editor'
+// The legacy name is 'Virindi Tank Loot Editor' (Form1.cs 45). The rebuild has its own name.
+export const APP_NAME = 'Ruleforge'
 
 /** Form1.cs line 417: a backup is at most one per 5 minutes. */
 export const BACKUP_INTERVAL_MINUTES = 5

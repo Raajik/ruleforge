@@ -1,4 +1,7 @@
-# VTClassic loot editor rebuild
+# Ruleforge: a rebuild of the VTClassic loot editor
+
+Name: **Ruleforge** (user, 2026-10-19). The repo is public at github.com/Raajik/ruleforge, under the MIT
+license of the VTClassic source.
 
 The user's request (2026-10-19): rebuild the VirindiTank Classic loot editor ("uTank2 Settings Editor", VTClassic
 1.0.1.6) from zero. Make it better and cross-platform. A local model does most of the work from `PLAN.md`.

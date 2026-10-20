@@ -279,7 +279,8 @@
 - [Observed] "New" writes no bytes: it clears the rule list, gives the profile a fresh `cLootRules`, sets the file
   name to "", the window title to `<app name> - New File` and `FileChanged` to false. `ref/editor/Form1.cs:292-306`,
   the same defaults as the constructor at `46-56`.
-- [Observed] The app name is `Virindi Tank Loot Editor`. A loaded or saved file puts the file name after it:
+- [Observed] The legacy app name is `Virindi Tank Loot Editor`. The rebuild uses `Ruleforge`. A loaded or saved file
+  puts the file name after it:
   `<app name> - <file name>`. `ref/editor/Form1.cs:45,298,367,458`.
 - [Observed] The default VT profile folder comes from the Windows registry key
   `Software\Decal\Plugins\{642F1F48-16BE-48BF-B1D4-286652C4533E}` value `ProfilePath`. A failure gives null.

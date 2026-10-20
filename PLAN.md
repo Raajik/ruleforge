@@ -1,6 +1,6 @@
 # PLAN: rebuild the VTClassic loot editor
 
-Spec: `specs/vtclassic-editor.md`. Read it once at the start of each session.
+Spec: `specs/ruleforge.md`. Read it once at the start of each session.
 
 ## How to work (each session)
 1. Read `AGENTS.md`, the spec and this file. Find the first task with `- [ ]`. Do that task only.
