@@ -7,6 +7,16 @@ import { eLootAction, eLootRuleType } from '../format/enums'
 import { doubleValueKey, intValueKey } from '../gamedata/generated'
 import type { LootProfile, LootRule, Requirement } from '../format/profile'
 import { colorToHSV, getValueDouble, getValueInt, getValueString, type LootItem, type Rgb } from './item'
+import type { Character } from './character'
+import {
+  canReachTargetValues,
+  getBuffedDoubleValueKey,
+  getBuffedLogValueKey,
+  getBuffedMissileDamage,
+  getBuffedAverageDamage,
+  getCalcedBuffedTinkedDamage,
+  getTotalRatings,
+} from './computed'
 
 /**
  * true: the requirement matches. false: it does not. "unknown": the type is
@@ -23,9 +33,9 @@ export type SlotDefinitions = ReadonlyMap<string, readonly number[]>
  * match, in order. It gives false at the first miss. It gives "unknown" when an undecided requirement comes
  * before a miss.
  */
-function matchRule(rule: LootRule, item: LootItem, slots?: SlotDefinitions): MatchResult {
+function matchRule(rule: LootRule, item: LootItem, slots?: SlotDefinitions, character?: Character): MatchResult {
   for (const req of rule.requirements) {
-    const result = matchRequirement(req, item, slots)
+    const result = matchRequirement(req, item, slots, character)
     if (result !== true) return result
   }
   return true
@@ -51,9 +61,9 @@ export interface ClassifyResult {
  * gives the action, the rule name and the LootActionData. NoLoot, an empty
  * name and data 0 when no rule matches.
  */
-export function classify(profile: LootProfile, item: LootItem, slots?: SlotDefinitions): ClassifyResult {
+export function classify(profile: LootProfile, item: LootItem, slots?: SlotDefinitions, character?: Character): ClassifyResult {
   for (const rule of profile.rules) {
-    const result = matchRule(rule, item, slots)
+    const result = matchRule(rule, item, slots, character)
     if (result === 'unknown') return { action: eLootAction.NoLoot, ruleName: rule.name, lootActionData: 0, known: false }
     if (result) return { action: rule.action, ruleName: rule.name, lootActionData: rule.lootActionData, known: true }
   }
@@ -65,9 +75,9 @@ export function classify(profile: LootProfile, item: LootItem, slots?: SlotDefin
  * `slots` gives the armor group palette slots that type 15 reads
  * (LootRules.cs 2033-2041). Without it, type 15 never matches.
  */
-export function matchRequirement(req: Requirement, item: LootItem, slots?: SlotDefinitions): MatchResult {
-  // cUnsupportedRequirement has no Match in the plugin, and the types of H3b
-  // are not evaluated yet. Both answer "unknown".
+export function matchRequirement(req: Requirement, item: LootItem, slots?: SlotDefinitions, character?: Character): MatchResult {
+  // cUnsupportedRequirement has no Match in the plugin, so it answers "unknown". The character types also answer
+  // "unknown" when no character, or no value for the skill, is given.
   if ('data' in req) return 'unknown'
   switch (req.type) {
     case eLootRuleType.SpellNameMatch:
@@ -163,8 +173,66 @@ export function matchRequirement(req: Requirement, item: LootItem, slots?: SlotD
     case eLootRuleType.DisabledRule:
       // LootRules.cs 1823-1826: a disabled rule matches nothing.
       return !req.b
+    case eLootRuleType.CharacterSkillGE: {
+      // LootRules.cs 1240-1255: the buffed skill from Decal's CharacterFilter.
+      if (!character) return 'unknown'
+      const skill = character.buffedSkills[req.vk]
+      if (skill === undefined) return 'unknown'
+      return skill >= req.keyval
+    }
+    case eLootRuleType.CharacterMainPackEmptySlotsGE: {
+      // LootRules.cs 1332-1335: the free main pack slots.
+      if (!character) return 'unknown'
+      return character.mainPackFreeSlots >= req.keyval
+    }
+    case eLootRuleType.CharacterLevelGE: {
+      // LootRules.cs 1623-1626: character level >= keyval.
+      if (!character) return 'unknown'
+      return character.level >= req.keyval
+    }
+    case eLootRuleType.CharacterLevelLE: {
+      // LootRules.cs 1680-1683: character level <= keyval.
+      if (!character) return 'unknown'
+      return character.level <= req.keyval
+    }
+    case eLootRuleType.CharacterBaseSkill: {
+      // LootRules.cs 1739-1754: the base skill is in the range.
+      if (!character) return 'unknown'
+      const skill = character.baseSkills[req.vk]
+      if (skill === undefined) return 'unknown'
+      return skill >= req.minskill && skill <= req.maxskill
+    }
+    case eLootRuleType.BuffedMedianDamageGE: {
+      // LootRules.cs 2378-2387: the buffed median damage.
+      return getBuffedAverageDamage(item) >= req.keyval
+    }
+    case eLootRuleType.BuffedMissileDamageGE: {
+      // LootRules.cs 2449-2454: ComputedItemInfo.BuffedMissileDamage.
+      return getBuffedMissileDamage(item) >= req.keyval
+    }
+    case eLootRuleType.BuffedLongValKeyGE: {
+      // LootRules.cs 2517-2524: the buffed int value >= keyval.
+      const val = getBuffedLogValueKey(item, req.vk)
+      return val >= req.keyval
+    }
+    case eLootRuleType.BuffedDoubleValKeyGE: {
+      // LootRules.cs 2591-2598: the buffed double value, compared as float.
+      const val = getBuffedDoubleValueKey(item, req.vk)
+      return Math.fround(val) >= Math.fround(req.keyval)
+    }
+    case eLootRuleType.CalcdBuffedTinkedDamageGE: {
+      // LootRules.cs 2664-2669: ComputedItemInfo.CalcedBuffedTinkedDamage.
+      return getCalcedBuffedTinkedDamage(item) >= req.keyval
+    }
+    case eLootRuleType.TotalRatingsGE: {
+      // LootRules.cs 2731-2736: the sum of the ratings.
+      return getTotalRatings(item) >= req.keyval
+    }
+    case eLootRuleType.CalcedBuffedTinkedTargetMeleeGE: {
+      // LootRules.cs 2797-2802: ComputedItemInfo.CanReachTargetValues.
+      return canReachTargetValues(item, req.dot, req.meleeDefenseBonus, req.attackBonus)
+    }
     default:
-      // The character types (1000-1004) and the buffed types (2000-2008).
       return 'unknown'
   }
 }

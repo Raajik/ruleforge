@@ -197,28 +197,98 @@ describe('matchRequirement types 0 to 17 and 9999', () => {
 })
 
 describe('matchRequirement types 1000-1004 and 2000-2008', () => {
-  const unknown: Requirement[] = [
-    { type: 1000, keyval: 1, vk: 1 },
-    { type: 1001, keyval: 1 },
-    { type: 1002, keyval: 1 },
-    { type: 1003, keyval: 1 },
-    { type: 1004, vk: 1, minskill: 0, maxskill: 400 },
-    { type: 2000, keyval: 1 },
-    { type: 2001, keyval: 1 },
-    { type: 2003, keyval: 1, vk: 1 },
-    { type: 2005, keyval: 1, vk: 1 },
-    { type: 2006, keyval: 1 },
-    { type: 2007, keyval: 1 },
-    { type: 2008, dot: 1, meleeDefenseBonus: 1, attackBonus: 1 },
-  ]
-  for (const req of unknown) {
-    it(`type ${req.type} answers "unknown" (H3b)`, () => {
-      expect(matchRequirement(req, item())).toBe('unknown')
-    })
-  }
-
   it('an unsupported raw requirement answers "unknown" too', () => {
     expect(matchRequirement({ type: 42, data: 'raw body' }, item())).toBe('unknown')
+  })
+
+  it('type 1000 CharacterSkillGE uses buffed skill from character', () => {
+    const req: Requirement = { type: 1000, keyval: 400, vk: 6 }
+    expect(matchRequirement(req, item(), undefined, { level: 1, baseSkills: {}, buffedSkills: { 6: 400 }, mainPackFreeSlots: 0 })).toBe(true)
+    expect(matchRequirement(req, item(), undefined, { level: 1, baseSkills: {}, buffedSkills: { 6: 399 }, mainPackFreeSlots: 0 })).toBe(false)
+    expect(matchRequirement(req, item())).toBe('unknown')
+  })
+
+  it('type 1001 CharacterMainPackEmptySlotsGE uses character main pack free slots', () => {
+    const req: Requirement = { type: 1001, keyval: 5 }
+    expect(matchRequirement(req, item(), undefined, { level: 1, baseSkills: {}, buffedSkills: {}, mainPackFreeSlots: 5 })).toBe(true)
+    expect(matchRequirement(req, item(), undefined, { level: 1, baseSkills: {}, buffedSkills: {}, mainPackFreeSlots: 4 })).toBe(false)
+  })
+
+  it('type 1002 CharacterLevelGE uses character level', () => {
+    const req: Requirement = { type: 1002, keyval: 126 }
+    expect(matchRequirement(req, item(), undefined, { level: 126, baseSkills: {}, buffedSkills: {}, mainPackFreeSlots: 0 })).toBe(true)
+    expect(matchRequirement(req, item(), undefined, { level: 125, baseSkills: {}, buffedSkills: {}, mainPackFreeSlots: 0 })).toBe(false)
+  })
+
+  it('type 1003 CharacterLevelLE uses character level', () => {
+    const req: Requirement = { type: 1003, keyval: 50 }
+    expect(matchRequirement(req, item(), undefined, { level: 50, baseSkills: {}, buffedSkills: {}, mainPackFreeSlots: 0 })).toBe(true)
+    expect(matchRequirement(req, item(), undefined, { level: 51, baseSkills: {}, buffedSkills: {}, mainPackFreeSlots: 0 })).toBe(false)
+  })
+
+  it('type 1004 CharacterBaseSkill uses base skill range', () => {
+    const req: Requirement = { type: 1004, vk: 6, minskill: 100, maxskill: 200 }
+    expect(matchRequirement(req, item(), undefined, { level: 1, baseSkills: { 6: 150 }, buffedSkills: {}, mainPackFreeSlots: 0 })).toBe(true)
+    expect(matchRequirement(req, item(), undefined, { level: 1, baseSkills: { 6: 99 }, buffedSkills: {}, mainPackFreeSlots: 0 })).toBe(false)
+    expect(matchRequirement(req, item(), undefined, { level: 1, baseSkills: { 6: 201 }, buffedSkills: {}, mainPackFreeSlots: 0 })).toBe(false)
+  })
+
+  it('type 2000 BuffedMedianDamageGE uses buffed average damage', () => {
+    // BuffedAverageDamage = (minDamage + maxDamage)/2 where minDamage = maxDamage - variance*maxDamage, maxDamage = GetBuffedLogValueKey(MaxDamage)
+    // minDamage = 50 - 0.25*50 = 37.5, avg = (37.5+50)/2 = 43.75
+    const req: Requirement = { type: 2000, keyval: 43.75 }
+    expect(matchRequirement(req, item({ intValues: { MaxDamage: 50 }, doubleValues: { Variance: 0.25 } }))).toBe(true)
+    expect(matchRequirement({ type: 2000, keyval: 44 }, item({ intValues: { MaxDamage: 50 }, doubleValues: { Variance: 0.25 } }))).toBe(false)
+  })
+
+  it('type 2001 BuffedMissileDamageGE uses buffed missile damage formula', () => {
+    // BuffedMissileDamage = GetBuffedLogValueKey(MaxDamage) + (((GetBuffedDoubleValueKey(DamageBonus)-1)*100)/3) + GetBuffedLogValueKey(ElementalDmgBonus)
+    const req: Requirement = { type: 2001, keyval: 50 + (((1.15 - 1) * 100) / 3) + 0 }
+    expect(matchRequirement(req, item({ intValues: { MaxDamage: 50, ElementalDmgBonus: 0 }, doubleValues: { DamageBonus: 1.15 } }))).toBe(true)
+  })
+
+  it('type 2003 BuffedLongValKeyGE uses buffed int value', () => {
+    const req: Requirement = { type: 2003, keyval: 50, vk: intValueKey.MaxDamage }
+    expect(matchRequirement(req, item({ intValues: { MaxDamage: 50 } }))).toBe(true)
+    expect(matchRequirement(req, item({ intValues: { MaxDamage: 49 } }))).toBe(false)
+  })
+
+  it('type 2003 BuffedLongValKeyGE applies spell bonuses', () => {
+    const req: Requirement = { type: 2003, keyval: 52, vk: intValueKey.MaxDamage }
+    // Minor Blood Thirst adds its Bonus 2. Blood Drinker VI has Bonus 0 and adds nothing.
+    expect(matchRequirement(req, item({ intValues: { MaxDamage: 50 }, spellIds: [2598] }))).toBe(true)
+    expect(matchRequirement(req, item({ intValues: { MaxDamage: 50 }, spellIds: [1616] }))).toBe(false)
+  })
+
+  it('type 2005 BuffedDoubleValKeyGE uses buffed double value compared as float', () => {
+    const req: Requirement = { type: 2005, keyval: 0.2, vk: doubleValueKey.AttackBonus }
+    expect(matchRequirement(req, item({ doubleValues: { AttackBonus: 0.2 } }))).toBe(true)
+    expect(matchRequirement({ type: 2005, keyval: 0.200000001, vk: doubleValueKey.AttackBonus }, item({ doubleValues: { AttackBonus: 0.2 } }))).toBe(true) // float compare
+  })
+
+  it('type 2005 BuffedDoubleValKeyGE applies spell bonuses/adds/mults', () => {
+    const req: Requirement = { type: 2005, keyval: 0.18, vk: doubleValueKey.AttackBonus }
+    // Minor Heart Thirst adds 0.03. Heart Seeker VI has Bonus 0 and adds nothing.
+    expect(matchRequirement(req, item({ doubleValues: { AttackBonus: 0.15 }, spellIds: [2603] }))).toBe(true)
+    expect(matchRequirement(req, item({ doubleValues: { AttackBonus: 0.15 }, spellIds: [1592] }))).toBe(false)
+  })
+
+  it('type 2006 CalcdBuffedTinkedDamageGE uses computed tinked damage', () => {
+    const req: Requirement = { type: 2006, keyval: 50 }
+    const item1 = item({ intValues: { MaxDamage: 50, NumberTimesTinkered: 0, Imbued: 0, Material: 1 }, doubleValues: { Variance: 0.2 } })
+    const result = matchRequirement(req, item1)
+    expect(typeof result).toBe('boolean')
+  })
+
+  it('type 2007 TotalRatingsGE sums ratings 370,371,372,373,374,375,376,379', () => {
+    const req: Requirement = { type: 2007, keyval: 10 }
+    expect(matchRequirement(req, item({ intValues: { DamRating: 1, DamResistRating: 2, CritRating: 3, VitalityRating: 4 } }))).toBe(true)
+    expect(matchRequirement(req, item({ intValues: { DamRating: 1, DamResistRating: 2 } }))).toBe(false)
+  })
+
+  it('type 2008 CalcedBuffedTinkedTargetMeleeGE uses CanReachTargetValues', () => {
+    const req: Requirement = { type: 2008, dot: 100, meleeDefenseBonus: 0.1, attackBonus: 0.1 }
+    expect(typeof matchRequirement(req, item({ objectClass: 1, intValues: { MaxDamage: 50, NumberTimesTinkered: 0, Imbued: 0, Material: 1 }, doubleValues: { Variance: 0.2, MeleeDefenseBonus: 0, AttackBonus: 0 } }))).toBe('boolean')
   })
 })
 

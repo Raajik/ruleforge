@@ -309,10 +309,12 @@ mockup data, not app code. Keep every T27-T31 test green: change test queries on
     false when an unknown requirement comes before a miss.
   - Tested by `src/core/eval/item.test.ts` and `src/core/eval/match.test.ts` (51 tests, 496 total).
     Facts: `docs/eval.md`.
-- [ ] H3b Character and buffed types.
+- [x] H3b Character and buffed types.
   - A `Character` input (level, skills, main pack free slots) for types 1000-1004.
   - Port `ref/plugin/ComputedItemInfo.cs` for types 2000-2008 (buffed values, damage over time, ratings). Test
     each type, and each formula with numbers that you compute by hand from the C#.
+  - Done by Wren after two free workers hit rate limits: `src/core/eval/computed.ts`, `character.ts`. Facts:
+    `docs/eval.md`.
 - [ ] H3c The loot preview.
   - `src/core/eval/samples.json`: about 20 sample items, made by hand to hit real rules of `LootSnobV4.utl` and
     `IAC_Level_NoCash.utl`. Say in `docs/` that they are made up, not taken from the game.

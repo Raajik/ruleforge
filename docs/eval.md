@@ -49,8 +49,19 @@
 - [Verified] A palette slot past the end of the palettes, or a negative one, gives false. The C# reads
   `id.Palettes[Slot]` and throws on a negative slot. `src/core/eval/match.test.ts`,
   `ref/shared/LootRules.cs:2201-2202`.
-- [Verified] Types 1000-1004 and 2000-2008 answer "unknown", as do unsupported raw requirements.
-  `src/core/eval/match.test.ts`.
+- [Verified] Unsupported raw requirements answer "unknown". Types 1000-1004 answer "unknown" without a
+  `Character`, or when the character has no value for the skill. `src/core/eval/match.test.ts`.
+- [Observed] Types 1000 and 1004 read the skill from Decal's CharacterFilter, and type 1001 counts the free main
+  pack slots in the game. The editor takes these values from a `Character` input. `ref/shared/LootRules.cs:1240-1255,
+  1332-1335,1739-1754`.
+- [Observed] A buffed value adds only the Bonus of an item spell, and only when the Bonus is not 0. Blood Drinker
+  VI has Change 20 and Bonus 0, so it adds nothing. The "Thirst" and "Impenetrability" cantrips add their Bonus.
+  For doubles, a spell whose `(int)Change` is 1 (the Hermetic Link spells) multiplies by its Bonus.
+  `ref/plugin/ComputedItemInfo.cs:259-308`.
+- [Observed] A buffed value of a key that the item does not have is the default (0), and no spell adds to it.
+  `ref/plugin/ComputedItemInfo.cs:266,289`.
+- [Verified] The tinked damage of a 50 max damage, 0.2 variance, unimbued item is 84.4344 after 9 tinks (2 granite,
+  7 iron). A separate Python copy of the formulas gives the same value. `src/core/eval/computed.test.ts`.
 - [Observed] The editor labels the hue difference "Max diff (Hue 0-255)", but `Color.GetHue` gives 0 to 360.
   `ref/shared/LootRules.cs:1988,1887-1895`.
 - [Unknown] The JS RegExp engine and .NET Regex agree on the patterns of the shipped profiles. This repo only ran

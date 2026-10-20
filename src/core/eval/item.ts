@@ -37,6 +37,8 @@ export interface LootItem {
   stringValues: Record<string, string>
   /** The names of the item spells, like MySpell.Name (LootRules.cs 285). */
   spells: string[]
+  /** Spell IDs for buff calculations (like GameItemInfo.Spells[i].Id). */
+  spellIds?: number[]
   /** The palettes of the item, in slot order. */
   palettes: ItemPalette[]
 }
