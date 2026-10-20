@@ -291,9 +291,25 @@ mockup data, not app code. Keep every T27-T31 test green: change test queries on
     name. `ruleSummary` reads the requirement fields, and `mainValueField` gives the number box of a rule. The
     number box edits the first value field of the rule, as the spec says. Verified: `src/core/ops/categories.test.ts`
     (19) and `src/ui/CustomizePage.test.tsx` (7), 445 total. Facts: `docs/ops.md`, `docs/ui.md`.
-- [ ] H3 The evaluator and the loot preview. Split it in more tasks before you start.
+- [ ] H3a The item evaluator, for item types.
+  - `src/core/eval/item.ts`: a `LootItem` type that holds what `GameItemInfo` gives the C# Match methods:
+    `ObjectClass`, int, double and string values keyed by the enum names of `generated.ts`, spells (names), and
+    palettes. Read the inputs from each `Match(GameItemInfo id)` in `ref/shared/LootRules.cs` (`#if VTC_PLUGIN`).
+  - `src/core/eval/match.ts`: `matchRequirement(req, item)` for types 0-17 and 9999, and `classify(profile,
+    item)`, a port of `LootRules.Classify`: the first rule that matches gives the action and the rule name.
+    Copy the C# exactly, including the defaults of `GetValueInt(vk, 0)` for a missing value.
+  - Types 1000-1004 and 2000-2008 return "unknown" for now (H3b). Test each type with a match and a miss.
+- [ ] H3b Character and buffed types.
+  - A `Character` input (level, skills, main pack free slots) for types 1000-1004.
+  - Port `ref/plugin/ComputedItemInfo.cs` for types 2000-2008 (buffed values, damage over time, ratings). Test
+    each type, and each formula with numbers that you compute by hand from the C#.
+- [ ] H3c The loot preview.
+  - `src/core/eval/samples.json`: about 20 sample items, made by hand to hit real rules of `LootSnobV4.utl` and
+    `IAC_Level_NoCash.utl`. Say in `docs/` that they are made up, not taken from the game.
+  - The loot preview panel of `design/A3-customize.html` on the Customize page, and a Loot preview tab: each
+    item with its action badge. A click shows the rule that matched and the result of each requirement.
 - [ ] H4 Review changes against the base profile.
-- [ ] H5 The Overview page (needs the user's strictness content).
+- [ ] H5 The Overview page. The strictness, ladder and character rules are in `specs/ruleforge-ui.md`, "Strictness".
 
 ## Later: "better" (only when the user picks)
 Ideas, not tasks. Do not start these.
