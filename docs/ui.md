@@ -94,10 +94,10 @@
 - **Observed** (`ref/shared/LootRules.cs` 3130-3171): `cLootRules.Read` catches every exception and returns
   false, and `LoadFile` (`ref/editor/Form1.cs` 360-387) ignores the result, so the legacy editor shows an
   empty rule list for a bad file.
-- **Observed** (`src/core/format/profile.ts` 460-461, 517-527): the rebuild `readProfile` throws only when
-  the header version is above the maximum. A first line that is not `UTL` and not a number reads as version
-  0 with an empty rule list. Most garbage text then loads as an empty profile, as it does in the C#
-  editor. The rebuild keeps the current profile and shows an error for the inputs that do throw.
+- **Verified** (`src/core/format/profile.test.ts`, "readProfile on a file that is not a profile"): the rebuild
+  `readProfile` throws when the version or the rule count is not a whole number, or the count is below 0.
+  The C# editor shows an empty profile there. The rebuild keeps the current profile and shows an error, so
+  a save cannot write an empty profile over the wrong file.
 - **Verified** (`src/ui/fileio.test.ts`, "is false without the pickers and true with them"):
   `hasFileSystemAccess` finds the File System Access API only when both `showOpenFilePicker` and
   `showSaveFilePicker` exist.

@@ -511,19 +511,16 @@ export function readProfile(text: string): LootProfile {
   // LootRules.cs 3140: a version 0 file starts with the rule count, later
   // versions start with UTL, the file version and then the rule count.
   const firstLine = reader.readLine()
-  let version: number
-  let count: number
-  if (firstLine === 'UTL') {
-    version = toInt(reader.readLine())
-    if (version > MAX_PROFILE_VERSION) {
-      throw new Error(
-        `Profile file is version ${version}, only version ${MAX_PROFILE_VERSION} is supported by this version of VTClassic.`,
-      )
-    }
-    count = toInt(reader.readLine())
-  } else {
-    version = 0
-    count = toInt(firstLine)
+  const isV1 = firstLine === 'UTL'
+  const version = isV1 ? parseInt32(reader.readLine() ?? '') : 0
+  const count = parseInt32((isV1 ? reader.readLine() : firstLine) ?? '')
+  // The C# shows an empty profile for a file that is not a profile. Throw instead, so that a save cannot
+  // write an empty profile over the wrong file.
+  if (version === undefined || count === undefined || count < 0) throw new Error('This file is not a loot profile.')
+  if (version > MAX_PROFILE_VERSION) {
+    throw new Error(
+      `Profile file is version ${version}, only version ${MAX_PROFILE_VERSION} is supported by this version of VTClassic.`,
+    )
   }
 
   const rules: LootRule[] = []

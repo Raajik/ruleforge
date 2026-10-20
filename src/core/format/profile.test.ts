@@ -691,3 +691,11 @@ describe('extra block, SalvageCombine', () => {
     expect(() => readProfile(missingLine)).toThrow(/material count/)
   })
 })
+
+describe('readProfile on a file that is not a profile', () => {
+  it('throws, so a save cannot write an empty profile over the wrong file', () => {
+    for (const text of ['', 'not a profile', '12abc\r\n', 'UTL\r\nx\r\n0\r\n', 'UTL\r\n1\r\n-1\r\n']) {
+      expect(() => readProfile(text), JSON.stringify(text)).toThrow('This file is not a loot profile.')
+    }
+  })
+})
