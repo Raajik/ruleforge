@@ -33,7 +33,7 @@ export interface PickedDesktopProfile {
  * which is the C# `FileName`.
  */
 export function backupPath(path: string, dialogName: string | undefined, at: Date): string {
-  const folder = path.slice(0, path.lastIndexOf('/') + 1)
+  const folder = path.slice(0, Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1)
   const name = dialogName !== undefined && dialogName !== '' ? dialogName : baseName(path)
   return backupFileName(`${folder}${name}`, at)
 }

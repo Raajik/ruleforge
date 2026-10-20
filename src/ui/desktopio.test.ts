@@ -166,4 +166,10 @@ describe('backupPath', () => {
       '/profiles/b.utl.2026-01-02-03-04.bak',
     )
   })
+
+  it('keeps the folder of a Windows path', () => {
+    expect(backupPath('C:\\VTank\\b.utl', 'c.utl', new Date(2026, 0, 2, 3, 4))).toBe(
+      'C:\\VTank\\c.utl.2026-01-02-03-04.bak',
+    )
+  })
 })
