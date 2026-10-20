@@ -42,6 +42,12 @@ export function indexFromKeyValue(kind: KeyKind, value: number): number {
   )
 }
 
+/** The enum name of a key value, or the number as text for a value not in the list. */
+export function keyNameFromValue(kind: KeyKind, value: number): string {
+  const index = indexFromKeyValue(kind, value)
+  return index === -1 ? String(value) : sortedNames[kind][index]!
+}
+
 const nonIdValues = {
   svk: new Set<number>([stringValueKey.Name, stringValueKey.SecondaryName]),
   lvk: new Set<number>([

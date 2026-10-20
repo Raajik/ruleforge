@@ -52,6 +52,7 @@ import {
   saveDesktopProfile,
 } from './desktopio'
 import { MenuBar, type MenuName } from './MenuBar'
+import { CustomizePage } from './CustomizePage'
 import { ReqEditor } from './ReqEditor'
 import { SalvageCombineTab } from './SalvageCombineTab'
 import './theme.css'
@@ -82,7 +83,7 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
   desktop?: boolean
 }) {
   const [profile, setProfileState] = useState(initialProfile)
-  const [tab, setTab] = useState<'rules' | 'salvage'>('rules')
+  const [tab, setTab] = useState<'rules' | 'customize' | 'salvage'>('rules')
   const [selectedRule, setSelectedRule] = useState(-1)
   const [selectedReq, setSelectedReq] = useState(-1)
   const [search, setSearch] = useState('')
@@ -458,6 +459,14 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
           <button
             type="button"
             role="tab"
+            aria-selected={tab === 'customize'}
+            onClick={() => setTab('customize')}
+          >
+            Customize
+          </button>
+          <button
+            type="button"
+            role="tab"
             aria-selected={tab === 'salvage'}
             onClick={() => setTab('salvage')}
           >
@@ -519,9 +528,12 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
 
       {fileError !== '' && <p role="alert">{fileError}</p>}
 
-      {tab === 'rules' ? (
-        <div role="tabpanel" aria-label="Loot Rules" className="editor">
-          <div className="rule-moves">
+      {tab === 'customize' ? (
+        <CustomizePage profile={profile} onChange={setProfile} onEditInDetail={() => setTab('rules')} />
+      ) : tab === 'salvage' ? (
+        <SalvageCombineTab profile={profile} onChange={setProfile} />
+      ) : (
+        <div role="tabpanel" aria-label="Loot Rules" className="editor">          <div className="rule-moves">
             <button type="button" onClick={(e) => moveRuleClick(-1, e.ctrlKey)}>
               Move Up
             </button>
@@ -646,8 +658,6 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
             <p className="rule-fields">Select a rule.</p>
           )}
         </div>
-      ) : (
-        <SalvageCombineTab profile={profile} onChange={setProfile} />
       )}
 
       {dialog === 'salvage' && (

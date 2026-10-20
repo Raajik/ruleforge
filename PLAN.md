@@ -278,7 +278,7 @@ mockup data, not app code. Keep every T27-T31 test green: change test queries on
     panels are a CSS grid on the existing controls, so no control and no key changed.
   - `isRuleDisabled` (`src/core/ops/rules.ts`) drives the badge: `Off` for a true `DisabledRule`, else the
     friendly action name. Tested by `rules.test.ts` and the badge test in `App.test.tsx` (419 tests pass).
-- [ ] H2 Categories and the Customize page.
+- [x] H2 Categories and the Customize page.
   - `src/core/ops/categories.ts`: split the rules into sections. A name that is two or more `*`, text, then two
     or more `*` (after a trim) starts a section. It is a sub-section when the untrimmed name starts with a space,
     or when it has exactly two `*` at the start. Else it is a top section. Keep the rule index of each rule.
@@ -287,6 +287,10 @@ mockup data, not app code. Keep every T27-T31 test green: change test queries on
   - `setRuleEnabled(profile, index, on)`: on removes every `DisabledRule`, off adds one with `b` true.
   - The Customize page of `design/A3-customize.html`, without the loot preview panel (that is H3).
   - A one-line rule summary from its requirements, for example "Missile weapon, Weapon mastery category = 8".
+  - `categorizeRules` drops `Uncategorized` when the file starts with a marker, and the section name is the trimmed
+    name. `ruleSummary` reads the requirement fields, and `mainValueField` gives the number box of a rule. The
+    number box edits the first value field of the rule, as the spec says. Verified: `src/core/ops/categories.test.ts`
+    (19) and `src/ui/CustomizePage.test.tsx` (7), 445 total. Facts: `docs/ops.md`, `docs/ui.md`.
 - [ ] H3 The evaluator and the loot preview. Split it in more tasks before you start.
 - [ ] H4 Review changes against the base profile.
 - [ ] H5 The Overview page (needs the user's strictness content).

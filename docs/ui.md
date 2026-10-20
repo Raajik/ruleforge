@@ -173,3 +173,17 @@
   rule row shows an action badge. The badge reads `Off` when a `DisabledRule` has `b` true. Else it reads
   `friendlyActionName(action)`. The badge text is part of the button text, so the accessible name is
   `Off ***** Trophies *****`. The `ruleNames()` helpers of the App tests read the `.rule-name` span.
+
+## The Customize page (H2)
+
+- **Observed** (`design/A3-customize.html` 42-79): the page is a category nav on the left and the rules of one
+  category beside it. Each rule row has an on/off box, a one-line summary and at most one number box. The loot
+  preview panel (81-107) is not part of H2, and the header carries a "Search rules, items, spells" box and an
+  "Export .utl" button.
+- **Verified** (`src/ui/CustomizePage.test.tsx`, `npm test` 445 pass): `App` gains a "Customize" tab beside "Loot
+  Rules" and "Salvage Combination". The tab shows the categories of `categorizeRules` with the rule count of each,
+  and the rules of the selected category with the summary of `ruleSummary`. The on/off box runs `setRuleEnabled`
+  and the number box runs `setTextValue` on the `mainValueField` of the rule. "Edit rules in detail" opens the Loot
+  Rules tab. Only one panel renders at a time, so the "Rules" list of the App tests is absent on this tab.
+- **Verified** (`src/ui/CustomizePage.test.tsx`, "shows the top sections ..."): on `IAC_Level_NoCash.utl` the
+  sections hold 10, 16 and 27 rules, because each section is the run of rules after its marker rule.

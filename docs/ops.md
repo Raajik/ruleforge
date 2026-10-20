@@ -331,3 +331,29 @@
   the same requirement. Test: `src/core/ops/reqfields.test.ts`, "real requirements".
 - [Observed] A material change in the salvage tab moves the combine range to the new material, and the new key goes to the end of the dictionary. The value mode stays under the old material. A material that has an entry already is rejected. `ref/editor/Form_SalvageTab.cs:95-122`.
 - [Verified] `setMaterial` copies that, and it never changes its input. Test: `src/core/ops/salvagecombine.test.ts`, "setMaterial".
+
+## Customize categories (H2)
+
+- [Verified] `categorizeRules` makes a section of a rule whose trimmed name starts and ends with two or more `*`.
+  It is a sub-section when the untrimmed name starts with a space, or when the trimmed name starts with exactly two
+  `*`. The section holds the rules after the marker, up to the next marker. The rules before the first marker go in
+  `Uncategorized`, which is dropped when the file starts with a marker. A section keeps the marker rule index
+  (`index`, -1 for `Uncategorized`) and the rule index of every rule. The marker stays in the rule list, and the
+  section name is the trimmed rule name. Test: `src/core/ops/categories.test.ts`, "categorizeRules".
+- [Verified] `LootSnobV4.utl` has 16 top sections and 50 sub-sections, and `IAC_Level_NoCash.utl` has 3 top
+  sections and no sub-section. Every rule index appears in exactly one section, unless the rule is a marker. Test:
+  `src/core/ops/categories.test.ts`, "finds 16 top sections ..." and "gives each rule exactly one section ...".
+- [Observed] The markers of `LootSnobV4.utl` show both forms of top section: `***** Trophies *****` (five `*`) and
+  `****** Death Items ******` (six `*`). `IAC_Level_NoCash.utl` uses `*** Leveling Weapons ***` (three `*`). A
+  sub-section with no leading space is `**AT**`. With a leading space it is `   ** Aetheria **`.
+  `fixtures/LootSnobV4.utl`, `fixtures/IAC_Level_NoCash.utl`.
+- [Verified] `setRuleEnabled(profile, index, on)` removes every `DisabledRule` of the rule when `on` is true. It
+  adds one with `b` true at the end when `on` is false. So a turned-off rule that had its `DisabledRule` first
+  moves it to the end, and the bytes change. A bad index gives the profile back, and the input never changes. Test:
+  `src/core/ops/categories.test.ts`, "setRuleEnabled".
+- [Verified] `ruleSummary` joins one part per requirement, in order, with ", ". A part is the type name, its acts-on
+  name and its value. A `DisabledRule` has no part, so a rule with only that requirement gives an empty text. The
+  `vk` reads as its enum name through `keyNameFromValue`. `mainValueField` gives the value field of the first
+  requirement that has one, or undefined. Test: `src/core/ops/categories.test.ts`, "ruleSummary".
+- [Unknown] `ruleSummary` is a plain reading of the requirement fields, not the prose of `design/A3-customize.html`
+  ("Missile weapon, Weapon mastery category = 8"). H3 rewrites it from the evaluator.

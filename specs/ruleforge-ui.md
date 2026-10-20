@@ -46,6 +46,17 @@ page.
 4. **H4 Review changes:** a diff against the base profile.
 5. **H5 Overview:** base profiles, strictness and character. It needs the content below.
 
+### H2 design decisions
+
+- The Customize page replaces the "Loot Rules" tab of the top bar. The page shows the category list
+  on the left, the rules of one category in the middle, and one number box per rule. It has no loot
+  preview panel. That panel is H3.
+- The number box of a rule edits the first value field of the rule, the one `requirementFields`
+  gives first. It is absent when the rule has no requirement with a value field.
+- A rule summary is one line, built from the requirements in order: the `ruleTypeName` of each type,
+  the acts-on key name and the value. The parts join with `, `. It is a plain reading of the file,
+  not the prose of the mockup. H3 replaces it with the evaluator text where the mockup shows it.
+
 ## The base profile: LootSnob v4
 
 The user (2026-10-19): LootSnob v4 is the profile that almost everyone uses. Its Keep rules define the best
