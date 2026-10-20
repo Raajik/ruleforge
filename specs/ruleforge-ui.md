@@ -94,7 +94,11 @@ Strict and Very strict keep them off.
 
 **Not touched by strictness:** Trophies stay separate on/off choices in the character step. Tailoring,
 Tailoring (Special) and Salvage stay as the file has them, and the user turns them on by hand. Item Only and
-Shields follow the ladder rule.
+Shields also stay as the file has them. Each of their rules is a ladder of one rung. So the ladder rule would
+turn all of them on at every level (Wren, 2026-10-19).
+
+A one-rung ladder is on at every level. Melee Weapons has 120 of them, for example `(H) 430 Insane` (counted by
+Wren on LootSnob v4).
 
 **Character:** the weapon choice keeps only the matching weapon rules on, by name prefix: `(H)` heavy, `(L)`
 light, `(F)` finesse, `(M)` missile, `(W)` wand. Rules of other weapon types go off.
