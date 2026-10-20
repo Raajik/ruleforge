@@ -237,7 +237,7 @@ Copy the layout of the legacy editor first. Improvements come later.
     and Ctrl+V skip a focused text box, as the C# handlers do (Form1.cs 1054-1074). Ctrl+V replaces the
     selected rule in place. The Delete key is a rebuild addition. The C# has none (Form1.cs 900-908).
     Tested by `App.connect.test.tsx` (21 tests, 368 total). Facts: `docs/ui.md`.
-- [ ] T30 Salvage Combination tab, connected to the T25 ops.
+- [x] T30 Salvage Combination tab, connected to the T25 ops.
 - [ ] T31 Open and save in the browser.
   - Use the File System Access API when the browser has it (Chromium). Else use `<input type="file">` and a
     download.
