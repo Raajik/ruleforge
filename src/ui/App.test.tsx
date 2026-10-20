@@ -16,13 +16,13 @@ function lootSnob() {
 
 describe('App layout', () => {
   it('renders LootSnobV4.utl and shows its 1627 rules', () => {
-    render(<App profile={lootSnob()} />)
+    render(<App initialProfile={lootSnob()} />)
     const list = screen.getByRole('list', { name: 'Rules' })
     expect(within(list).getAllByRole('listitem')).toHaveLength(1627)
   })
 
   it('has the menu bar, the toolbar and the two tabs', () => {
-    render(<App profile={lootSnob()} />)
+    render(<App initialProfile={lootSnob()} />)
     for (const menu of ['File', 'Edit', 'Rule', 'Combine']) {
       expect(screen.getByRole('button', { name: menu })).toBeTruthy()
     }
@@ -35,7 +35,7 @@ describe('App layout', () => {
   })
 
   it('clicking a rule shows its name, action and requirements', () => {
-    render(<App profile={lootSnob()} />)
+    render(<App initialProfile={lootSnob()} />)
     // Rule 0 is "***** Trophies *****" (Keep) with a DisabledRule and a
     // StringValueMatch requirement.
     fireEvent.click(screen.getByRole('button', { name: '***** Trophies *****' }))
@@ -52,15 +52,25 @@ describe('App layout', () => {
   })
 
   it('a KeepUpTo rule shows its keep count', () => {
-    render(<App profile={lootSnob()} />)
+    render(<App initialProfile={lootSnob()} />)
     // Rule 17 is "    (T) Adept Healing Kit", KeepUpTo with count 5.
     const items = within(screen.getByRole('list', { name: 'Rules' })).getAllByRole('listitem')
     fireEvent.click(within(items[17]!).getByRole('button'))
     expect((screen.getByLabelText('Keep Count') as HTMLInputElement).value).toBe('5')
   })
 
+  it('clicking a requirement shows its fields, and typing updates the requirement', () => {
+    render(<App initialProfile={lootSnob()} />)
+    fireEvent.click(screen.getByRole('button', { name: '***** Trophies *****' }))
+    fireEvent.click(screen.getByRole('button', { name: 'StringValueMatch' }))
+    const pattern = screen.getByLabelText('String Value Pattern') as HTMLInputElement
+    expect(pattern.value).toBeTruthy()
+    fireEvent.change(pattern, { target: { value: 'Changed' } })
+    expect((screen.getByLabelText('String Value Pattern') as HTMLInputElement).value).toBe('Changed')
+  })
+
   it('switching to the Salvage Combination tab hides the rule list', () => {
-    render(<App profile={lootSnob()} />)
+    render(<App initialProfile={lootSnob()} />)
     fireEvent.click(screen.getByRole('tab', { name: 'Salvage Combination' }))
     expect(screen.queryByRole('list', { name: 'Rules' })).toBeNull()
     expect(screen.getByRole('tabpanel')).toBeTruthy()

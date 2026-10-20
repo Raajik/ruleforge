@@ -301,3 +301,30 @@
   digits. `saveState` writes the profile, clears the flag, keeps `lastBackup` and never changes its input.
   `markChanged` backs up only a named, changed file whose last backup is over 5 minutes old, and it takes no
   second backup within the interval. Test: `src/core/ops/file.test.ts`, "backupFileName", "save" and "markChanged".
+
+## Requirement fields (T28)
+
+- [Observed] A field change sets the value through the type's `UI_*_Set` method and then refreshes the
+  requirement list. The integer and double setters use `int.TryParse` and `double.TryParse`, so an empty or
+  invalid text stores 0. `ref/editor/Form1.cs:656-769`, `ref/shared/LootRules.cs:522-525`.
+- [Observed] The RGB color field and the palette id field parse hex text with
+  `int.TryParse(value, NumberStyles.HexNumber, ...)`. A failed parse gives 0. The color setter forces alpha
+  on, and both getters mask to 24 bits and show uppercase hex without leading zeros.
+  `ref/shared/LootRules.cs:1982-1985,2352-2355`.
+- [Observed] The buffed acts-on combos of types 2003 and 2005 list exactly two and four keys, in this order:
+  ArmorLevel, MaxDamage and AttackBonus, ElementalDamageVersusMonsters, ManaCBonus, MeleeDefenseBonus.
+  `ref/shared/LootRules.cs:2566-2567,2640-2641`.
+- [Observed] The SpellMatch "Does NOT Match" setter builds a `new Regex(value)` directly and throws on a bad
+  pattern. The editor keeps every regex field as text instead (PLAN.md Traps), so the editor stores a bad
+  pattern as typed. `ref/shared/LootRules.cs:1073-1076`.
+
+- [Verified] `requirementFields` gives the acts-on combo, the text values and the color sample of all 31
+  creatable types, with the C# labels and option lists. An unsupported requirement gets no field. Test:
+  `src/core/ops/reqfields.test.ts`, "requirementFields".
+- [Verified] `setTextValue` copies the TryParse behavior: an invalid integer or hex text stores 0, and a
+  double accepts a comma as the decimal point. A regex field keeps its text, and an unknown field leaves the
+  requirement unchanged. `setActsOn` sets the key from the combo index and throws a RangeError on an index
+  the combo cannot give. Test: `src/core/ops/reqfields.test.ts`, "setTextValue" and "setActsOn".
+- [Verified] The real `LongValKey*` requirements of `IAC_Level_NoCash.utl` and the real `StringValueMatch`
+  requirements of `UnfamilarShores.utl` show and re-set unchanged: reading a field and setting it back gives
+  the same requirement. Test: `src/core/ops/reqfields.test.ts`, "real requirements".

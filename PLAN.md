@@ -213,10 +213,18 @@ Copy the layout of the legacy editor first. Improvements come later.
   - Loot Rules tab: the rule list on the left. The rule fields (name, action, keep count) and the requirement list
     in the middle. The requirement fields on the right.
   - Test: it renders `fixtures/LootSnobV4.utl` and shows 1627 rules.
-- [ ] T28 Requirement field editor.
-  - `SetCurrentReq` (`Form1.cs` 187–291) shows the fields of each type: acts on, key, value 1–4, color sample.
-    It also shows their labels.
-  - The field handlers are at 656–769. Test 3 types.
+- [x] T28 Requirement field editor.
+  - `SetCurrentReq` (`Form1.cs` 187-291) shows the fields of each type: acts on, key, value 1-4, color sample.
+    It also shows their labels. The field handlers are at 656-769. Test 3 types.
+  - `src/core/ops/reqfields.ts`: one field table for all 31 types with the C# labels. The acts-on combos use
+    the T17 ComboKeys lists, the two buffed key lists and the status pair. Type 15 uses the armor group
+    names of the color slot file. `setTextValue` and `setActsOn` copy the handlers at Form1.cs 656-769.
+    An invalid int, double or hex text stores 0. The hex getters mask to 24 bits, and the regex fields stay
+    text. Tested by `reqfields.test.ts` (25 tests), including the real requirements of
+    `IAC_Level_NoCash.utl` and `UnfamilarShores.utl`.
+  - `src/ui/ReqEditor.tsx` shows the fields of the selected requirement. The App holds the edited profile in
+    state and updates the selected requirement on a field change. Tested by `ReqEditor.test.tsx` plus the App
+    test (347 total). Facts: `docs/ops.md`, `docs/ui.md`.
 - [ ] T29 Connect the menus, toolbar and buttons to the ops from phase E.
   - Keyboard: Ctrl+C, Ctrl+V, Ctrl+S, Ctrl+O, Delete.
   - Test: a click on "Auto-Sort Rules" changes the rule order.

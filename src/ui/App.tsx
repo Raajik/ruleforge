@@ -3,12 +3,16 @@
  * columns copy ref/editor/Form1.Designer.cs. The menu items and toolbar
  * buttons are not connected to the ops yet (that is T29).
  *
+ * T28 adds the requirement field editor: click a requirement in the list to
+ * edit its fields, as `SetCurrentReq` does (ref/editor/Form1.cs 187-291).
+ *
  * The C# action combo lists only the five friendly names (Constants.cs
  * 350-364). Any other action gets no combo entry (Form1.cs 127-141).
  */
 import { useState } from 'react'
 import { eLootAction, friendlyActionName, ruleTypeName } from '../core/format/enums'
-import type { LootProfile } from '../core/format/profile'
+import type { LootProfile, Requirement } from '../core/format/profile'
+import { ReqEditor } from './ReqEditor'
 
 const MENUS = ['File', 'Edit', 'Rule', 'Combine'] as const
 
@@ -18,11 +22,32 @@ const ACTION_COMBO = Object.values(eLootAction)
   .map((value) => [value, friendlyActionName(value)] as const)
   .filter(([, name]) => name !== '')
 
-export function App({ profile }: { profile: LootProfile }) {
+export function App({
+  initialProfile,
+  armorGroups,
+}: {
+  initialProfile: LootProfile
+  /** The color slot names of the ColorSlots XML file (type 15 only). */
+  armorGroups?: readonly string[]
+}) {
+  const [profile, setProfile] = useState(initialProfile)
   const [tab, setTab] = useState<'rules' | 'salvage'>('rules')
   const [selectedRule, setSelectedRule] = useState(-1)
+  const [selectedReq, setSelectedReq] = useState(-1)
 
   const rule = selectedRule >= 0 ? profile.rules[selectedRule] : undefined
+  const req = rule && selectedReq >= 0 ? rule.requirements[selectedReq] : undefined
+
+  function changeReq(updated: Requirement) {
+    setProfile((p) => ({
+      ...p,
+      rules: p.rules.map((r, i) =>
+        i === selectedRule
+          ? { ...r, requirements: r.requirements.map((q, j) => (j === selectedReq ? updated : q)) }
+          : r,
+      ),
+    }))
+  }
 
   return (
     <div>
@@ -58,7 +83,14 @@ export function App({ profile }: { profile: LootProfile }) {
           <ul aria-label="Rules" style={{ height: 400, overflow: 'auto' }}>
             {profile.rules.map((r, i) => (
               <li key={i}>
-                <button type="button" aria-pressed={i === selectedRule} onClick={() => setSelectedRule(i)}>
+                <button
+                  type="button"
+                  aria-pressed={i === selectedRule}
+                  onClick={() => {
+                    setSelectedRule(i)
+                    setSelectedReq(-1)
+                  }}
+                >
                   {r.name}
                 </button>
               </li>
@@ -93,15 +125,24 @@ export function App({ profile }: { profile: LootProfile }) {
                   </label>
                 )}
                 <ul aria-label="Requirements">
-                  {rule.requirements.map((req, i) => (
-                    <li key={i}>{ruleTypeName(req.type)}</li>
+                  {rule.requirements.map((r, i) => (
+                    <li key={i}>
+                      <button
+                        type="button"
+                        aria-pressed={i === selectedReq}
+                        onClick={() => setSelectedReq(i)}
+                      >
+                        {ruleTypeName(r.type)}
+                      </button>
+                    </li>
                   ))}
                 </ul>
               </fieldset>
-              <fieldset>
-                <legend>Requirement</legend>
-                <p>Requirement fields come in T28.</p>
-              </fieldset>
+              {req ? (
+                <ReqEditor req={req} armorGroups={armorGroups} onChange={changeReq} />
+              ) : (
+                <p>Select a requirement.</p>
+              )}
             </>
           ) : (
             <p>Select a rule.</p>
