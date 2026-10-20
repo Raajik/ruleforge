@@ -9,7 +9,7 @@ mkdir -p .agent-log
 opencode run -m "$model" --title "$task $model" "$prompt" 2>&1 | tee ".agent-log/$task-${model##*/}.log"
 status=${PIPESTATUS[0]}
 # Record a rate-limit hit, so pick-model.sh skips this model for 5 hours.
-grep -q "Rate limit exceeded" ".agent-log/$task-${model##*/}.log" && printf '%s\t%s\n' "$(date +%s)" "$model" >> .agent-log/limits.tsv
+grep -q "Rate limit exceeded" ".agent-log/$task-${model##*/}.log" && printf '%s\t%s\n' "$(date +%s)" "$model" >> ~/.local/state/opencode-limits.tsv
 echo "=== DISPATCH END $task $model exit=$status"
 # The orchestrator waits for this file, not for the process.
 echo "$status" > ".agent-log/$task.done"
