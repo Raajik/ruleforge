@@ -125,7 +125,8 @@ describe('App in the desktop build', () => {
     pick('File', 'Open')
     await waitFor(() => expect(ruleNames()).toEqual(['fixture_minimal_editor']))
     editRule()
-    const at = 1_792_465_500_000
+    // The stamp is local time, so build the instant in local time too.
+    const at = new Date(2026, 9, 19, 21, 5).getTime()
     const now = vi.spyOn(Date, 'now').mockReturnValue(at)
     pick('File', 'Save')
     await waitFor(() => expect(writtenPaths()).toHaveLength(2))
