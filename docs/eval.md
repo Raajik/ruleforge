@@ -62,6 +62,13 @@
   `ref/plugin/ComputedItemInfo.cs:266,289`.
 - [Verified] The tinked damage of a 50 max damage, 0.2 variance, unimbued item is 84.4344 after 9 tinks (2 granite,
   7 iron). A separate Python copy of the formulas gives the same value. `src/core/eval/computed.test.ts`.
+- [Verified] The other computed formulas give the hand-computed numbers: `CalculateDamageOverTime(50, 0.25)` is
+  49.375, `BuffedAverageDamage` of a 50 max damage, 0.25 variance item is 43.75, `BuffedMissileDamage` of a 50 max
+  damage bow with 1.15 damage bonus is 55, `TotalRatings` of the 8 rating keys 1 to 8 is 36.
+  `src/core/eval/computed.test.ts`.
+- [Verified] `CanReachTargetValues` spends the tinks on melee defense first, then on attack, then on damage: an item
+  with no bonuses reaches melee 0.05 and attack 0.04 in 9 tinks and its damage stays 74.74, so 0.06 melee or 0.05
+  attack is out of reach. `src/core/eval/computed.test.ts`, `src/core/eval/match.test.ts`.
 - [Observed] The editor labels the hue difference "Max diff (Hue 0-255)", but `Color.GetHue` gives 0 to 360.
   `ref/shared/LootRules.cs:1988,1887-1895`.
 - [Unknown] The JS RegExp engine and .NET Regex agree on the patterns of the shipped profiles. This repo only ran

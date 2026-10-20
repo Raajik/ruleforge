@@ -19,9 +19,9 @@ import {
 } from './computed'
 
 /**
- * true: the requirement matches. false: it does not. "unknown": the type is
- * not evaluated yet (types 1000-1004 and 2000-2008, and unsupported raw
- * requirements). H3b fills the unknown types in.
+ * true: the requirement matches. false: it does not. "unknown": an
+ * unsupported raw requirement, or a character type (1000-1004) without a
+ * Character, or without a value for the skill.
  */
 export type MatchResult = boolean | 'unknown'
 

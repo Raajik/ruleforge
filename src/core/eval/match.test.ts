@@ -1,6 +1,7 @@
-// Tests for the evaluator match functions (PLAN.md H3a). Each type gets a
+// Tests for the evaluator match functions (PLAN.md H3a, H3b). Each type gets a
 // match and a miss case, on the Match methods of ref/shared/LootRules.cs.
-// Types 1000-1004 and 2000-2008 come in H3b and answer "unknown".
+// Unsupported raw requirements and the character types without a Character
+// answer "unknown".
 
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
@@ -244,7 +245,9 @@ describe('matchRequirement types 1000-1004 and 2000-2008', () => {
   it('type 2001 BuffedMissileDamageGE uses buffed missile damage formula', () => {
     // BuffedMissileDamage = GetBuffedLogValueKey(MaxDamage) + (((GetBuffedDoubleValueKey(DamageBonus)-1)*100)/3) + GetBuffedLogValueKey(ElementalDmgBonus)
     const req: Requirement = { type: 2001, keyval: 50 + (((1.15 - 1) * 100) / 3) + 0 }
-    expect(matchRequirement(req, item({ intValues: { MaxDamage: 50, ElementalDmgBonus: 0 }, doubleValues: { DamageBonus: 1.15 } }))).toBe(true)
+    const bow = item({ intValues: { MaxDamage: 50, ElementalDmgBonus: 0 }, doubleValues: { DamageBonus: 1.15 } })
+    expect(matchRequirement(req, bow)).toBe(true)
+    expect(matchRequirement({ type: 2001, keyval: 56 }, bow)).toBe(false)
   })
 
   it('type 2003 BuffedLongValKeyGE uses buffed int value', () => {
@@ -274,10 +277,10 @@ describe('matchRequirement types 1000-1004 and 2000-2008', () => {
   })
 
   it('type 2006 CalcdBuffedTinkedDamageGE uses computed tinked damage', () => {
-    const req: Requirement = { type: 2006, keyval: 50 }
-    const item1 = item({ intValues: { MaxDamage: 50, NumberTimesTinkered: 0, Imbued: 0, Material: 1 }, doubleValues: { Variance: 0.2 } })
-    const result = matchRequirement(req, item1)
-    expect(typeof result).toBe('boolean')
+    // Not imbued, so 9 tinks: granite twice, then iron, gives DoT(57 + 24, 0.128) = 84.4344.
+    const tinked = item({ intValues: { MaxDamage: 50, NumberTimesTinkered: 0, Imbued: 0, Material: 1 }, doubleValues: { Variance: 0.2 } })
+    expect(matchRequirement({ type: 2006, keyval: 84 }, tinked)).toBe(true)
+    expect(matchRequirement({ type: 2006, keyval: 85 }, tinked)).toBe(false)
   })
 
   it('type 2007 TotalRatingsGE sums ratings 370,371,372,373,374,375,376,379', () => {
@@ -287,8 +290,13 @@ describe('matchRequirement types 1000-1004 and 2000-2008', () => {
   })
 
   it('type 2008 CalcedBuffedTinkedTargetMeleeGE uses CanReachTargetValues', () => {
-    const req: Requirement = { type: 2008, dot: 100, meleeDefenseBonus: 0.1, attackBonus: 0.1 }
-    expect(typeof matchRequirement(req, item({ objectClass: 1, intValues: { MaxDamage: 50, NumberTimesTinkered: 0, Imbued: 0, Material: 1 }, doubleValues: { Variance: 0.2, MeleeDefenseBonus: 0, AttackBonus: 0 } }))).toBe('boolean')
+    // 9 tinks: 5 to melee defense (0.05), 4 to attack (0.04), none left for damage.
+    // The damage stays DoT(50 + 24, 0.2) = 74.74.
+    const target = item({ objectClass: 1, intValues: { MaxDamage: 50, NumberTimesTinkered: 0, Imbued: 0, Material: 1 }, doubleValues: { Variance: 0.2, MeleeDefenseBonus: 0, AttackBonus: 0 } })
+    expect(matchRequirement({ type: 2008, dot: 74, meleeDefenseBonus: 0.05, attackBonus: 0.04 }, target)).toBe(true)
+    expect(matchRequirement({ type: 2008, dot: 75, meleeDefenseBonus: 0.05, attackBonus: 0.04 }, target)).toBe(false)
+    expect(matchRequirement({ type: 2008, dot: 74, meleeDefenseBonus: 0.06, attackBonus: 0.04 }, target)).toBe(false)
+    expect(matchRequirement({ type: 2008, dot: 74, meleeDefenseBonus: 0.05, attackBonus: 0.05 }, target)).toBe(false)
   })
 })
 
@@ -337,7 +345,20 @@ describe('classify', () => {
     expect(classify(p, item())).toEqual({ action: eLootAction.KeepUpTo, ruleName: 'keep up to', lootActionData: 7, known: true })
   })
 
-  it('stops with known false on an unknown requirement type before any match (H3b)', () => {
+  it('stops with known false on an unsupported raw requirement before any match', () => {
+    const p = profile(
+      rule('undecided', eLootAction.Keep, [{ type: 42, data: 'raw body' }]),
+      rule('never reached', eLootAction.Salvage, []),
+    )
+    expect(classify(p, item())).toEqual({
+      action: eLootAction.NoLoot,
+      ruleName: 'undecided',
+      lootActionData: 0,
+      known: false,
+    })
+  })
+
+  it('stops with known false on a character type when no character is given', () => {
     const p = profile(
       rule('undecided', eLootAction.Keep, [{ type: 1002, keyval: 60 }]),
       rule('never reached', eLootAction.Salvage, []),
@@ -350,11 +371,18 @@ describe('classify', () => {
     })
   })
 
+  it('passes the character on to the character types', () => {
+    const p = profile(rule('level 126', eLootAction.Keep, [{ type: 1002, keyval: 126 }]))
+    const character = { level: 126, baseSkills: {}, buffedSkills: {}, mainPackFreeSlots: 0 }
+    expect(classify(p, item(), undefined, character).action).toBe(eLootAction.Keep)
+    expect(classify(p, item(), undefined, { ...character, level: 125 }).action).toBe(eLootAction.NoLoot)
+  })
+
   it('still decides a rule whose unknown requirement comes after a miss', () => {
     const p = profile(
       rule('misses first', eLootAction.Keep, [
         { type: 7, vk: objectClass.Armor },
-        { type: 1002, keyval: 60 },
+        { type: 42, data: 'raw body' },
       ]),
       rule('matches', eLootAction.Salvage, []),
     )
