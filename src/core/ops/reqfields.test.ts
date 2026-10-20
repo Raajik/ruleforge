@@ -96,7 +96,7 @@ describe('requirementFields', () => {
     const actsOn = field(req, 'actsOn')!
     expect(actsOn.label).toBe('Armor Type/Color Region')
     expect(actsOn.options).toEqual(ARMOR_GROUPS)
-    expect(actsOn.value).toBe(-1)
+    expect(actsOn.value).toBe(0) // "None", the first armor group
   })
 
   it('shows the fixed buffed key lists of types 2003 and 2005', () => {
