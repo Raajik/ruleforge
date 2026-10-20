@@ -249,9 +249,18 @@ Copy the layout of the legacy editor first. Improvements come later.
     with `beforeunload`. Tested by `fileio.test.ts` and `App.file.test.tsx` (396 total). Facts: `docs/ui.md`.
 
 ## Phase G: desktop (needs the user)
-- [ ] T32 USER: install Rust (`mise use -g rust`) and the Tauri packages:
-  `sudo dnf install webkit2gtk4.1-devel openssl-devel libappindicator-gtk3-devel librsvg2-devel libxdo-devel`.
-  Then a session adds Tauri 2 around the web app, with native open and save dialogs.
+- [x] T32 Tauri 2 around the web app, with native open and save dialogs.
+  - The user installed Rust (mise, 1.99.1) and the Tauri packages.
+  - `src-tauri/`: the Ruleforge app, the dialog and fs plugins, the icons from `ref/editor/games.ico`, and
+    a capability for the two text-file commands. The dialog plugin adds each picked path to the fs scope.
+  - `src/ui/desktopio.ts`: `openDesktopProfile` and `saveDesktopProfile` on the native dialogs, plus
+    `shouldBackup` and `backupPath`. `App.tsx` uses them when its `desktop` prop is set. The web build keeps
+    the T31 browser path.
+  - The Tauri build only writes the 5-minute `.bak` backup of `markChanged` (`src/core/ops/file.ts`), with
+    the profile text, before each save.
+  - `main.desktop.tsx` is the entry of the desktop build (Vite `build.rollupOptions.input`,
+    `TAURI_ENV_PLATFORM`). Proved with `nice -n 19 npx tauri build --no-bundle`.
+  - Tested by `src/ui/desktopio.test.ts`. Facts: `docs/ui.md`.
 
 ## Later: "better" (only when the user picks)
 Ideas, not tasks. Do not start these.

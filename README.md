@@ -6,7 +6,7 @@ cross-platform rebuild of the Windows-only VTClassic loot editor ("uTank2 Settin
 - It reads and writes `.utl` files byte for byte, the same as the legacy editor. A test checks this on 8 real
   profiles.
 - It has all 31 requirement types, the salvage combine settings and the legacy editor's macros.
-- It runs in a browser. A Tauri desktop build is next.
+- It runs in a browser, and as a Tauri desktop app with native open and save dialogs.
 
 ## Use it
 
@@ -18,6 +18,16 @@ npm run dev
 Open the URL that Vite prints. In Chrome, Save writes back to the open file. In other browsers, Save downloads
 the file.
 
+### Desktop app
+
+```sh
+npm run tauri build      # installers in src-tauri/target/release/bundle
+npm run tauri build -- --no-bundle   # the binary alone, at src-tauri/target/release/ruleforge
+```
+
+The desktop app uses native Open and Save dialogs, and writes a `.bak` copy of a saved profile at most once
+each 5 minutes. Rust and the Tauri system packages are needed (see `PLAN.md` T32).
+
 Use a copy of your profile until you trust the editor.
 
 ## Develop
@@ -27,6 +37,7 @@ npm test           # unit tests
 npm run typecheck
 npm run build
 npm run gen        # regenerate src/core/gamedata/generated.ts (needs ref/)
+npm run tauri dev  # the desktop app; it opens a window
 ```
 
 - `specs/ruleforge.md`: what the editor must do.

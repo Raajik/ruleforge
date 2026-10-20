@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "The main window reads and writes the .utl file that the user picks in a native dialog, and writes the .bak backup next to it. The dialog plugin adds the picked path to the fs scope (permission-dialog-2.8.3/src/commands.rs 188-215, 248-258), so no folder scope is needed here.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "dialog:default",
+    "fs:allow-read-text-file",
+    "fs:allow-write-text-file"
+  ]
+}

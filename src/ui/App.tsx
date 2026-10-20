@@ -18,7 +18,7 @@ import { eLootAction, ruleTypeName } from '../core/format/enums'
 import { readProfile, writeProfile, type LootProfile, type Requirement } from '../core/format/profile'
 import { parseInt32 } from '../core/format/reader'
 import { copyRuleText, pasteRuleText } from '../core/ops/clipboard'
-import { newFile, unsavedChangesPrompt } from '../core/ops/file'
+import { BACKUP_INTERVAL_MINUTES, newFile, unsavedChangesPrompt } from '../core/ops/file'
 import {
   cloneRequirement,
   cloneRule,
@@ -46,6 +46,10 @@ import {
   pickProfileFile,
   writeProfileHandle,
 } from './fileio'
+import {
+  openDesktopProfile,
+  saveDesktopProfile,
+} from './desktopio'
 import { MenuBar, type MenuName } from './MenuBar'
 import { ReqEditor } from './ReqEditor'
 import { SalvageCombineTab } from './SalvageCombineTab'
@@ -68,10 +72,12 @@ function isTextEntry(target: EventTarget | null): boolean {
   return element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.tagName === 'SELECT'
 }
 
-export function App({ initialProfile, armorGroups }: {
+export function App({ initialProfile, armorGroups, desktop = false }: {
   initialProfile: LootProfile
   /** The color slot names of the ColorSlots XML file (type 15 only). */
   armorGroups?: readonly string[]
+  /** The Tauri build sets this: File > Open and Save use the native dialogs. */
+  desktop?: boolean
 }) {
   const [profile, setProfileState] = useState(initialProfile)
   const [tab, setTab] = useState<'rules' | 'salvage'>('rules')
@@ -89,6 +95,12 @@ export function App({ initialProfile, armorGroups }: {
   const [fileError, setFileError] = useState('')
   /** The open file of the File System Access API, to save back to. */
   const handleRef = useRef<FileSystemFileHandle | null>(null)
+  /**
+   * The desktop path and the C# `LastBackup` clock (Form1.cs 70). A ref: the
+   * save runs from event handlers, which read it at the time of the save.
+   */
+  const pathRef = useRef<string | null>(null)
+  const lastBackupRef = useRef(0)
 
   /**
    * Every profile edit marks the file changed, so the unsaved-changes box
@@ -221,6 +233,8 @@ export function App({ initialProfile, armorGroups }: {
     setProfileState(loaded)
     setFileName(name)
     handleRef.current = handle
+    // Form1.cs 365-368: a load clears the change flag and the backup clock.
+    lastBackupRef.current = 0
     setChanged(false)
     setFileError('')
     selectRule(-1)
@@ -228,6 +242,20 @@ export function App({ initialProfile, armorGroups }: {
 
   /** Form1.cs 319-331, 360-387. A bad file keeps the current profile. */
   async function openFile() {
+    if (desktop) {
+      const picked = await openDesktopProfile()
+      if (!picked) return
+      try {
+        const loaded = readProfile(picked.text)
+        pathRef.current = picked.path
+        loadProfile(loaded, picked.name, null)
+      } catch {
+        // The path follows a good file only, so a bad file leaves the open
+        // path alone and a later Save cannot write over it.
+        setFileError(`Could not read ${picked.name}.`)
+      }
+      return
+    }
     const picked = await pickProfileFile()
     if (!picked) return
     try {
@@ -246,6 +274,23 @@ export function App({ initialProfile, armorGroups }: {
   async function saveFile(pickNew: boolean): Promise<boolean> {
     const text = writeProfile(profile)
     const name = fileName === '' ? DEFAULT_FILE_NAME : fileName
+    if (desktop) {
+      // Form1.cs 407-427: the `FileChanged` setter writes an older file as the
+      // `.bak` before the save, once in 5 minutes, and Save As resets the
+      // clock (461). A load resets it too (`loadProfile`).
+      const at = Date.now()
+      const picks = pickNew || pathRef.current === null
+      const backup = !picks && (at - lastBackupRef.current) / (60 * 1000) > BACKUP_INTERVAL_MINUTES
+      const path = await saveDesktopProfile(pickNew, name, text, pathRef.current, backup ? at : undefined)
+      if (!path) return false
+      pathRef.current = path
+      // Save As resets the clock (461), so the next save takes the first backup.
+      lastBackupRef.current = backup ? at : 0
+      setFileName(name)
+      setFileError('')
+      setChanged(false)
+      return true
+    }
     let handle = pickNew ? null : handleRef.current
     if (!handle && hasFileSystemAccess()) {
       handle = await newProfileFile(name)
@@ -276,8 +321,10 @@ export function App({ initialProfile, armorGroups }: {
   }
 
   function runFileAction(action: FileAction) {
-    if (action === 'new') loadProfile(newFile().profile, '', null)
-    else if (action === 'open') void openFile()
+    if (action === 'new') {
+      pathRef.current = null
+      loadProfile(newFile().profile, '', null)
+    } else if (action === 'open') void openFile()
     else window.close()
   }
 

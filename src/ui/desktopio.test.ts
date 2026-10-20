@@ -1,0 +1,169 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { eLootAction } from '../core/format/enums'
+import type { LootProfile } from '../core/format/profile'
+import { writeProfile } from '../core/format/profile'
+import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
+import { open, save } from '@tauri-apps/plugin-dialog'
+import {
+  backupPath,
+  hasDesktopAccess,
+  openDesktopProfile,
+  saveDesktopProfile,
+} from './desktopio'
+
+vi.mock('@tauri-apps/api/core', () => ({ isTauri: vi.fn(() => true) }))
+vi.mock('@tauri-apps/plugin-dialog', () => ({ open: vi.fn(), save: vi.fn() }))
+vi.mock('@tauri-apps/plugin-fs', () => ({ readTextFile: vi.fn(), writeTextFile: vi.fn() }))
+
+/** The profile text of T26's `writeProfile`, to compare with what lands on disk. */
+const PROFILE_TEXT = ((): string => {
+  const profile: LootProfile = {
+    version: 1,
+    extraBlocks: [],
+    rules: [
+      {
+        name: 'Beta',
+        customExpression: '',
+        priority: 0,
+        action: eLootAction.Keep,
+        lootActionData: 0,
+        requirements: [],
+      },
+    ],
+  }
+  return writeProfile(profile)
+})()
+
+/** The calls that reached the fs plugin, as paths. */
+function writtenPaths(): (string | URL)[] {
+  return vi.mocked(writeTextFile).mock.calls.map(([path]) => path)
+}
+
+beforeEach(() => {
+  vi.mocked(readTextFile).mockResolvedValue(PROFILE_TEXT)
+  vi.mocked(writeTextFile).mockResolvedValue()
+  vi.mocked(open).mockResolvedValue('/profiles/mine.utl')
+  vi.mocked(save).mockResolvedValue('/profiles/new.utl')
+})
+
+afterEach(() => {
+  vi.clearAllMocks()
+})
+
+describe('isDesktop and hasDesktopAccess', () => {
+  it('hasDesktopAccess follows whether the app runs in a Tauri window', () => {
+    expect(hasDesktopAccess()).toBe(true)
+  })
+})
+
+describe('openDesktopProfile', () => {
+  it('reads the .utl file of the native open dialog', async () => {
+    expect(await openDesktopProfile()).toEqual({
+      name: 'mine.utl',
+      text: PROFILE_TEXT,
+      path: '/profiles/mine.utl',
+    })
+    expect(open).toHaveBeenCalledWith(
+      expect.objectContaining({ filters: [{ name: 'uTank settings files', extensions: ['utl'] }] }),
+    )
+    expect(readTextFile).toHaveBeenCalledWith('/profiles/mine.utl')
+  })
+
+  it('gives null when the user closes the dialog, and does not read', async () => {
+    vi.mocked(open).mockResolvedValue(null)
+    expect(await openDesktopProfile()).toBeNull()
+    expect(readTextFile).not.toHaveBeenCalled()
+  })
+
+  it('gives null when the dialog fails', async () => {
+    vi.mocked(open).mockRejectedValue(new Error('no dialog'))
+    expect(await openDesktopProfile()).toBeNull()
+  })
+
+  it('gives null when the file cannot be read', async () => {
+    vi.mocked(readTextFile).mockRejectedValue(new Error('gone'))
+    expect(await openDesktopProfile()).toBeNull()
+  })
+})
+
+describe('saveDesktopProfile', () => {
+  it('Save writes the text to the open path and gives it back', async () => {
+    expect(await saveDesktopProfile(false, 'mine.utl', PROFILE_TEXT, '/profiles/mine.utl')).toBe(
+      '/profiles/mine.utl',
+    )
+    expect(save).not.toHaveBeenCalled()
+    expect(writeTextFile).toHaveBeenCalledWith('/profiles/mine.utl', PROFILE_TEXT)
+    // Save does not touch a backup: the caller keeps the 5-minute clock.
+    expect(writeTextFile).toHaveBeenCalledTimes(1)
+  })
+
+  it('Save As asks for a path with the file name as the default', async () => {
+    expect(await saveDesktopProfile(true, 'mine.utl', PROFILE_TEXT, '/profiles/mine.utl')).toBe(
+      '/profiles/new.utl',
+    )
+    expect(save).toHaveBeenCalledWith(
+      expect.objectContaining({ defaultPath: 'mine.utl' }),
+    )
+    expect(writeTextFile).toHaveBeenCalledWith('/profiles/new.utl', PROFILE_TEXT)
+  })
+
+  it('Save without a file path asks, as the C# Save runs Save As for FileName ""', async () => {
+    expect(await saveDesktopProfile(false, 'New File.utl', PROFILE_TEXT, null)).toBe(
+      '/profiles/new.utl',
+    )
+    expect(save).toHaveBeenCalledTimes(1)
+  })
+
+  it('gives null when the user closes the dialog, and does not write', async () => {
+    vi.mocked(save).mockResolvedValue(null)
+    expect(await saveDesktopProfile(true, 'mine.utl', PROFILE_TEXT, null)).toBeNull()
+    expect(writeTextFile).not.toHaveBeenCalled()
+  })
+
+  it('gives null when the write fails', async () => {
+    vi.mocked(writeTextFile).mockRejectedValueOnce(new Error('read only'))
+    expect(await saveDesktopProfile(false, 'mine.utl', PROFILE_TEXT, '/profiles/mine.utl')).toBeNull()
+  })
+
+  it('writes the .bak backup of `backupAt` before the profile, with its stamp', async () => {
+    const at = new Date(2026, 9, 19, 21, 5)
+    const result = await saveDesktopProfile(
+      false,
+      'mine.utl',
+      PROFILE_TEXT,
+      '/profiles/mine.utl',
+      at.getTime(),
+    )
+    expect(result).toBe('/profiles/mine.utl')
+    expect(writtenPaths()).toEqual([
+      '/profiles/mine.utl.2026-10-19-21-05.bak',
+      '/profiles/mine.utl',
+    ])
+    // Both files get the same profile text (Form1.cs 420-422).
+    expect(vi.mocked(writeTextFile).mock.calls[0]![1]).toBe(PROFILE_TEXT)
+  })
+
+  it('uses the save-dialog name for the backup of a save-as', async () => {
+    const at = new Date(2026, 9, 19, 21, 5)
+    await saveDesktopProfile(true, 'mine.utl', PROFILE_TEXT, '/profiles/mine.utl', at.getTime())
+    expect(writtenPaths()).toEqual([
+      '/profiles/new.utl.2026-10-19-21-05.bak',
+      '/profiles/new.utl',
+    ])
+  })
+})
+
+describe('backupPath', () => {
+  it('is the C# file name + stamp + .bak, beside the profile', () => {
+    expect(backupPath('/profiles/mine.utl', undefined, new Date(2026, 0, 2, 3, 4))).toBe(
+      '/profiles/mine.utl.2026-01-02-03-04.bak',
+    )
+  })
+
+  it('uses the save-dialog name for a save to a path of another name', () => {
+    // The user typed "b.utl" in the dialog; the C# FileName is "b.utl".
+    expect(backupPath('/profiles/new.utl', 'b.utl', new Date(2026, 0, 2, 3, 4))).toBe(
+      '/profiles/b.utl.2026-01-02-03-04.bak',
+    )
+  })
+})

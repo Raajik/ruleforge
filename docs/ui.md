@@ -128,3 +128,34 @@
 - **Observed** (`src/core/ops/file.ts` 83-95): the C# 5-minute `.bak` backup of the `FileChanged` setter
   (`ref/editor/Form1.cs` 407-427) is not wired in the web app. `markChanged` stays for the desktop build
   (T32).
+
+## Desktop build (T32)
+
+- **Observed** (`ref/editor/Form1.cs` 407-427): the `FileChanged` setter takes a backup when the file is
+  named and `(DateTimeOffset.Now - LastBackup).TotalMinutes > 5d`, and writes `<FileName>.<yyyy-MM-dd-HH-mm>.bak`
+  (`ref/editor/Form1.cs` 420). `LastBackup` starts at `DateTimeOffset.MinValue`, which is year 1, so the C#
+  guard is a ~2026-year wait, not a 5-minute wait. This build takes the first backup after each load or
+  save-as (`src/ui/App.tsx`). `LoadFile` and Save As reset the clock (`ref/editor/Form1.cs` 368, 461).
+- **Observed** (`ref/editor/Form1.cs` 441-450): the save `SaveFileDialog` writes the C# `FileName`, so the
+  backup of a save-as starts with the name of the dialog, beside the chosen path
+  (`src/ui/desktopio.ts`, `backupPath`).
+- **Verified** (`src/ui/desktopio.test.ts`): `openDesktopProfile` reads the `.utl` file of the native open
+  dialog and gives the name, the text and the path. A closed dialog, a failing dialog and an unreadable file
+  give `null`. `saveDesktopProfile` writes to the open path on Save. It asks on Save As and on a Save with no
+  path, and gives `null` on a closed dialog or a failed write. With a `backup` decision it writes
+  `<path>.<stamp>.bak` before the profile, with the same text. `shouldBackup` matches the C# `> 5d`.
+  `backupPath` gives the C# `FileName + "." + stamp + ".bak"`, in the folder of the profile.
+- **Verified** (`src/ui/desktopio.test.ts`): `hasDesktopAccess` follows the Tauri runtime flag.
+- **Verified** (`src/ui/App.desktop.test.tsx`): after a good Open, a Save writes to the file of that Open.
+  A file that is not a profile at Open keeps the first file open and the editor shows `Could not read
+  <name>.`; the later Save still writes to the first file, never to the failed one.
+- **Verified** (`vite.config.ts`, the Tauri build): the Tauri build sets `TAURI_ENV_PLATFORM`, so Vite uses
+  `src/ui/main.desktop.tsx` in place of `index.html`, and `App` gets the `desktop` prop. The desktop bundle
+  holds the Tauri runtime check and the `uTank settings files` dialog filter. Checked with
+  `TAURI_ENV_PLATFORM=linux npm run build` and `npx tauri build --no-bundle`.
+- **Verified** (`src-tauri/`, `nice -n 19 npx tauri build --no-bundle`): the Tauri 2 app is named Ruleforge
+  and builds. The window has the dialog and fs plugins. `Capabilities/default.json` allows
+  `fs:allow-read-text-file` and `fs:allow-write-text-file`. The dialog plugin adds each picked path to the
+  live fs scope (`tauri-plugin-dialog 2.8.3`, `src/commands.rs` 188-215, 248-258. `tauri-plugin-fs` 2.7.1,
+  `src/lib.rs` 534-565), so no folder scope is needed.
+
