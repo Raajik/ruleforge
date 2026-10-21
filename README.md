@@ -51,13 +51,9 @@ npm run tauri dev  # the desktop app; it opens a window
 commit. Docs and config pass. A change that truly needs no test passes with `[skip-tests]` in the
 message.
 
-Set it once on each new box, after the clone:
-
-```sh
-git config core.hooksPath tools/githooks
-```
-
-This setting is local to the clone and is not committed. It replaces the global hooks for this repo.
+On the user's boxes the global hook dispatcher (`~/.config/git/hooks/dispatch`) runs it by itself.
+Do not set `core.hooksPath` in this repo: that would skip the global email guard. On another machine,
+link it once: `ln -s ../../tools/githooks/commit-msg .git/hooks/commit-msg`.
 
 - `specs/ruleforge.md`: what the editor must do.
 - `docs/`: facts about the file format and the legacy editor, each tagged Verified, Observed or Unknown.

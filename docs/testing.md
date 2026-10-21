@@ -17,5 +17,5 @@ Facts about the fake Tauri modules, the release gate, the manual checks and the 
   and why no automated check covers it.
 - **Verified**: `tools/githooks/commit-msg` stops a commit that stages `src/hook-check-tmp.ts` and no
   test file (exit 1, "BLOCKED: src/ changed but no test file"), and passes with `[skip-tests]` in the
-  message (exit 0). Checked by hand on 2026-10-21. `git config core.hooksPath tools/githooks` turns it on
-  for one clone; the README gives that line.
+  message (exit 0). Checked by hand on 2026-10-21. The global hook dispatcher runs it
+  on the user's boxes; elsewhere `.git/hooks/commit-msg` links to it (README).

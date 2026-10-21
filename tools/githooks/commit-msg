@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Real git commit-msg hook. Enable it once on a box with:
-#   git config core.hooksPath tools/githooks
+# Real git commit-msg hook. The global hook dispatcher runs it on the user's boxes; elsewhere link
+# .git/hooks/commit-msg to it. Do not set core.hooksPath here: it would skip the global email guard.
 # It refuses a commit that changes src/ without a test change in the same commit.
 # Docs and config pass. Add [skip-tests] to the message for a change that needs no test.
 
