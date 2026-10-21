@@ -1,9 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fakeTauri, resetFakeTauri } from '../test/fakeTauri'
 import { eLootAction } from '../core/format/enums'
 import type { LootProfile } from '../core/format/profile'
 import { writeProfile } from '../core/format/profile'
-import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
-import { open, save } from '@tauri-apps/plugin-dialog'
 import {
   backupPath,
   hasDesktopAccess,
@@ -11,9 +10,9 @@ import {
   saveDesktopProfile,
 } from './desktopio'
 
-vi.mock('@tauri-apps/api/core', () => ({ isTauri: vi.fn(() => true) }))
-vi.mock('@tauri-apps/plugin-dialog', () => ({ open: vi.fn(), save: vi.fn() }))
-vi.mock('@tauri-apps/plugin-fs', () => ({ readTextFile: vi.fn(), writeTextFile: vi.fn() }))
+vi.mock('@tauri-apps/api/core', async () => (await import('../test/fakeTauri')).coreMock)
+vi.mock('@tauri-apps/plugin-dialog', async () => (await import('../test/fakeTauri')).dialogMock)
+vi.mock('@tauri-apps/plugin-fs', async () => (await import('../test/fakeTauri')).fsMock)
 
 /** The profile text of T26's `writeProfile`, to compare with what lands on disk. */
 const PROFILE_TEXT = ((): string => {
@@ -36,14 +35,15 @@ const PROFILE_TEXT = ((): string => {
 
 /** The calls that reached the fs plugin, as paths. */
 function writtenPaths(): (string | URL)[] {
-  return vi.mocked(writeTextFile).mock.calls.map(([path]) => path)
+  return fakeTauri.writeTextFile.mock.calls.map(([path]) => path)
 }
 
 beforeEach(() => {
-  vi.mocked(readTextFile).mockResolvedValue(PROFILE_TEXT)
-  vi.mocked(writeTextFile).mockResolvedValue()
-  vi.mocked(open).mockResolvedValue('/profiles/mine.utl')
-  vi.mocked(save).mockResolvedValue('/profiles/new.utl')
+  resetFakeTauri()
+  fakeTauri.readTextFile.mockResolvedValue(PROFILE_TEXT)
+  fakeTauri.writeTextFile.mockResolvedValue()
+  fakeTauri.open.mockResolvedValue('/profiles/mine.utl')
+  fakeTauri.save.mockResolvedValue('/profiles/new.utl')
 })
 
 afterEach(() => {
@@ -63,25 +63,25 @@ describe('openDesktopProfile', () => {
       text: PROFILE_TEXT,
       path: '/profiles/mine.utl',
     })
-    expect(open).toHaveBeenCalledWith(
+    expect(fakeTauri.open).toHaveBeenCalledWith(
       expect.objectContaining({ filters: [{ name: 'uTank settings files', extensions: ['utl'] }] }),
     )
-    expect(readTextFile).toHaveBeenCalledWith('/profiles/mine.utl')
+    expect(fakeTauri.readTextFile).toHaveBeenCalledWith('/profiles/mine.utl')
   })
 
   it('gives null when the user closes the dialog, and does not read', async () => {
-    vi.mocked(open).mockResolvedValue(null)
+    fakeTauri.open.mockResolvedValue(null)
     expect(await openDesktopProfile()).toBeNull()
-    expect(readTextFile).not.toHaveBeenCalled()
+    expect(fakeTauri.readTextFile).not.toHaveBeenCalled()
   })
 
   it('gives null when the dialog fails', async () => {
-    vi.mocked(open).mockRejectedValue(new Error('no dialog'))
+    fakeTauri.open.mockRejectedValue(new Error('no dialog'))
     expect(await openDesktopProfile()).toBeNull()
   })
 
   it('gives null when the file cannot be read', async () => {
-    vi.mocked(readTextFile).mockRejectedValue(new Error('gone'))
+    fakeTauri.readTextFile.mockRejectedValue(new Error('gone'))
     expect(await openDesktopProfile()).toBeNull()
   })
 })
@@ -91,37 +91,37 @@ describe('saveDesktopProfile', () => {
     expect(await saveDesktopProfile(false, 'mine.utl', PROFILE_TEXT, '/profiles/mine.utl')).toBe(
       '/profiles/mine.utl',
     )
-    expect(save).not.toHaveBeenCalled()
-    expect(writeTextFile).toHaveBeenCalledWith('/profiles/mine.utl', PROFILE_TEXT)
+    expect(fakeTauri.save).not.toHaveBeenCalled()
+    expect(fakeTauri.writeTextFile).toHaveBeenCalledWith('/profiles/mine.utl', PROFILE_TEXT)
     // Save does not touch a backup: the caller keeps the 5-minute clock.
-    expect(writeTextFile).toHaveBeenCalledTimes(1)
+    expect(fakeTauri.writeTextFile).toHaveBeenCalledTimes(1)
   })
 
   it('Save As asks for a path with the file name as the default', async () => {
     expect(await saveDesktopProfile(true, 'mine.utl', PROFILE_TEXT, '/profiles/mine.utl')).toBe(
       '/profiles/new.utl',
     )
-    expect(save).toHaveBeenCalledWith(
+    expect(fakeTauri.save).toHaveBeenCalledWith(
       expect.objectContaining({ defaultPath: 'mine.utl' }),
     )
-    expect(writeTextFile).toHaveBeenCalledWith('/profiles/new.utl', PROFILE_TEXT)
+    expect(fakeTauri.writeTextFile).toHaveBeenCalledWith('/profiles/new.utl', PROFILE_TEXT)
   })
 
   it('Save without a file path asks, as the C# Save runs Save As for FileName ""', async () => {
     expect(await saveDesktopProfile(false, 'New File.utl', PROFILE_TEXT, null)).toBe(
       '/profiles/new.utl',
     )
-    expect(save).toHaveBeenCalledTimes(1)
+    expect(fakeTauri.save).toHaveBeenCalledTimes(1)
   })
 
   it('gives null when the user closes the dialog, and does not write', async () => {
-    vi.mocked(save).mockResolvedValue(null)
+    fakeTauri.save.mockResolvedValue(null)
     expect(await saveDesktopProfile(true, 'mine.utl', PROFILE_TEXT, null)).toBeNull()
-    expect(writeTextFile).not.toHaveBeenCalled()
+    expect(fakeTauri.writeTextFile).not.toHaveBeenCalled()
   })
 
   it('gives null when the write fails', async () => {
-    vi.mocked(writeTextFile).mockRejectedValueOnce(new Error('read only'))
+    fakeTauri.writeTextFile.mockRejectedValueOnce(new Error('read only'))
     expect(await saveDesktopProfile(false, 'mine.utl', PROFILE_TEXT, '/profiles/mine.utl')).toBeNull()
   })
 
@@ -140,7 +140,7 @@ describe('saveDesktopProfile', () => {
       '/profiles/mine.utl',
     ])
     // Both files get the same profile text (Form1.cs 420-422).
-    expect(vi.mocked(writeTextFile).mock.calls[0]![1]).toBe(PROFILE_TEXT)
+    expect(fakeTauri.writeTextFile.mock.calls[0]![1]).toBe(PROFILE_TEXT)
   })
 
   it('uses the save-dialog name for the backup of a save-as', async () => {

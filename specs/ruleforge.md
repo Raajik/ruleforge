@@ -36,6 +36,14 @@ The user's request (2026-10-19): rebuild the VirindiTank Classic loot editor ("u
 ## Constraints
 - TypeScript (strict). The core (`src/core/`) has no DOM and no Node APIs, so the web app and Tauri both use it.
 - The tests use Vitest. Each format function and each editor operation has a test.
+- One typed fake for the Tauri modules sits in `src/test/fakeTauri.ts`. It has the call names, the sync or
+  async shape and the return types of `@tauri-apps/api/core`, `plugin-dialog` and `plugin-fs`, so the
+  compiler finds drift. Every test that mocks Tauri imports it.
+- A release tag runs the tests before it builds the installers. A failed test stops the release.
+- `TO-TEST.md` lists the checks that only the user can do, each with its expected result and why no
+  automated check covers it.
+- A commit hook (`tools/githooks/commit-msg`) refuses a change under `src/` that has no test change in
+  the same commit. A commit message with `[skip-tests]` passes.
 - Game data tables (property keys, object classes, skills, materials) come from the C# source through a generator
   script, never typed by hand.
 - Facts go in `docs/`, one file for each area, each fact tagged Verified, Observed or Unknown.

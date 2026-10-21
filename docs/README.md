@@ -9,3 +9,4 @@ One file for each area. Each fact is tagged **Verified** (name the test), **Obse
 - [ops.md](ops.md): editor operations and the legacy behavior they copy (T18–T28).
 - [ui.md](ui.md): the main window layout and its legacy controls (T27+).
 - [eval.md](eval.md): the item evaluator and the C# Match methods it ports (H3a–H3c).
+- [testing.md](testing.md): the Tauri fake, the release gate, the manual checks and the commit hook.

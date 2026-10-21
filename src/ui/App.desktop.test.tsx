@@ -7,15 +7,14 @@
 import { readFileSync } from 'node:fs'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fakeTauri, resetFakeTauri } from '../test/fakeTauri'
 import { eLootAction } from '../core/format/enums'
 import type { LootProfile } from '../core/format/profile'
-import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
-import { open, save } from '@tauri-apps/plugin-dialog'
 import { App } from './App'
 
-vi.mock('@tauri-apps/api/core', () => ({ isTauri: vi.fn(() => true) }))
-vi.mock('@tauri-apps/plugin-dialog', () => ({ open: vi.fn(), save: vi.fn() }))
-vi.mock('@tauri-apps/plugin-fs', () => ({ readTextFile: vi.fn(), writeTextFile: vi.fn() }))
+vi.mock('@tauri-apps/api/core', async () => (await import('../test/fakeTauri')).coreMock)
+vi.mock('@tauri-apps/plugin-dialog', async () => (await import('../test/fakeTauri')).dialogMock)
+vi.mock('@tauri-apps/plugin-fs', async () => (await import('../test/fakeTauri')).fsMock)
 
 const MINIMAL = readFileSync('fixtures/vtclassic_editor_minimal.utl', 'utf8')
 
@@ -57,14 +56,15 @@ function editRule() {
 }
 
 function writtenPaths(): (string | URL)[] {
-  return vi.mocked(writeTextFile).mock.calls.map(([path]) => path)
+  return fakeTauri.writeTextFile.mock.calls.map(([path]) => path)
 }
 
 beforeEach(() => {
-  vi.mocked(readTextFile).mockResolvedValue(MINIMAL)
-  vi.mocked(writeTextFile).mockResolvedValue()
-  vi.mocked(open).mockResolvedValue('/profiles/mine.utl')
-  vi.mocked(save).mockResolvedValue('/profiles/new.utl')
+  resetFakeTauri()
+  fakeTauri.readTextFile.mockResolvedValue(MINIMAL)
+  fakeTauri.writeTextFile.mockResolvedValue()
+  fakeTauri.open.mockResolvedValue('/profiles/mine.utl')
+  fakeTauri.save.mockResolvedValue('/profiles/new.utl')
 })
 
 afterEach(() => {
@@ -77,8 +77,8 @@ describe('App in the desktop build', () => {
     render(<App initialProfile={smallProfile()} desktop />)
     pick('File', 'Open')
     await waitFor(() => expect(ruleNames()).toEqual(['fixture_minimal_editor']))
-    expect(open).toHaveBeenCalledTimes(1)
-    expect(readTextFile).toHaveBeenCalledWith('/profiles/mine.utl')
+    expect(fakeTauri.open).toHaveBeenCalledTimes(1)
+    expect(fakeTauri.readTextFile).toHaveBeenCalledWith('/profiles/mine.utl')
   })
 
   it('Save writes the edited profile back to the open path', async () => {
@@ -87,10 +87,10 @@ describe('App in the desktop build', () => {
     await waitFor(() => expect(ruleNames()).toEqual(['fixture_minimal_editor']))
     editRule()
     pick('File', 'Save')
-    await waitFor(() => expect(vi.mocked(writeTextFile).mock.calls.length).toBeGreaterThan(0))
+    await waitFor(() => expect(fakeTauri.writeTextFile.mock.calls.length).toBeGreaterThan(0))
     // Save without Save As does not ask for a path.
-    expect(save).not.toHaveBeenCalled()
-    const last = vi.mocked(writeTextFile).mock.calls.at(-1)!
+    expect(fakeTauri.save).not.toHaveBeenCalled()
+    const last = fakeTauri.writeTextFile.mock.calls.at(-1)!
     expect(last[0]).toBe('/profiles/mine.utl')
     expect(String(last[1])).toContain('Renamed')
   })
@@ -99,7 +99,7 @@ describe('App in the desktop build', () => {
     render(<App initialProfile={smallProfile()} desktop />)
     editRule()
     pick('File', 'Save As')
-    await waitFor(() => expect(save).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(fakeTauri.save).toHaveBeenCalledTimes(1))
     await waitFor(() => expect(writtenPaths().at(-1)).toBe('/profiles/new.utl'))
   })
 
@@ -109,8 +109,8 @@ describe('App in the desktop build', () => {
     await waitFor(() => expect(ruleNames()).toEqual(['fixture_minimal_editor']))
     // A second Open picks a file that is not a profile: the first file stays
     // open, and a Save must still write to it.
-    vi.mocked(readTextFile).mockResolvedValue('not a profile')
-    vi.mocked(open).mockResolvedValue('/profiles/bad.utl')
+    fakeTauri.readTextFile.mockResolvedValue('not a profile')
+    fakeTauri.open.mockResolvedValue('/profiles/bad.utl')
     pick('File', 'Open')
     await waitFor(() => expect(screen.getByText('Could not read bad.utl.')).toBeTruthy())
     expect(ruleNames()).toEqual(['fixture_minimal_editor'])
