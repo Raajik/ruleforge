@@ -10,3 +10,5 @@ Facts about the fake Tauri modules, the release gate, the manual checks and the 
   use `fakeTauri`.
 - **Observed**: Every test file that mocks a Tauri module calls `vi.mock` with a factory that imports
   `coreMock`, `dialogMock` or `fsMock` from `src/test/fakeTauri.ts`. Source: `src/ui/*.test.ts*`.
+- **Observed**: The release workflow runs `npm test` before `tauri-apps/tauri-action@v0` in each matrix
+  job, so a failed test stops every installer. Source: `.github/workflows/release.yml`.
