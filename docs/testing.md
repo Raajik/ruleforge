@@ -12,3 +12,6 @@ Facts about the fake Tauri modules, the release gate, the manual checks and the 
   `coreMock`, `dialogMock` or `fsMock` from `src/test/fakeTauri.ts`. Source: `src/ui/*.test.ts*`.
 - **Observed**: The release workflow runs `npm test` before `tauri-apps/tauri-action@v0` in each matrix
   job, so a failed test stops every installer. Source: `.github/workflows/release.yml`.
+- **Observed**: `TO-TEST.md` lists the checks that only the user can do: the native dialogs, the `.bak`
+  backup, the installers on each OS and a profile loaded in VTClassic. Each item has its expected result
+  and why no automated check covers it.
