@@ -15,3 +15,7 @@ Facts about the fake Tauri modules, the release gate, the manual checks and the 
 - **Observed**: `TO-TEST.md` lists the checks that only the user can do: the native dialogs, the `.bak`
   backup, the installers on each OS and a profile loaded in VTClassic. Each item has its expected result
   and why no automated check covers it.
+- **Verified**: `tools/githooks/commit-msg` stops a commit that stages `src/hook-check-tmp.ts` and no
+  test file (exit 1, "BLOCKED: src/ changed but no test file"), and passes with `[skip-tests]` in the
+  message (exit 0). Checked by hand on 2026-10-21. `git config core.hooksPath tools/githooks` turns it on
+  for one clone; the README gives that line.

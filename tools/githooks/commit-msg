@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Real git commit-msg hook. Enable it once on a box with:
+#   git config core.hooksPath tools/githooks
+# It refuses a commit that changes src/ without a test change in the same commit.
+# Docs and config pass. Add [skip-tests] to the message for a change that needs no test.
+
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+MSG_FILE="$1"
+STAGED=$(git diff --cached --name-only 2>/dev/null || true)
+
+HAS_SOURCE=$(printf '%s\n' "$STAGED" | grep -c '^src/' || true)
+if [[ "$HAS_SOURCE" -gt 0 ]]; then
+  HAS_TESTS=$(printf '%s\n' "$STAGED" | grep -cE '^src/.*\.test\.tsx?$' || true)
+  if [[ "$HAS_TESTS" -eq 0 ]] && ! grep -qi '\[skip-tests\]' "$MSG_FILE"; then
+    echo "BLOCKED: src/ changed but no test file (*.test.ts or *.test.tsx) changed." >&2
+    echo "Add or update a test, or put [skip-tests] in the message for a test-free change." >&2
+    exit 1
+  fi
+fi
+exit 0
