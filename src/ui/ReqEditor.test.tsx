@@ -4,6 +4,7 @@
 
 import { readFileSync } from 'node:fs'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { useState } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { Requirement } from '../core/format/profile'
 import { parseColorSlots } from '../core/gamedata/colorslots'
@@ -57,6 +58,42 @@ describe('ReqEditor', () => {
     // One option more than the list: the empty one for "nothing selected".
     expect(actsOn.options.length).toBe(ARMOR_GROUPS.length + 1)
     expect(actsOn.selectedOptions[0]!.textContent).toBe('')
+  })
+
+  it('shows the armor preview text of a type 15 requirement, and none for type 17', () => {
+    const req: Requirement = {
+      type: 15,
+      r: 0x30,
+      g: 0x60,
+      b: 0xc0,
+      maxDifferenceH: 10,
+      maxDifferenceSV: 0.1,
+      armorGroup: 'Amuli Coat (Chest)',
+    }
+    const { rerender } = render(<ReqEditor req={req} armorGroups={ARMOR_GROUPS} onChange={() => {}} />)
+    // jsdom has no WebGL, so the view shows its text alternative.
+    expect(screen.getByText('Amuli Coat, Chest in #3060C0')).toBeTruthy()
+    rerender(<ReqEditor req={{ ...req, r: 0xff }} armorGroups={ARMOR_GROUPS} onChange={() => {}} />)
+    expect(screen.getByText('Amuli Coat, Chest in #FF60C0')).toBeTruthy()
+    rerender(<ReqEditor req={{ type: 17, slot: 2, palette: 90 }} onChange={() => {}} />)
+    expect(document.querySelector('.armor-preview')).toBeNull()
+  })
+
+  it('a colour change in the field updates the armor preview text', () => {
+    function Editor() {
+      const [req, setReq] = useState<Requirement>({ type: 14, r: 0, g: 0, b: 0, maxDifferenceH: 10, maxDifferenceSV: 0.1 })
+      return <ReqEditor req={req} onChange={setReq} />
+    }
+    render(<Editor />)
+    expect(screen.getByText('Armor suit, every region in #000000')).toBeTruthy()
+    fireEvent.change(screen.getByLabelText('RGB color value (hex)'), { target: { value: '3060C0' } })
+    expect(screen.getByText('Armor suit, every region in #3060C0')).toBeTruthy()
+  })
+
+  it('type 16 shows the slot note under the armor preview', () => {
+    const req: Requirement = { type: 16, r: 1, g: 2, b: 3, maxDifferenceH: 10, maxDifferenceSV: 0.1, slot: 4 }
+    render(<ReqEditor req={req} onChange={() => {}} />)
+    expect(screen.getByText('Slot 4: the region depends on the armor.')).toBeTruthy()
   })
 
   it('keeps a regex field as text and never compiles it', () => {

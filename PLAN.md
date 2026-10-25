@@ -366,8 +366,16 @@ mockup data, not app code. Keep every T27-T31 test green: change test queries on
   - Tested by `src/core/ops/strictness.test.ts` (32), `src/core/ops/baseprofiles.test.ts` (3) and
     `src/ui/OverviewPage.test.tsx` (12), 613 total. Facts: `docs/ops.md`, `docs/ui.md`.
 
-- [ ] H4 Armor preview: a 3D stand-in model in the colour requirement editor (user pick, 2026-10-24).
+- [x] H4 Armor preview: a 3D stand-in model in the colour requirement editor (user pick, 2026-10-24).
   - Read `specs/armor-preview.md` first. Types 14, 15 and 16 get the view, type 17 gets none.
+  - `src/core/gamedata/armorpreview.ts`: `armorView` gives the piece, the parts in the colour, a pattern (stripes
+    or studs), the hex colour, the text alternative and the type 16 note. One map entry per default slot
+    definition; an unknown group shows the piece its name names, or the generic suit.
+  - `src/ui/armorScene.ts` builds the figure and the piece from three.js primitives. `src/ui/ArmorPreview.tsx`
+    imports it dynamically, turns it by drag and arrow keys, and shows the text alternative without WebGL.
+    `ReqEditor` shows it under the fields of types 14, 15 and 16.
+  - Tested by `src/core/gamedata/armorpreview.test.ts` (72, one per slot definition), `src/ui/ArmorPreview.test.tsx`
+    (3) and `src/ui/ReqEditor.test.tsx` (3 new), 691 total. Facts: `docs/gamedata.md`, `docs/ui.md`.
 
 ## Later: "better" (only when the user picks)
 Ideas, not tasks. Do not start these.

@@ -250,3 +250,21 @@
   Review changes tab counts the changes.
 - **Unknown** The mockup has a "New sample" button in the aside. The spec says that a real item import needs a
   data source, and the sample items are made up (`docs/eval.md`), so the page has no such button.
+
+## Armor preview (H4 armor preview)
+
+- **Verified** (`src/ui/ReqEditor.test.tsx`, "shows the armor preview text of a type 15 requirement, and none for
+  type 17" and "a colour change in the field updates the armor preview text"): the editor of types 14, 15 and 16
+  shows the armor preview under its fields, and type 17 shows none. jsdom has no WebGL, so the tests see the
+  text alternative, for example "Amuli Coat, Chest in #3060C0". It follows each change of the colour.
+- **Verified** (`src/ui/ReqEditor.test.tsx`, "type 16 shows the slot note under the armor preview"): type 16 adds
+  "Slot N: the region depends on the armor." under the view.
+- **Verified** (`src/ui/ArmorPreview.test.tsx`, with a faked scene module): `ArmorPreview` imports
+  `src/ui/armorScene.ts` only when `WebGLRenderingContext` exists. It shows each new view, turns the model by
+  0.012 radians per dragged pixel and by 15 degrees per left or right arrow key, and disposes the scene on
+  unmount. When the scene cannot start, it shows the text alternative.
+- **Observed** (`src/ui/armorScene.ts`): dispose frees the geometries, the materials and the renderer, then calls
+  `forceContextLoss`, because `WebGLRenderer.dispose` alone keeps the WebGL context until garbage collection.
+- **Verified** (`npm run build`, 2026-10-24): three.js 0.186.1 lands in its own chunk
+  (`dist/assets/armorScene-*.js`, 538 kB). The entry chunk `dist/assets/index-*.js` has no `WebGLRenderer` and
+  no shader text.
