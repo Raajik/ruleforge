@@ -699,3 +699,31 @@ describe('readProfile on a file that is not a profile', () => {
     }
   })
 })
+
+describe('readProfile on a damaged profile', () => {
+  const rule = 'r\r\n\r\n1;1\r\n'
+  it.each([
+    // A negative length moved the read position back and looped forever (C# new char[-7] throws).
+    ['negative block length', 'UTL\r\n1\r\n0\r\nX\r\n-7\r\n'],
+    ['negative requirement length', 'UTL\r\n1\r\n1\r\nr\r\n\r\n1;1;555\r\n-3\r\n'],
+    // A count past the last rule added blank rules that saved as NaN;NaN (C# null.Split throws).
+    ['fewer rules than the count', `UTL\r\n1\r\n2\r\n${rule}`],
+    // parseInt read these as NaN, 12, 1 and 1 (C# Convert.ToInt32 throws).
+    ['non-numeric priority', 'UTL\r\n1\r\n1\r\nr\r\n\r\nx;1\r\n'],
+    ['trailing letters', 'UTL\r\n1\r\n1\r\nr\r\n\r\n12abc;1\r\n'],
+    ['exponent', 'UTL\r\n1\r\n1\r\nr\r\n\r\n1e5;1\r\n'],
+    ['fraction type id', 'UTL\r\n1\r\n1\r\nr\r\n\r\n1;1;2.9\r\n'],
+    ['empty type id', 'UTL\r\n1\r\n1\r\nr\r\n\r\n1;1;\r\n'],
+    ['out of int range', 'UTL\r\n1\r\n1\r\nr\r\n\r\n99999999999;1\r\n'],
+    // An empty line or a bad length dropped every block after it (C# int.Parse throws).
+    ['non-numeric block length', `UTL\r\n1\r\n1\r\n${rule}Foo\r\nxx\r\n`],
+    ['missing block length', `UTL\r\n1\r\n1\r\n${rule}Foo`],
+    ['empty line before a block', `UTL\r\n1\r\n1\r\n${rule}\r\nFoo\r\n3\r\nabc`],
+  ])('throws on a %s', (_, text) => {
+    expect(() => readProfile(text)).toThrow()
+  })
+
+  it('still opens a file that ends with a blank line', () => {
+    expect(readProfile(`UTL\r\n1\r\n1\r\n${rule}\r\n`).rules).toHaveLength(1)
+  })
+})

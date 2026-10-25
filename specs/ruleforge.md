@@ -18,6 +18,8 @@ The user's request (2026-10-19): rebuild the VirindiTank Classic loot editor ("u
    - all 31 requirement types in `eLootRuleType` (0–17, 1000–1004, 2000–2008, 9999)
    - unknown requirement types, kept as opaque data
    - extra blocks, with `SalvageCombine` parsed and unknown blocks kept as opaque data
+   - a file the legacy reader throws on (a bad number, a negative or missing length, fewer rules than its count)
+     fails to open with an error. It never hangs, and never opens with values that a save would change.
 2. **Lossless save.** For a file that the legacy editor wrote, open then save gives the same bytes.
 3. **Editor parity.** Each legacy editor feature exists, with the same result on the file:
    - rules: new, clone, delete, move up and down (Ctrl moves 3), rename, action, "keep up to" count

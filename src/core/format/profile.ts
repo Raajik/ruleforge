@@ -457,8 +457,11 @@ export interface LootProfile {
   extraBlocks: ExtraBlock[]
 }
 
+// Convert.ToInt32 and int.Parse throw on a bad or missing line, so a damaged file fails to load.
 function toInt(line: string | null | undefined): number {
-  return Number.parseInt(line ?? '', 10)
+  const n = parseInt32(line ?? '')
+  if (n === undefined) throw new Error(`Bad number in the profile: ${JSON.stringify(line)}`)
+  return n
 }
 
 function readRule(reader: LineReader, version: number): LootRule {
@@ -467,7 +470,9 @@ function readRule(reader: LineReader, version: number): LootRule {
   const customExpression = versionHasFeature(RULE_EXPRESSION, version) ? (reader.readLine() ?? '') : ''
 
   // The 'big line': priority, action, then one type number per requirement.
-  const parts = (reader.readLine() ?? '').split(';')
+  const bigLine = reader.readLine()
+  if (bigLine === null) throw new Error('The profile ends before its last rule.')
+  const parts = bigLine.split(';')
   const priority = toInt(parts[0])
   const action = toInt(parts[1])
   const lootActionData = action === eLootAction.KeepUpTo ? toInt(reader.readLine()) : 0
@@ -491,9 +496,9 @@ function readRule(reader: LineReader, version: number): LootRule {
 
 function readExtraBlocks(reader: LineReader): ExtraBlock[] {
   const blocks: ExtraBlock[] = []
-  while (reader.posRemaining > 0) {
-    const typeId = reader.readLine()
-    if (typeId === null || typeId === '') break
+  // The C# reads blocks to the end of the file. Only trailing blank lines are let through.
+  while (!reader.restIsBlank) {
+    const typeId = reader.readLine() ?? ''
     const data = reader.readChars(toInt(reader.readLine()))
     blocks.push(
       typeId === SALVAGE_COMBINE

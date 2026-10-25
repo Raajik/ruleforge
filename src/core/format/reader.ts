@@ -59,6 +59,8 @@ export class LineReader {
    * an unsupported requirement and for an extra block body.
    */
   readChars(n: number): string {
+    // C# new char[n] throws on a negative n. Going back here would re-read the same text forever.
+    if (n < 0) throw new Error(`Negative length in the profile: ${n}`)
     const end = Math.min(this.pos + n, this.buffer.length)
     const text = this.buffer.slice(this.pos, end)
     this.pos = end
@@ -70,6 +72,11 @@ export class LineReader {
    */
   get posRemaining(): number {
     return this.buffer.length - this.pos
+  }
+
+  /** True when only whitespace is left unread. */
+  get restIsBlank(): boolean {
+    return this.buffer.slice(this.pos).trim() === ''
   }
 }
 
