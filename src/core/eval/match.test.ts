@@ -207,7 +207,16 @@ describe('matchRequirement types 0 to 17 and 9999', () => {
     expect(name('a\nGold', '(?m)\\AGold')).toBe(false)
     expect(name('a\\AGold', 'a\\\\AGold')).toBe(true)
     expect(matchRequirement({ type: 0, pattern: '(?i)shield' }, item({ spells: ['Shield Self'] }))).toBe(true)
-    for (const pattern of ['(?>Gold)', '\\p{Lu}ing', '[]x]', '[^]x]', '[a-z-[aeiou]]old', 'a(?i)b', '(?x)a']) {
+    expect(name('Gold Ring\n', 'Ring$')).toBe(true)
+    expect(name('a\rb', 'a.b')).toBe(true)
+    expect(name('a\nb', 'a.b')).toBe(false)
+    expect(name('a\nb', '(?s)a.b')).toBe(true)
+    expect(name('aeb', 'a\\eb')).toBe(false)
+    expect(name('a\x1bb', 'a\\eb')).toBe(true)
+    expect(name('[.$]', '[.$]')).toBe(true)
+    for (const pattern of [
+      '(?>Gold)', '\\p{Lu}ing', '[]x]', '[^]x]', '[a-z-[aeiou]]old', 'a(?i)b', '(?x)a', '\\GGold', '(?<n>a)(b)\\1',
+    ]) {
       expect(name('Ring gold x', pattern), pattern).toBe('error')
     }
   })

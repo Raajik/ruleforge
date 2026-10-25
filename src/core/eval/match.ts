@@ -326,6 +326,8 @@ function dotNetToJs(pattern: string): { source: string; flags: string } | null {
     flags = [...new Set(lead[1])].join('')
     i = lead[0].length
   }
+  // .NET numbers named groups after the unnamed ones, JS numbers them in order, so \1 can mean another group.
+  if (/\(\?<[A-Za-z_]/.test(pattern) && /\\[1-9]/.test(pattern)) return null
   let out = ''
   let inClass = false
   for (; i < pattern.length; i++) {
@@ -333,8 +335,10 @@ function dotNetToJs(pattern: string): { source: string; flags: string } | null {
     if (c === '\\') {
       const next = pattern[i + 1] ?? ''
       i++
-      if (next === 'p' || next === 'P') return null
-      if (!inClass && next === 'A') out += '(?<![\\s\\S])'
+      if (next === 'p' || next === 'P' || next === 'G') return null
+      if (next === 'e') out += '\\x1b'
+      else if (next === 'a') out += '\\x07'
+      else if (!inClass && next === 'A') out += '(?<![\\s\\S])'
       else if (!inClass && next === 'z') out += '(?![\\s\\S])'
       else if (!inClass && next === 'Z') out += '(?=\\n?(?![\\s\\S]))'
       else out += c + next
@@ -350,6 +354,12 @@ function dotNetToJs(pattern: string): { source: string; flags: string } | null {
       out += c
     } else if (c === '(' && pattern[i + 1] === '?' && pattern[i + 2] === '>') {
       return null
+    } else if (c === '.' && !flags.includes('s')) {
+      // .NET . stops only at \n; JS . also stops at \r, \u2028 and \u2029.
+      out += '[^\\n]'
+    } else if (c === '$' && !flags.includes('m')) {
+      // .NET $ also matches before a final \n, as \Z does.
+      out += '(?=\\n?(?![\\s\\S]))'
     } else {
       out += c
     }
