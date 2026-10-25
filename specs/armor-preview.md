@@ -28,11 +28,15 @@ what armor in that colour looks like, as a stand-in model the user can turn with
 9. **Randomize (user pick, 2026-10-24).** A Randomize button rolls a look for the rest of the piece, the way the game
    colours loot armor: it picks one palette template and one shade (0 to 1), and every region takes its colour from
    that pair (ACE `LootGenerationFactory.MutateColor`). Regions are not rolled one by one.
-   - **With game files:** the user can point Ruleforge at their own Asheron's Call folder. Ruleforge then reads the
-     piece's real `ClothingTable` and palettes from `client_portal.dat`: only templates that piece can roll, with
-     their real colours. A roll keeps only looks where the rule's region matches the rule (the same
+   - **With game files:** the user can point Ruleforge at the `client_portal.dat` of their own Asheron's Call
+     install. Ruleforge then reads the piece's real `ClothingTable` and palettes from it: only templates that piece
+     can roll, with their real colours. A roll keeps only looks where the rule's region matches the rule (the same
      similar-colour test as the loot preview), and shows one of them at random. When no template and shade of that
      piece matches, the view says so: "This armor never rolls this colour in <region>."
+   - Exact looks need a piece, so they apply to type 15 only, and only to a piece whose `ClothingTable` id is known
+     (`docs/gamedata.md`). Types 14 and 16, and a piece without a known id, use the approximate roll.
+   - A region's colour is the example colour of its palette slot, the colour that the similar-colour test reads:
+     the palette entry in the middle of the slot's range (`docs/gamedata.md`).
    - The game also weighs templates by the item's material (a table in ACE's world database, not in the game files).
      Ruleforge has no material, so it rolls each template of the piece with equal weight. The docs say so.
    - **Without game files:** the roll picks a named template from a fixed list (the names of ACE's palette
@@ -41,15 +45,18 @@ what armor in that colour looks like, as a stand-in model the user can turn with
    - The text alternative names the template and shade, for example "Amuli Coat, Chest in #3060C0, rolled as
      AquaBlue at shade 0.42".
 10. **The game files stay on the user's machine.** Ruleforge never copies, uploads or bundles them. The browser
-    reads byte ranges of the picked file (`Blob.slice`); the desktop app reads ranges of the file at the saved path.
-    Nothing is read until the user picks the folder or file. A missing or unreadable file falls back to the
-    approximate roll with a short message.
+    reads byte ranges of the picked file (`Blob.slice`); the desktop app reads ranges of the file at the path picked
+    in its native dialog. The desktop app keeps the path for the session, because the dialog grants access to the
+    file for the session only. Nothing is read until the user picks the file. A missing or unreadable file falls back
+    to the approximate roll with a short message.
 11. **Parity fixes found while testing (user pick, 2026-10-24):**
     - The requirement editor has a type picker that calls `setRequirementType` (legacy: changing the requirement
       type). Today no control changes a requirement's type.
     - The armor group list of type 15 is filled from `ColorSlots.Default.xml`, bundled with the app, in both builds.
-      The desktop app also reads `ColorSlots.User.xml` beside the profile folder setting as the C# does
-      (`ref/shared/ColorXML.cs`). Today both builds pass no list, so the dropdown only offers "None".
+      The desktop app also reads `ColorSlots.User.xml` from the folder of the open profile, after the default
+      file, as the C# reads it from the VTank profile folder (`ref/shared/ColorXML.cs`). Ruleforge has no profile
+      folder setting, and the folder of an open `.utl` file is where VTank keeps its profiles. Today both builds pass
+      no list, so the dropdown only offers "None".
 
 ## Constraints
 - Ruleforge is MIT. gyre (AGPL-3.0, from webAC) and ACE (AGPL-3.0) may be read to learn the file format and the
