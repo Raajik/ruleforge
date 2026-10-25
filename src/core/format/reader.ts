@@ -59,6 +59,8 @@ export class LineReader {
    * an unsupported requirement and for an extra block body.
    */
   readChars(n: number): string {
+    // C# new char[n] throws on a negative n. Going back here would re-read the same text forever.
+    if (n < 0) throw new Error(`Negative length in the profile: ${n}`)
     const end = Math.min(this.pos + n, this.buffer.length)
     const text = this.buffer.slice(this.pos, end)
     this.pos = end
@@ -71,6 +73,11 @@ export class LineReader {
   get posRemaining(): number {
     return this.buffer.length - this.pos
   }
+
+  /** True when only whitespace is left unread. */
+  get restIsBlank(): boolean {
+    return this.buffer.slice(this.pos).trim() === ''
+  }
 }
 
 /**
@@ -79,9 +86,14 @@ export class LineReader {
  * digits, and the Int32 range. Gives undefined where C# gives false.
  */
 export function parseInt32(text: string): number | undefined {
-  const s = text.trim()
+  const s = trimDotNet(text)
   if (!/^[+-]?[0-9]+$/.test(s)) return undefined
   const n = Number(s)
   if (n < -2147483648 || n > 2147483647) return undefined
   return n === 0 ? 0 : n // C# int has no negative zero, so "-0" reads as 0.
+}
+
+/** NumberStyles.AllowLeadingWhite and AllowTrailingWhite trim U+0009 to U+000D and space only, unlike JS trim(). */
+export function trimDotNet(text: string): string {
+  return text.replace(/^[\t-\r ]+|[\t-\r ]+$/g, '')
 }

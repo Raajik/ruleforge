@@ -194,6 +194,33 @@ describe('matchRequirement types 0 to 17 and 9999', () => {
     expect(matchRequirement({ type: 0, pattern: '(' }, item({ spells: ['Fire Ball'] }))).toBe('error')
   })
 
+  it('reads a pattern as .NET Regex does, or gives "error" where JS would differ', () => {
+    // Each answer was checked against .NET 10 Regex.
+    const name = (n: string, pattern: string) =>
+      matchRequirement({ type: 1, pattern, key: stringValueKey.Name }, item({ stringValues: { Name: n } }))
+    expect(name('Pyreal Mote', '(?i)pyreal')).toBe(true)
+    expect(name('Gold Ring', '\\AGold')).toBe(true)
+    expect(name('AGold', '\\AGold')).toBe(false)
+    expect(name('Gold Ring', 'Ring\\Z')).toBe(true)
+    expect(name('Gold Ring\n', 'Ring\\Z')).toBe(true)
+    expect(name('Gold Ring\n', 'Ring\\z')).toBe(false)
+    expect(name('a\nGold', '(?m)\\AGold')).toBe(false)
+    expect(name('a\\AGold', 'a\\\\AGold')).toBe(true)
+    expect(matchRequirement({ type: 0, pattern: '(?i)shield' }, item({ spells: ['Shield Self'] }))).toBe(true)
+    expect(name('Gold Ring\n', 'Ring$')).toBe(true)
+    expect(name('a\rb', 'a.b')).toBe(true)
+    expect(name('a\nb', 'a.b')).toBe(false)
+    expect(name('a\nb', '(?s)a.b')).toBe(true)
+    expect(name('aeb', 'a\\eb')).toBe(false)
+    expect(name('a\x1bb', 'a\\eb')).toBe(true)
+    expect(name('[.$]', '[.$]')).toBe(true)
+    for (const pattern of [
+      '(?>Gold)', '\\p{Lu}ing', '[]x]', '[^]x]', '[a-z-[aeiou]]old', 'a(?i)b', '(?x)a', '\\GGold', '(?<n>a)(b)\\1',
+    ]) {
+      expect(name('Ring gold x', pattern), pattern).toBe('error')
+    }
+  })
+
   it('a missing value gives the default of the C# call: 0, 0.0 and ""', () => {
     const empty = item()
     expect(matchRequirement({ type: 2, keyval: 0, vk: intValueKey.Material }, empty)).toBe(true)
