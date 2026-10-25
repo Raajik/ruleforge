@@ -28,6 +28,16 @@
 - **Verified** (`src/ui/ReqEditor.test.tsx`): `ReqEditor` shows the acts-on combo, the text values and the
   color sample of a requirement, and every change fires `onChange` with the changed requirement. The acts-on
   combo of type 15 lists the color slot names of `fixtures/ColorSlots.Default.xml` (64 names).
+- **Observed** (`ref/editor/Form1.cs` 197-223): the requirement type combo lists "Enable/Disable" first, then
+  every type that `LootRuleCreator.CreateLootRule` can make, sorted by `FriendlyName` in a
+  `SortedList<string, eLootRuleType>`. A pick of another type replaces the requirement with a new default one
+  (`cmbReqType_SelectedIndexChanged`, 630-655). The names are the `FriendlyName` overrides in
+  `ref/shared/LootRules.cs` 326-2838.
+- **Verified** (`src/core/ops/rules.test.ts`, "lists Enable/Disable first, then every type the editor can make by
+  friendly name", and `src/ui/ReqEditor.test.tsx`, "shows the requirement type combo and reports a picked type"):
+  `requirementTypeCombo` gives that list, and the editor's "Requirement type" combo calls `setRequirementType`
+  through the App. **Unknown** whether the .NET culture order and `Intl.Collator('en')` agree on the names that
+  differ only in `<=`, `>=`, `==` and `!=`.
 - **Verified** (`src/ui/App.test.tsx`, "clicking a requirement shows its fields"): clicking a requirement in
   the list shows its fields, and typing in a field updates the requirement. The App keeps the edited profile
   in state. The ops of phase E connect in T29.
@@ -250,3 +260,41 @@
   Review changes tab counts the changes.
 - **Unknown** The mockup has a "New sample" button in the aside. The spec says that a real item import needs a
   data source, and the sample items are made up (`docs/eval.md`), so the page has no such button.
+
+## Armor preview (H4 armor preview)
+
+- **Verified** (`src/ui/ReqEditor.test.tsx`, "shows the armor preview text of a type 15 requirement, and none for
+  type 17" and "a colour change in the field updates the armor preview text"): the editor of types 14, 15 and 16
+  shows the armor preview under its fields, and type 17 shows none. jsdom has no WebGL, so the tests see the
+  text alternative, for example "Amuli Coat, Chest in #3060C0". It follows each change of the colour.
+- **Verified** (`src/ui/ReqEditor.test.tsx`, "type 16 shows the slot note under the armor preview"): type 16 adds
+  "Slot N: the region depends on the armor." under the view.
+- **Verified** (`src/ui/ArmorPreview.test.tsx`, with a faked scene module): `ArmorPreview` imports
+  `src/ui/armorScene.ts` only when `WebGLRenderingContext` exists. It shows each new view, turns the model by
+  0.012 radians per dragged pixel and by 15 degrees per left or right arrow key, and disposes the scene on
+  unmount. When the scene cannot start, it shows the text alternative.
+- **Verified** (`src/ui/armorScene.test.ts`, "keeps the %s and the whole head in view at every turn" and
+  "centres the %s at the starting angle"): the camera frames an upright cylinder around the turning axis, from
+  the bottom of the piece to the top of the head, and looks level at its middle. So every piece and the whole head
+  stay in the 319x260 view at every turn, centred. The first version framed only the piece, from a camera on the
+  axis tilted down, which cut the head off a coat.
+- **Observed** (`src/ui/armorScene.ts`): dispose frees the geometries, the materials and the renderer, then calls
+  `forceContextLoss`, because `WebGLRenderer.dispose` alone keeps the WebGL context until garbage collection.
+- **Verified** (`src/ui/ArmorPreview.test.tsx`, "ArmorPreview Randomize"): Randomize rolls an exact look from the
+  game files for type 15 and shows its name and shade in the text alternative, for example "Amuli Coat, Chest in
+  #3060C0, rolled as Red at shade 0.50". Without game files, or when the files cannot colour the region, it rolls an
+  approximate look and says "The colours are approximate." When no look passes, it says "This armor never rolls this
+  colour in Chest." A read error falls back to the approximate roll with "Could not read the game files."
+- **Verified** (`src/ui/App.test.tsx`, "reads a picked game file in the browser for an exact roll, and falls back on
+  a bad file"): "Use game files…" opens a file input; the App keeps the picked file for the session and reads it
+  with `Blob.slice`. A file that is not a DAT shows "Could not read <name>. Randomize uses approximate colours."
+- **Verified** (`src/ui/desktopio.test.ts`, "openDesktopDat", with a fake fs): the desktop app picks the file in
+  the native dialog and reads byte ranges of that path through one fs file handle, one read at a time. **Observed**
+  `tauri-plugin-dialog-2.8.3/src/commands.rs` 205-213: the dialog adds the picked file to the fs scope at run time.
+  The app has no plugin that keeps the scope across a restart, so it asks again after one. **Unknown** whether the real app reads the file
+  (`TO-TEST.md`).
+- **Verified** (`npm run build`, 2026-10-24): the DAT reader lands in its own chunk (`dist/assets/looks-*.js`,
+  4 kB), loaded when the user picks a file. The entry chunk has none of its error texts.
+- **Verified** (`npm run build`, 2026-10-24): three.js 0.186.1 lands in its own chunk
+  (`dist/assets/armorScene-*.js`, 538 kB). The entry chunk `dist/assets/index-*.js` has no `WebGLRenderer` and
+  no shader text.

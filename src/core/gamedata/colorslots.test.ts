@@ -69,3 +69,20 @@ describe('parseColorSlots edge cases', () => {
     expect(slots.has('Big')).toBe(false)
   })
 })
+
+describe('parseColorSlots of a user file over the default file', () => {
+  const defaults = parseColorSlots('<x><slotdef name="A (Base)"><entry value="0"/></slotdef></x>')
+
+  it('replaces a default definition, appends a new one and keeps the input map', () => {
+    const user = parseColorSlots(
+      '<x><slotdef name="A (Base)"><entry value="2"/></slotdef><slotdef name="B (Trim)"><entry value="1"/></slotdef></x>',
+      defaults,
+    )
+    expect([...user]).toEqual([
+      ['None', []],
+      ['A (Base)', [2]],
+      ['B (Trim)', [1]],
+    ])
+    expect(defaults.get('A (Base)')).toEqual([0])
+  })
+})

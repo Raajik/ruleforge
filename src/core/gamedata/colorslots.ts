@@ -6,9 +6,15 @@
 // C# XmlDocument rejects a malformed whole file; this parser only skips the
 // parts it cannot match.
 
-export function parseColorSlots(xml: string): Map<string, number[]> {
+/**
+ * Parses one file into `into`. The C# reads ColorSlots.Default.xml and then
+ * ColorSlots.User.xml into the same dictionary (ColorXML.cs 56-60, 76-78), so
+ * pass the map of the default file to read the user file over it.
+ */
+export function parseColorSlots(xml: string, into?: ReadonlyMap<string, readonly number[]>): Map<string, number[]> {
   const result = new Map<string, number[]>()
-  result.set('None', [])
+  if (into) for (const [name, entries] of into) result.set(name, [...entries])
+  else result.set('None', [])
   const stripped = xml.replace(/<!--[\s\S]*?-->/g, '')
   for (const block of stripped.matchAll(/<slotdef\b([^>]*)>([\s\S]*?)<\/slotdef\s*>/gi)) {
     const [, slotAttrs = '', slotBody = ''] = block

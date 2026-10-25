@@ -440,6 +440,49 @@ legend {
   border-radius: 6px;
 }
 
+.armor-preview {
+  margin: 14px 0 0;
+}
+
+.armor-preview canvas {
+  display: block;
+  width: 100%;
+  height: 260px;
+  background: var(--surface-2);
+  cursor: grab;
+  touch-action: none;
+}
+
+.armor-preview canvas:active {
+  cursor: grabbing;
+}
+
+.armor-preview canvas:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.armor-preview-text {
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  color: var(--text-dim);
+}
+
+.armor-preview-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.armor-preview figcaption {
+  margin-top: 8px;
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
 p.rule-fields,
 p.req-fields {
   color: var(--text-dim);

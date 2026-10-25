@@ -89,6 +89,58 @@ export function defaultRequirement(type: number): Requirement | null {
   }
 }
 
+/**
+ * `FriendlyName` of each type that `defaultRequirement` can make
+ * (ref/shared/LootRules.cs, the overrides at 326 to 2838).
+ */
+const FRIENDLY_NAMES: Readonly<Record<number, string>> = {
+  [eLootRuleType.SpellNameMatch]: 'Spell Name Match',
+  [eLootRuleType.StringValueMatch]: 'String Value Match',
+  [eLootRuleType.LongValKeyLE]: 'Long Value Key <=',
+  [eLootRuleType.LongValKeyGE]: 'Long Value Key >=',
+  [eLootRuleType.DoubleValKeyLE]: 'Double Value Key <=',
+  [eLootRuleType.DoubleValKeyGE]: 'Double Value Key >=',
+  [eLootRuleType.DamagePercentGE]: 'Damage Percentage >=',
+  [eLootRuleType.ObjectClass]: 'ObjectClass',
+  [eLootRuleType.SpellCountGE]: 'Spell Count >=',
+  [eLootRuleType.SpellMatch]: 'Spell Match and Count',
+  [eLootRuleType.MinDamageGE]: 'Minimum Damage >=',
+  [eLootRuleType.LongValKeyFlagExists]: 'Long Value Key Has Flags',
+  [eLootRuleType.CharacterSkillGE]: 'Character Buffed Skill >=',
+  [eLootRuleType.CharacterMainPackEmptySlotsGE]: 'Free Main Pack Slots >=',
+  [eLootRuleType.LongValKeyE]: 'Long Value Key ==',
+  [eLootRuleType.LongValKeyNE]: 'Long Value Key !=',
+  [eLootRuleType.CharacterLevelGE]: 'Character Level >=',
+  [eLootRuleType.CharacterLevelLE]: 'Character Level <=',
+  [eLootRuleType.CharacterBaseSkill]: 'Base Skill Range',
+  [eLootRuleType.DisabledRule]: 'Enable/Disable',
+  [eLootRuleType.AnySimilarColor]: 'One Similar Color',
+  [eLootRuleType.SimilarColorArmorType]: 'Armor Type Similar Color',
+  [eLootRuleType.SlotSimilarColor]: 'Slot Similar Color',
+  [eLootRuleType.SlotExactPalette]: 'Slot Exact Palette',
+  [eLootRuleType.BuffedMedianDamageGE]: 'Calced Buffed Median Damage >=',
+  [eLootRuleType.BuffedMissileDamageGE]: 'Calced Buffed Missile Damage >=',
+  [eLootRuleType.BuffedLongValKeyGE]: 'Buffed Long Value Key >=',
+  [eLootRuleType.BuffedDoubleValKeyGE]: 'Buffed Double Value Key >=',
+  [eLootRuleType.CalcdBuffedTinkedDamageGE]: 'Calced Buffed Tinked Dmg >=',
+  [eLootRuleType.TotalRatingsGE]: 'Calced Total Ratings >=',
+  [eLootRuleType.CalcedBuffedTinkedTargetMeleeGE]: 'Calced Buffed Tinked Target Melee',
+}
+
+/**
+ * The requirement type combo (Form1.cs 204-220): "Enable/Disable" first, then
+ * every other type by friendly name. The C# `SortedList<string, ...>` sorts
+ * in culture order.
+ */
+export function requirementTypeCombo(): { type: number; name: string }[] {
+  const byCulture = new Intl.Collator('en').compare
+  const rest = Object.entries(FRIENDLY_NAMES)
+    .map(([type, name]) => ({ type: Number(type), name }))
+    .filter((entry) => entry.type !== eLootRuleType.DisabledRule)
+    .sort((a, b) => byCulture(a.name, b.name))
+  return [{ type: eLootRuleType.DisabledRule, name: FRIENDLY_NAMES[eLootRuleType.DisabledRule]! }, ...rest]
+}
+
 /** Where the legacy editor inserts a new item: after the given one, else at the end. */
 function afterIndex(length: number, after: number): number {
   return after >= 0 && after < length ? after + 1 : length

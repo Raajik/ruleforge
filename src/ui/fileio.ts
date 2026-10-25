@@ -8,6 +8,8 @@
  * (ref/editor/Form1.cs 360-464).
  */
 
+import type { ReadRange } from '../core/dat/archive'
+
 /** The file types of the C# open and save dialogs (Form1.cs 324-325, 450-451). */
 const UTL_TYPES = [{ description: 'uTank settings files', accept: { 'application/octet-stream': ['.utl'] } }]
 
@@ -121,4 +123,20 @@ export function downloadText(fileName: string, text: string): void {
   link.click()
   link.remove()
   URL.revokeObjectURL(url)
+}
+
+/** A picked game file: its name, its size and ranged reads of it (specs/armor-preview.md item 10). */
+export interface PickedDat {
+  name: string
+  size: number
+  read: ReadRange
+}
+
+/** Ranged reads of a file the user picked, through `Blob.slice`. Nothing is read up front. */
+export function datFromFile(file: Blob & { name: string }): PickedDat {
+  return {
+    name: file.name,
+    size: file.size,
+    read: async (offset, length) => new Uint8Array(await file.slice(offset, offset + length).arrayBuffer()),
+  }
 }

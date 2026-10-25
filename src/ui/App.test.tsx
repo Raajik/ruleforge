@@ -3,12 +3,14 @@
 // ref/editor/Form1.Designer.cs (see docs/ui.md).
 
 import { readFileSync } from 'node:fs'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { eLootAction } from '../core/format/enums'
 import type { LootProfile } from '../core/format/profile'
 import { readProfile } from '../core/format/profile'
 import { App } from './App'
+import { DEFAULT_COLOR_SLOTS } from './colorSlots'
+import { craftPortal } from '../test/craftDat'
 
 afterEach(cleanup)
 
@@ -125,5 +127,53 @@ describe('App layout', () => {
     expect(within(items[0]!).getByText('Off')).toBeTruthy()
     expect(within(items[1]!).getByText('Sell')).toBeTruthy()
     expect(within(items[2]!).getByText('Salvage')).toBeTruthy()
+  })
+
+  it('makes a new type 15 rule from scratch with the bundled armor groups', () => {
+    render(<App initialProfile={{ version: 1, rules: [], extraBlocks: [] }} colorSlots={DEFAULT_COLOR_SLOTS} />)
+    fireEvent.click(within(screen.getByRole('group', { name: 'Rule actions' })).getByRole('button', { name: 'New' }))
+    // The requirement "New" button sits under the requirement list, after the rule's.
+    fireEvent.click(screen.getAllByRole('button', { name: 'New' }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'SpellNameMatch' }))
+    const type = screen.getByLabelText('Requirement type') as HTMLSelectElement
+    const armor = [...type.options].find((o) => o.textContent === 'Armor Type Similar Color')!
+    fireEvent.change(type, { target: { value: armor.value } })
+    expect(screen.getByRole('button', { name: 'SimilarColorArmorType' })).toBeTruthy()
+    // The bundled ColorSlots.Default.xml: "None" and its 63 definitions.
+    const actsOn = screen.getByLabelText('Armor Type/Color Region') as HTMLSelectElement
+    expect(actsOn.options).toHaveLength(64)
+    const chest = [...actsOn.options].find((o) => o.textContent === 'Amuli Coat (Chest)')!
+    fireEvent.change(actsOn, { target: { value: chest.value } })
+    fireEvent.change(screen.getByLabelText('RGB color value (hex)'), { target: { value: '3060C0' } })
+    expect(screen.getByText('Amuli Coat, Chest in #3060C0')).toBeTruthy()
+  })
+
+  it('reads a picked game file in the browser for an exact roll, and falls back on a bad file', async () => {
+    const coat: LootProfile = {
+      version: 1,
+      extraBlocks: [],
+      rules: [
+        {
+          name: 'Red coat',
+          customExpression: '',
+          priority: 0,
+          action: eLootAction.Keep,
+          lootActionData: 0,
+          requirements: [{ type: 15, r: 255, g: 0, b: 0, maxDifferenceH: 10, maxDifferenceSV: 0.1, armorGroup: 'Amuli Coat (Chest)' }],
+        },
+      ],
+    }
+    render(<App initialProfile={coat} colorSlots={DEFAULT_COLOR_SLOTS} />)
+    fireEvent.click(within(screen.getByRole('list', { name: 'Rules' })).getByRole('button'))
+    fireEvent.click(screen.getByRole('button', { name: 'SimilarColorArmorType' }))
+    const input = screen.getByLabelText('client_portal.dat')
+    fireEvent.change(input, { target: { files: [new File([new Uint8Array(10)], 'broken.dat')] } })
+    expect(await screen.findByText('Could not read broken.dat. Randomize uses approximate colours.')).toBeTruthy()
+    // Blob.slice of the picked file: a crafted DAT, no game data.
+    fireEvent.change(input, { target: { files: [new File([craftPortal()], 'client_portal.dat')] } })
+    expect(await screen.findByText('Game files: client_portal.dat')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Randomize' }))
+    await waitFor(() => expect(screen.getByText(/^Amuli Coat, Chest in #FF0000, rolled as Red at shade/)).toBeTruthy())
+    expect(screen.queryByText('The colours are approximate.')).toBeNull()
   })
 })

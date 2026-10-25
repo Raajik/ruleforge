@@ -11,8 +11,10 @@
 
 import { isTauri } from '@tauri-apps/api/core'
 import { open, save } from '@tauri-apps/plugin-dialog'
-import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
+import { open as openFile, readTextFile, writeTextFile, type SeekMode } from '@tauri-apps/plugin-fs'
+import type { ReadRange } from '../core/dat/archive'
 import { backupFileName } from '../core/ops/file'
+import type { PickedDat } from './fileio'
 
 /**
  * The file type of the C# open and save dialogs (Form1.cs 324-325, 450-451).
@@ -33,14 +35,72 @@ export interface PickedDesktopProfile {
  * which is the C# `FileName`.
  */
 export function backupPath(path: string, dialogName: string | undefined, at: Date): string {
-  const folder = path.slice(0, Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1)
+  const folder = folderOf(path)
   const name = dialogName !== undefined && dialogName !== '' ? dialogName : baseName(path)
   return backupFileName(`${folder}${name}`, at)
+}
+
+/** The folder of a path, with its trailing separator. */
+function folderOf(path: string): string {
+  return path.slice(0, Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1)
 }
 
 /** The last path part, the file name that the window title shows. */
 function baseName(path: string): string {
   return path.split(/[/\\]/).pop() ?? path
+}
+
+/**
+ * The text of ColorSlots.User.xml in the folder of the profile, or null when
+ * it is missing or unreadable. The C# reads it from the VTank profile folder
+ * (ref/shared/ColorXML.cs 56-87), where VTank keeps its .utl profiles.
+ */
+export async function readUserColorSlots(profilePath: string): Promise<string | null> {
+  try {
+    return await readTextFile(`${folderOf(profilePath)}ColorSlots.User.xml`)
+  } catch {
+    return null
+  }
+}
+
+const DAT_FILTERS = [{ name: 'Asheron\'s Call game files', extensions: ['dat'] }]
+// SeekMode.Start. The enum is a value of the fs module, which the tests fake.
+const SEEK_START = 0 as SeekMode
+
+/**
+ * The native open dialog for client_portal.dat, then ranged reads of the file
+ * at that path (specs/armor-preview.md item 10). The dialog grants access to
+ * the file for the session. Null when the dialog is closed; a file that cannot
+ * be opened rejects.
+ */
+export async function openDesktopDat(): Promise<PickedDat | null> {
+  let path: string | null
+  try {
+    path = await open({ multiple: false, directory: false, filters: DAT_FILTERS })
+  } catch {
+    return null
+  }
+  if (!path) return null
+  const handle = await openFile(path, { read: true })
+  const { size } = await handle.stat()
+  // One handle has one position, so the reads run one at a time.
+  let queue: Promise<unknown> = Promise.resolve()
+  const read: ReadRange = (offset, length) => {
+    const run = queue.then(async () => {
+      await handle.seek(offset, SEEK_START)
+      const out = new Uint8Array(length)
+      let got = 0
+      while (got < length) {
+        const n = await handle.read(out.subarray(got))
+        if (!n) break
+        got += n
+      }
+      return out.subarray(0, got)
+    })
+    queue = run.catch(() => undefined)
+    return run
+  }
+  return { name: baseName(path), size, read }
 }
 
 /** True inside a Tauri window. The web build has no plugins. */

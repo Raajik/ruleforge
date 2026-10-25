@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fakeTauri, resetFakeTauri } from '../test/fakeTauri'
+import { fakeFileHandle, fakeTauri, resetFakeTauri } from '../test/fakeTauri'
 import { eLootAction } from '../core/format/enums'
 import type { LootProfile } from '../core/format/profile'
 import { writeProfile } from '../core/format/profile'
 import {
   backupPath,
   hasDesktopAccess,
+  openDesktopDat,
   openDesktopProfile,
   saveDesktopProfile,
 } from './desktopio'
@@ -171,5 +172,34 @@ describe('backupPath', () => {
     expect(backupPath('C:\\VTank\\b.utl', 'c.utl', new Date(2026, 0, 2, 3, 4))).toBe(
       'C:\\VTank\\c.utl.2026-01-02-03-04.bak',
     )
+  })
+})
+
+describe('openDesktopDat', () => {
+  const bytes = Uint8Array.from({ length: 5000 }, (_, i) => i & 0xff)
+
+  it('picks a .dat in the native dialog and reads byte ranges of that path', async () => {
+    fakeTauri.open.mockResolvedValue('C:\\AC\\client_portal.dat')
+    fakeTauri.openFile.mockResolvedValue(fakeFileHandle(bytes))
+    const picked = await openDesktopDat()
+    expect(fakeTauri.open).toHaveBeenCalledWith(expect.objectContaining({ filters: [{ name: "Asheron's Call game files", extensions: ['dat'] }] }))
+    expect(fakeTauri.openFile).toHaveBeenCalledWith('C:\\AC\\client_portal.dat', { read: true })
+    expect(picked?.name).toBe('client_portal.dat')
+    expect(picked?.size).toBe(5000)
+    // Two reads at once on the one handle, each longer than one fake read gives.
+    const [a, b] = await Promise.all([picked!.read(100, 2500), picked!.read(4000, 50)])
+    expect(a).toEqual(bytes.slice(100, 2600))
+    expect(b).toEqual(bytes.slice(4000, 4050))
+    // A read past the end gives the bytes that are there.
+    expect(await picked!.read(4990, 100)).toEqual(bytes.slice(4990))
+  })
+
+  it('gives null when the dialog is closed, and rejects when the file cannot be opened', async () => {
+    fakeTauri.open.mockResolvedValue(null)
+    expect(await openDesktopDat()).toBeNull()
+    expect(fakeTauri.openFile).not.toHaveBeenCalled()
+    fakeTauri.open.mockResolvedValue('/ac/client_portal.dat')
+    fakeTauri.openFile.mockRejectedValue(new Error('forbidden path'))
+    await expect(openDesktopDat()).rejects.toThrow('forbidden path')
   })
 })
