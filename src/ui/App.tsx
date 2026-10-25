@@ -61,6 +61,7 @@ import { CustomizePage } from './CustomizePage'
 import { OverviewPage } from './OverviewPage'
 import { LootPreview } from './LootPreview'
 import { ReqEditor } from './ReqEditor'
+import { useGameFiles } from './gameFiles'
 import { ReviewChanges } from './ReviewChanges'
 import { SalvageCombineTab } from './SalvageCombineTab'
 import './theme.css'
@@ -95,6 +96,7 @@ export function App({ initialProfile, colorSlots, desktop = false }: {
   const [userSlots, setUserSlots] = useState<SlotDefinitions | null>(null)
   const slots = userSlots ?? colorSlots
   const armorGroups = useMemo(() => (slots ? [...slots.keys()] : undefined), [slots])
+  const gameFiles = useGameFiles(desktop)
   /**
    * The base profile of the Review changes page (PLAN.md H4): the file as it
    * was opened. A load and New set a new base. A save keeps it, so the user
@@ -718,6 +720,8 @@ export function App({ initialProfile, colorSlots, desktop = false }: {
                 <ReqEditor
                   req={req}
                   armorGroups={armorGroups}
+                  slots={slots}
+                  gameFiles={gameFiles}
                   onChange={changeReq}
                   onTypeChange={(type) => setProfile((p) => setRequirementType(p, selectedRule, selectedReq, type))}
                 />

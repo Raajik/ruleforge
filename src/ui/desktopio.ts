@@ -11,8 +11,10 @@
 
 import { isTauri } from '@tauri-apps/api/core'
 import { open, save } from '@tauri-apps/plugin-dialog'
-import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
+import { open as openFile, readTextFile, writeTextFile, type SeekMode } from '@tauri-apps/plugin-fs'
+import type { ReadRange } from '../core/dat/archive'
 import { backupFileName } from '../core/ops/file'
+import type { PickedDat } from './fileio'
 
 /**
  * The file type of the C# open and save dialogs (Form1.cs 324-325, 450-451).
@@ -59,6 +61,46 @@ export async function readUserColorSlots(profilePath: string): Promise<string | 
   } catch {
     return null
   }
+}
+
+const DAT_FILTERS = [{ name: 'Asheron\'s Call game files', extensions: ['dat'] }]
+// SeekMode.Start. The enum is a value of the fs module, which the tests fake.
+const SEEK_START = 0 as SeekMode
+
+/**
+ * The native open dialog for client_portal.dat, then ranged reads of the file
+ * at that path (specs/armor-preview.md item 10). The dialog grants access to
+ * the file for the session. Null when the dialog is closed; a file that cannot
+ * be opened rejects.
+ */
+export async function openDesktopDat(): Promise<PickedDat | null> {
+  let path: string | null
+  try {
+    path = await open({ multiple: false, directory: false, filters: DAT_FILTERS })
+  } catch {
+    return null
+  }
+  if (!path) return null
+  const handle = await openFile(path, { read: true })
+  const { size } = await handle.stat()
+  // One handle has one position, so the reads run one at a time.
+  let queue: Promise<unknown> = Promise.resolve()
+  const read: ReadRange = (offset, length) => {
+    const run = queue.then(async () => {
+      await handle.seek(offset, SEEK_START)
+      const out = new Uint8Array(length)
+      let got = 0
+      while (got < length) {
+        const n = await handle.read(out.subarray(got))
+        if (!n) break
+        got += n
+      }
+      return out.subarray(0, got)
+    })
+    queue = run.catch(() => undefined)
+    return run
+  }
+  return { name: baseName(path), size, read }
 }
 
 /** True inside a Tauri window. The web build has no plugins. */

@@ -4,9 +4,9 @@
 
 import * as THREE from 'three'
 import type { ArmorPiece, ArmorView } from '../core/gamedata/armorpreview'
+import type { Paint } from '../core/gamedata/armorroll'
 
 const FIGURE_COLOR = 0x3a3f48
-const NEUTRAL_COLOR = 0x8d939d
 // Three-quarter front: the model turned 35 degrees from facing the camera.
 const START_ANGLE = -0.6
 
@@ -244,7 +244,8 @@ export function frameCamera(frame: Frame, fovDegrees: number, aspect: number): {
 }
 
 export interface ArmorScene {
-  show(view: ArmorView): void
+  /** Shows the piece of the view in the paint's colours. */
+  show(view: ArmorView, paint: Paint): void
   turn(radians: number): void
   dispose(): void
 }
@@ -267,8 +268,16 @@ export function createArmorScene(canvas: HTMLCanvasElement): ArmorScene {
   scene.add(model)
 
   const figureMaterial = new THREE.MeshStandardMaterial({ color: FIGURE_COLOR, roughness: 0.9 })
-  const neutralMaterial = new THREE.MeshStandardMaterial({ color: NEUTRAL_COLOR, roughness: 0.55, metalness: 0.2 })
-  const colorMaterial = new THREE.MeshStandardMaterial({ roughness: 0.5, metalness: 0.2 })
+  // One material per colour of the current paint.
+  let paintMaterials = new Map<string, THREE.MeshStandardMaterial>()
+  function material(hex: string): THREE.MeshStandardMaterial {
+    let m = paintMaterials.get(hex)
+    if (!m) {
+      m = new THREE.MeshStandardMaterial({ color: hex, roughness: 0.5, metalness: 0.2 })
+      paintMaterials.set(hex, m)
+    }
+    return m
+  }
   for (const mesh of figure()) {
     mesh.material = figureMaterial
     model.add(mesh)
@@ -301,20 +310,22 @@ export function createArmorScene(canvas: HTMLCanvasElement): ArmorScene {
   }
 
   return {
-    show(view) {
+    show(view, paint) {
       clearPiece()
-      colorMaterial.color.set(view.color)
+      const old = paintMaterials
+      paintMaterials = new Map()
       const { parts, hosts } = shape(view.piece)
       for (const [part, mesh] of parts) {
-        mesh.material = view.colored.includes(part) ? colorMaterial : neutralMaterial
+        mesh.material = material(paint.parts[part] ?? paint.pattern)
         piece.add(mesh)
       }
       if (view.pattern) {
         for (const mesh of pattern(view.pattern.kind, hosts[view.pattern.on] ?? [])) {
-          mesh.material = colorMaterial
+          mesh.material = material(paint.pattern)
           piece.add(mesh)
         }
       }
+      for (const m of old.values()) m.dispose()
       frame = frameOf(model, piece)
       render()
     },
@@ -327,8 +338,7 @@ export function createArmorScene(canvas: HTMLCanvasElement): ArmorScene {
       clearPiece()
       for (const mesh of model.children) if (mesh instanceof THREE.Mesh) mesh.geometry.dispose()
       figureMaterial.dispose()
-      neutralMaterial.dispose()
-      colorMaterial.dispose()
+      for (const m of paintMaterials.values()) m.dispose()
       renderer.dispose()
       // dispose() alone keeps the WebGL context until garbage collection.
       renderer.forceContextLoss()

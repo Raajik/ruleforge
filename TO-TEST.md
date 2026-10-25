@@ -40,3 +40,11 @@ them. Do each item, then delete it and its line here in the same commit.
    **Expected:** the "Armor Type/Color Region" combo lists "My Robe (Base)" after the 63 default groups.
    **Why no check:** the tests fake `plugin-fs`. Only a real run shows that the `fs:scope` entry in
    `src-tauri/capabilities/default.json` lets the app read the file.
+
+7. **Game files for the armor preview (desktop).** Open a profile with an "Armor Type Similar Color"
+   requirement on "Amuli Coat (Chest)" in red (`F00000`). Click "Use game files…", pick the
+   `client_portal.dat` of an Asheron's Call install, then click Randomize a few times.
+   **Expected:** "Game files: client_portal.dat" shows, and each roll shows a red chest with a template and shade
+   in the text alternative, and no "approximate" note.
+   **Why no check:** the tests fake `plugin-fs`. Only a real run shows that the fs permissions in
+   `src-tauri/capabilities/default.json` and the dialog's scope let the app read byte ranges of the file.

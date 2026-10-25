@@ -471,6 +471,12 @@ legend {
   color: var(--text-dim);
 }
 
+.armor-preview-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .armor-preview figcaption {
   margin-top: 8px;
   color: var(--text-faint);

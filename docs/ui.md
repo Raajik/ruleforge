@@ -280,6 +280,21 @@
   axis tilted down, which cut the head off a coat.
 - **Observed** (`src/ui/armorScene.ts`): dispose frees the geometries, the materials and the renderer, then calls
   `forceContextLoss`, because `WebGLRenderer.dispose` alone keeps the WebGL context until garbage collection.
+- **Verified** (`src/ui/ArmorPreview.test.tsx`, "ArmorPreview Randomize"): Randomize rolls an exact look from the
+  game files for type 15 and shows its name and shade in the text alternative, for example "Amuli Coat, Chest in
+  #3060C0, rolled as Red at shade 0.50". Without game files, or when the files cannot colour the region, it rolls an
+  approximate look and says "The colours are approximate." When no look passes, it says "This armor never rolls this
+  colour in Chest." A read error falls back to the approximate roll with "Could not read the game files."
+- **Verified** (`src/ui/App.test.tsx`, "reads a picked game file in the browser for an exact roll, and falls back on
+  a bad file"): "Use game files…" opens a file input; the App keeps the picked file for the session and reads it
+  with `Blob.slice`. A file that is not a DAT shows "Could not read <name>. Randomize uses approximate colours."
+- **Verified** (`src/ui/desktopio.test.ts`, "openDesktopDat", with a fake fs): the desktop app picks the file in
+  the native dialog and reads byte ranges of that path through one fs file handle, one read at a time. **Observed**
+  `tauri-plugin-dialog-2.8.3/src/commands.rs` 205-213: the dialog adds the picked file to the fs scope at run time.
+  The app has no plugin that keeps the scope across a restart, so it asks again after one. **Unknown** whether the real app reads the file
+  (`TO-TEST.md`).
+- **Verified** (`npm run build`, 2026-10-24): the DAT reader lands in its own chunk (`dist/assets/looks-*.js`,
+  4 kB), loaded when the user picks a file. The entry chunk has none of its error texts.
 - **Verified** (`npm run build`, 2026-10-24): three.js 0.186.1 lands in its own chunk
   (`dist/assets/armorScene-*.js`, 538 kB). The entry chunk `dist/assets/index-*.js` has no `WebGLRenderer` and
   no shader text.

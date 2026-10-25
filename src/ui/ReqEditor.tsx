@@ -8,20 +8,27 @@
  */
 import { useMemo } from 'react'
 import type { Requirement } from '../core/format/profile'
+import type { SlotDefinitions } from '../core/eval/match'
 import { armorView } from '../core/gamedata/armorpreview'
 import { requirementFields, setActsOn, setTextValue } from '../core/ops/reqfields'
 import { requirementTypeCombo } from '../core/ops/rules'
 import { ArmorPreview } from './ArmorPreview'
+import type { GameFiles } from './gameFiles'
 
 export function ReqEditor({
   req,
   armorGroups,
+  slots,
+  gameFiles,
   onChange,
   onTypeChange,
 }: {
   req: Requirement
   /** The color slot names of the ColorSlots XML file (type 15 only). */
   armorGroups?: readonly string[]
+  /** The slot definitions behind the names, for the armor preview's exact roll. */
+  slots?: SlotDefinitions
+  gameFiles?: GameFiles
   onChange: (req: Requirement) => void
   /** A pick in the type combo. The caller replaces the requirement (`setRequirementType`). */
   onTypeChange: (type: number) => void
@@ -93,7 +100,7 @@ export function ReqEditor({
           </label>
         )
       })}
-      {view && <ArmorPreview view={view} />}
+      {view && <ArmorPreview view={view} req={req} slots={slots} gameFiles={gameFiles} />}
     </fieldset>
   )
 }
