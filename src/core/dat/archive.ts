@@ -28,6 +28,7 @@ const MAX_DEPTH = 16
 const MIN_BLOCK = 64
 const MAX_BLOCK = 1 << 16
 const NODE_CACHE_LIMIT = 4096
+const READ_AHEAD = 1 << 16
 
 interface Entry {
   id: number
@@ -83,11 +84,13 @@ export async function openDat(read: ReadRange, fileSize: number): Promise<DatArc
       seen.add(block)
       const take = Math.min(size - done, blockSize - 4)
       if (block < chunkStart || block + 4 + take > chunkStart + chunk.length) {
-        // Blocks of a file usually follow each other, so read all the blocks
-        // still needed in one go and follow the chain inside that.
+        // Blocks of a file usually follow each other, so read the blocks
+        // still needed in one go and follow the chain inside that. The cap
+        // keeps a scattered chain from reading the rest of a big file again
+        // at every block.
         const left = Math.ceil((size - done) / (blockSize - 4))
         chunkStart = block
-        chunk = await readExact(read, block, Math.min(left * blockSize, fileSize - block))
+        chunk = await readExact(read, block, Math.min(left * blockSize, READ_AHEAD, fileSize - block))
       }
       const at = block - chunkStart
       const next = new DataView(chunk.buffer, chunk.byteOffset + at, 4).getUint32(0, true)

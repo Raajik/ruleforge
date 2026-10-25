@@ -117,6 +117,19 @@ describe('ArmorPreview Randomize', () => {
     expect(await screen.findByText('Could not read the game files. The colours are approximate.')).toBeTruthy()
   })
 
+  it('drops a roll that ends after the view changed, and can roll again', async () => {
+    let finish: (looks: null) => void = () => {}
+    const slow = gameFiles({ source: { ...SOURCE, piece: () => new Promise((resolve) => (finish = resolve)) } })
+    const { rerender } = render(<ArmorPreview view={COAT} req={COAT_REQ} slots={SLOTS} gameFiles={slow} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Randomize' }))
+    const red = { ...COAT_REQ, r: 255 } as Requirement
+    rerender(<ArmorPreview view={armorView(red)!} req={red} slots={SLOTS} gameFiles={slow} />)
+    finish(null)
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Randomize' }) as HTMLButtonElement).disabled).toBe(false))
+    expect(screen.queryByText('The colours are approximate.')).toBeNull()
+    expect(screen.getByRole('img').getAttribute('aria-label')).toBe('Amuli Coat, Chest in #FF60C0')
+  })
+
   it('hands a picked file to the game files in the browser', () => {
     const files = gameFiles({ name: null, source: null })
     render(<ArmorPreview view={COAT} gameFiles={files} />)

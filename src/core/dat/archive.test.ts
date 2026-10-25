@@ -54,6 +54,19 @@ describe('openDat on a good file', () => {
   })
 })
 
+describe('openDat read sizes', () => {
+  it('reads a big file in pieces of at most 64 KiB', async () => {
+    const b = new DatBuilder()
+    const data = bytes(200_000)
+    const entry = b.file(1, data)
+    const dat = b.build(b.node([entry]))
+    const read = memoryReader(dat)
+    const archive = await openDat(read, dat.length)
+    expect(await archive.readFile(1)).toEqual(data)
+    expect(read.largest).toBeLessThanOrEqual(65536)
+  })
+})
+
 describe('openDat guards', () => {
   it('rejects a file too small for the header, a bad block size and a short read', async () => {
     await expect(openDat(memoryReader(new Uint8Array(100)), 100)).rejects.toThrow(DatError)

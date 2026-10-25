@@ -87,8 +87,8 @@ export function ArmorPreview({
         note = 'Could not read the game files. '
       }
     }
-    if (id !== rollId.current) return
     setRolling(false)
+    if (id !== rollId.current) return
     if (roll?.kind === 'never') {
       setLook(null)
       setMessage(roll.message)
