@@ -19,7 +19,7 @@ interface Host {
   r: number
 }
 
-interface Shape {
+export interface Shape {
   parts: [part: string, mesh: THREE.Mesh][]
   hosts: Record<string, Host[]>
 }
@@ -59,7 +59,8 @@ function place(geometry: THREE.BufferGeometry, x: number, y: number, z: number):
 
 const SIDES = [-1, 1] as const
 
-function figure(): THREE.Mesh[] {
+/** The figure the piece sits on. */
+export function figure(): THREE.Mesh[] {
   return [
     ...SIDES.map((s) => geo.cyl(0.065, 0.055, 0.05, 0.86, s * 0.1)),
     ...SIDES.map((s) => geo.box(0.09, 0.05, 0.17, s * 0.1, 0.025, 0.035)),
@@ -73,7 +74,8 @@ function figure(): THREE.Mesh[] {
   ]
 }
 
-function shape(piece: ArmorPiece): Shape {
+/** The meshes of a stand-in piece, each with its part name. */
+export function shape(piece: ArmorPiece): Shape {
   const both = (part: string, make: (s: -1 | 1) => THREE.Mesh) =>
     SIDES.map((s): [string, THREE.Mesh] => [part, make(s)])
   switch (piece) {
@@ -197,6 +199,50 @@ function pattern(kind: 'stripes' | 'studs', hosts: readonly Host[]): THREE.Mesh[
   return meshes
 }
 
+// The top of the figure's head (geo.sphere(0.1, 0, 1.65)) and of the helm's horns.
+const HEAD_TOP = 1.83
+const FRAME_MARGIN = 1.12
+const MIN_FRAME_HEIGHT = 0.6
+
+/** The upright cylinder around the axis that the view keeps in frame. */
+export interface Frame {
+  yMin: number
+  yMax: number
+  radius: number
+}
+
+/** The part of the model to keep in view: the piece and everything up to the top of the head. */
+export function frameOf(model: THREE.Object3D, piece: THREE.Object3D): Frame {
+  model.updateMatrixWorld(true)
+  const box = new THREE.Box3().setFromObject(piece)
+  const turn = model.rotation.y
+  // Measure the radius unturned, so the frame does not depend on the angle.
+  model.rotation.y = 0
+  model.updateMatrixWorld(true)
+  const whole = new THREE.Box3().setFromObject(model)
+  model.rotation.y = turn
+  model.updateMatrixWorld(true)
+  let yMin = box.isEmpty() ? 0 : box.min.y
+  let yMax = Math.max(HEAD_TOP, box.isEmpty() ? 0 : box.max.y)
+  if (yMax - yMin < MIN_FRAME_HEIGHT) yMin = yMax - MIN_FRAME_HEIGHT
+  const x = Math.max(-whole.min.x, whole.max.x)
+  const z = Math.max(-whole.min.z, whole.max.z)
+  return { yMin, yMax, radius: Math.hypot(x, z) }
+}
+
+/**
+ * The camera height and distance that fit the frame at every turn, looking
+ * level along -z at the axis, so the model stays centred while it turns.
+ */
+export function frameCamera(frame: Frame, fovDegrees: number, aspect: number): { y: number; z: number } {
+  const tanV = Math.tan(THREE.MathUtils.degToRad(fovDegrees / 2))
+  const tanH = tanV * aspect
+  const half = (frame.yMax - frame.yMin) / 2
+  // The nearest point of the cylinder is `radius` in front of the axis.
+  const z = frame.radius + FRAME_MARGIN * Math.max(frame.radius / tanH, half / tanV)
+  return { y: frame.yMin + half, z }
+}
+
 export interface ArmorScene {
   show(view: ArmorView): void
   turn(radians: number): void
@@ -229,7 +275,7 @@ export function createArmorScene(canvas: HTMLCanvasElement): ArmorScene {
   }
   const piece = new THREE.Group()
   model.add(piece)
-  let focus = { y: 1, size: 2 }
+  let frame: Frame = { yMin: 0, yMax: HEAD_TOP, radius: 0.35 }
 
   function render() {
     const width = canvas.clientWidth
@@ -237,11 +283,9 @@ export function createArmorScene(canvas: HTMLCanvasElement): ArmorScene {
     if (width === 0 || height === 0) return
     renderer.setSize(width, height, false)
     camera.aspect = width / height
-    // Fit the piece's height (and width on a narrow canvas) with some margin.
-    const halfFov = THREE.MathUtils.degToRad(camera.fov / 2)
-    const fit = Math.max(focus.size, focus.size / camera.aspect) / 2
-    camera.position.set(0, focus.y + 0.08, (fit / Math.tan(halfFov)) * 1.25 + 0.3)
-    camera.lookAt(0, focus.y, 0)
+    const at = frameCamera(frame, camera.fov, camera.aspect)
+    camera.position.set(0, at.y, at.z)
+    camera.lookAt(0, at.y, 0)
     camera.updateProjectionMatrix()
     renderer.render(scene, camera)
   }
@@ -271,10 +315,7 @@ export function createArmorScene(canvas: HTMLCanvasElement): ArmorScene {
           piece.add(mesh)
         }
       }
-      // Frame the piece, but never closer than head and shoulders.
-      const box = new THREE.Box3().setFromObject(piece)
-      const size = box.getSize(new THREE.Vector3())
-      focus = { y: box.getCenter(new THREE.Vector3()).y, size: Math.max(size.y, size.x, 0.6) }
+      frame = frameOf(model, piece)
       render()
     },
     turn(radians) {

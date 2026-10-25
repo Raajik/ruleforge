@@ -263,6 +263,11 @@
   `src/ui/armorScene.ts` only when `WebGLRenderingContext` exists. It shows each new view, turns the model by
   0.012 radians per dragged pixel and by 15 degrees per left or right arrow key, and disposes the scene on
   unmount. When the scene cannot start, it shows the text alternative.
+- **Verified** (`src/ui/armorScene.test.ts`, "keeps the %s and the whole head in view at every turn" and
+  "centres the %s at the starting angle"): the camera frames an upright cylinder around the turning axis, from
+  the bottom of the piece to the top of the head, and looks level at its middle. So every piece and the whole head
+  stay in the 319x260 view at every turn, centred. The first version framed only the piece, from a camera on the
+  axis tilted down, which cut the head off a coat.
 - **Observed** (`src/ui/armorScene.ts`): dispose frees the geometries, the materials and the renderer, then calls
   `forceContextLoss`, because `WebGLRenderer.dispose` alone keeps the WebGL context until garbage collection.
 - **Verified** (`npm run build`, 2026-10-24): three.js 0.186.1 lands in its own chunk
