@@ -69,6 +69,25 @@ tests read `fixtures/ColorSlots.Default.xml` with `node:fs`.
   reject a whole file. **Observed** `ref/shared/ColorXML.cs:56-87`. **Verified** the skip tests in
   `colorslots.test.ts`.
 
+## Armor preview map (H4 armor preview)
+
+`src/core/gamedata/armorpreview.ts` maps a colour requirement to a stand-in piece, the parts in the colour and
+a text alternative (`specs/armor-preview.md`). The pieces and their parts are made up for the stand-in model.
+They are not the game's models or palette slots.
+
+- Every one of the 63 slot definitions of the default file has a map entry: a piece named by the group, the
+  region from its brackets, and parts that exist on that piece. A region with a pattern word (Veins, Stripes,
+  Lines, Bumps, Ornaments, Hilight, Circle) gets stripes or studs. **Verified** `armorpreview.test.ts`, the
+  "maps %s to a piece and the region in its brackets" tests.
+- "Celdon (Base)" and "Celdon (Veins)" name no piece. The map shows them on the breastplate. **Unknown** which
+  Celdon piece the game uses these slots for; the slots may fit all of the set.
+- A group that is not in the map shows the piece its name names, or the generic suit, with every part in the
+  colour. Types 14 and 16 show the generic suit. Type 16 adds "Slot N: the region depends on the armor."
+  Type 17 gets no view. **Verified** `armorpreview.test.ts`, "armorGroupView on a group that is not in the
+  map" and "armorView".
+- The preview colour is `#RRGGBB` from R, G and B, each channel kept in 0-255. **Verified**
+  `armorpreview.test.ts`, "colorHex".
+
 ## Unknown
 
 - How the legacy editor orders these lists in its own UI. Phase F (T27–T28) reads `Form1.cs` and settles it.
