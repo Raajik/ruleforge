@@ -48,7 +48,9 @@
 - [Observed] An extra block after the rules has a type id line, a length line, then that many UTF-16 code units. A handler parses a known type id. Today `SalvageCombine` is the only known one. The reader skips an unknown type id and never re-writes it, so the C# editor drops that block on save. This editor keeps the raw body instead. `ref/shared/UTLFileExtraBlockManager.cs:44-70,94-137`.
 - [Verified] The C# reader throws on a bad number (`Convert.ToInt32`, `int.Parse`), a negative length
   (`new char[n]`) and a missing rule (`null.Split`), so the legacy editor opens no such file. Ruleforge throws on the
-  same input, and lets only trailing blank lines through. `ref/shared/LootRules.cs:2944-2960`,
+  same input, and lets only trailing blank lines through. A number may have only ASCII whitespace (U+0009 to U+000D,
+  space) around it, as .NET `NumberStyles.Integer` allows. A key (`vk`) reads as `Convert.ToUInt32` then the int
+  enum cast, so `4294967295` reads as -1 and a sign throws. `ref/shared/LootRules.cs:455,2944-2960`,
   `ref/shared/UTLFileExtraBlockManager.cs:94-117`. Test: `src/core/format/profile.test.ts`, "readProfile on a
   damaged profile".
 - [Observed] A `SalvageCombine` body starts with the format version line. The reader ignores that line. It then reads the default combine string, the material count, and one material id and one combine string per material. It reads the value mode count and one material id and one target value per entry. The C# checks `inf.EndOfStream` on the whole file, so this works only when the block is last. `ref/shared/UTLBlock_SalvageCombine.cs:272-299`.

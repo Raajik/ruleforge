@@ -11,7 +11,7 @@
 
 import { eLootAction, eLootRuleType } from './enums'
 import { formatDouble, haxConvertDouble } from './doubles'
-import { LineReader, parseInt32 } from './reader'
+import { LineReader, parseInt32, trimDotNet } from './reader'
 import { CountedWriter } from './writer'
 
 // ref/shared/FileVersioning.cs line 49.
@@ -316,25 +316,25 @@ export const requirementReaders: Record<number, (reader: LineReader, version: nu
   // LootRules.cs 378-380: pattern line, then the StringValueKey number.
   1: (reader) => ({ type: 1, pattern: reader.readLine() ?? '', key: toInt(reader.readLine()) }),
   // LootRules.cs 454-455: keyval line, then the IntValueKey number.
-  2: (reader) => ({ type: 2, keyval: toInt(reader.readLine()), vk: toInt(reader.readLine()) }),
+  2: (reader) => ({ type: 2, keyval: toInt(reader.readLine()), vk: toKey(reader.readLine()) }),
   // LootRules.cs 571-572: keyval line, then the IntValueKey number.
-  3: (reader) => ({ type: 3, keyval: toInt(reader.readLine()), vk: toInt(reader.readLine()) }),
+  3: (reader) => ({ type: 3, keyval: toInt(reader.readLine()), vk: toKey(reader.readLine()) }),
   // LootRules.cs 1187-1188: keyval line, then the IntValueKey number.
-  11: (reader) => ({ type: 11, keyval: toInt(reader.readLine()), vk: toInt(reader.readLine()) }),
+  11: (reader) => ({ type: 11, keyval: toInt(reader.readLine()), vk: toKey(reader.readLine()) }),
   // LootRules.cs 1412-1413: keyval line, then the IntValueKey number.
-  12: (reader) => ({ type: 12, keyval: toInt(reader.readLine()), vk: toInt(reader.readLine()) }),
+  12: (reader) => ({ type: 12, keyval: toInt(reader.readLine()), vk: toKey(reader.readLine()) }),
   // LootRules.cs 1529-1530: keyval line, then the IntValueKey number.
-  13: (reader) => ({ type: 13, keyval: toInt(reader.readLine()), vk: toInt(reader.readLine()) }),
+  13: (reader) => ({ type: 13, keyval: toInt(reader.readLine()), vk: toKey(reader.readLine()) }),
   // LootRules.cs 686-688: keyval line, then the DoubleValueKey number.
-  4: (reader) => ({ type: 4, keyval: haxConvertDouble(reader.readLine()), vk: toInt(reader.readLine()) }),
+  4: (reader) => ({ type: 4, keyval: haxConvertDouble(reader.readLine()), vk: toKey(reader.readLine()) }),
   // LootRules.cs 761-763: keyval line, then the DoubleValueKey number.
-  5: (reader) => ({ type: 5, keyval: haxConvertDouble(reader.readLine()), vk: toInt(reader.readLine()) }),
+  5: (reader) => ({ type: 5, keyval: haxConvertDouble(reader.readLine()), vk: toKey(reader.readLine()) }),
   // LootRules.cs 827-829: keyval line.
   6: (reader) => ({ type: 6, keyval: haxConvertDouble(reader.readLine()) }),
   // LootRules.cs 1119-1121: keyval line.
   10: (reader) => ({ type: 10, keyval: haxConvertDouble(reader.readLine()) }),
   // LootRules.cs 891: one ObjectClass line.
-  7: (reader) => ({ type: 7, vk: toInt(reader.readLine()) }),
+  7: (reader) => ({ type: 7, vk: toKey(reader.readLine()) }),
   // LootRules.cs 957: one keyval line.
   8: (reader) => ({ type: 8, keyval: toInt(reader.readLine()) }),
   // LootRules.cs 1043-1045: two regex lines, then the Count line.
@@ -345,7 +345,7 @@ export const requirementReaders: Record<number, (reader: LineReader, version: nu
     count: toInt(reader.readLine()),
   }),
   // LootRules.cs 1264-1267: keyval line, then the VTCSkillID number.
-  1000: (reader) => ({ type: 1000, keyval: toInt(reader.readLine()), vk: toInt(reader.readLine()) }),
+  1000: (reader) => ({ type: 1000, keyval: toInt(reader.readLine()), vk: toKey(reader.readLine()) }),
   // LootRules.cs 1344-1346: one keyval line.
   1001: (reader) => ({ type: 1001, keyval: toInt(reader.readLine()) }),
   // LootRules.cs 1635-1637: one keyval line.
@@ -355,7 +355,7 @@ export const requirementReaders: Record<number, (reader: LineReader, version: nu
   // LootRules.cs 1763-1766: VTCSkillID line, minskill line, maxskill line.
   1004: (reader) => ({
     type: 1004,
-    vk: toInt(reader.readLine()),
+    vk: toKey(reader.readLine()),
     minskill: toInt(reader.readLine()),
     maxskill: toInt(reader.readLine()),
   }),
@@ -397,9 +397,9 @@ export const requirementReaders: Record<number, (reader: LineReader, version: nu
   // LootRules.cs 2473: one keyval line.
   2001: (reader) => ({ type: 2001, keyval: haxConvertDouble(reader.readLine()) }),
   // LootRules.cs 2535-2536: keyval line, then the IntValueKey number.
-  2003: (reader) => ({ type: 2003, keyval: haxConvertDouble(reader.readLine()), vk: toInt(reader.readLine()) }),
+  2003: (reader) => ({ type: 2003, keyval: haxConvertDouble(reader.readLine()), vk: toKey(reader.readLine()) }),
   // LootRules.cs 2609-2610: keyval line, then the DoubleValueKey number.
-  2005: (reader) => ({ type: 2005, keyval: haxConvertDouble(reader.readLine()), vk: toInt(reader.readLine()) }),
+  2005: (reader) => ({ type: 2005, keyval: haxConvertDouble(reader.readLine()), vk: toKey(reader.readLine()) }),
   // LootRules.cs 2688: one keyval line.
   2006: (reader) => ({ type: 2006, keyval: haxConvertDouble(reader.readLine()) }),
   // LootRules.cs 2755: one keyval line.
@@ -462,6 +462,15 @@ function toInt(line: string | null | undefined): number {
   const n = parseInt32(line ?? '')
   if (n === undefined) throw new Error(`Bad number in the profile: ${JSON.stringify(line)}`)
   return n
+}
+
+// A key reads with Convert.ToUInt32, then the cast to an int enum wraps it to a signed int (LootRules.cs 455).
+function toKey(line: string | null | undefined): number {
+  const s = trimDotNet(line ?? '')
+  if (!/^(\+?[0-9]+|-0+)$/.test(s) || Number(s) > 4294967295) {
+    throw new Error(`Bad key in the profile: ${JSON.stringify(line)}`)
+  }
+  return Number(s) | 0
 }
 
 function readRule(reader: LineReader, version: number): LootRule {
