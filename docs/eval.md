@@ -71,8 +71,12 @@
   attack is out of reach. `src/core/eval/computed.test.ts`, `src/core/eval/match.test.ts`.
 - [Observed] The editor labels the hue difference "Max diff (Hue 0-255)", but `Color.GetHue` gives 0 to 360.
   `ref/shared/LootRules.cs:1988,1887-1895`.
-- [Unknown] The JS RegExp engine and .NET Regex agree on the patterns of the shipped profiles. This repo only ran
-  the JS engine.
+- [Verified] JS RegExp reads some .NET syntax differently: `(?i)` and `(?>..)` throw, `\A`, `\Z` and `\p{Lu}`
+  are literal letters, `[]x]` is an empty class, and `[a-z-[aeiou]]` is not class subtraction. `compilePattern`
+  rewrites leading `(?i)`/`(?m)`/`(?s)` and `\A`, `\Z`, `\z`, and gives "error" for the rest. The expected answers
+  came from running .NET 10 `Regex`. Test: `src/core/eval/match.test.ts`, "reads a pattern as .NET Regex does".
+- [Unknown] JS `\w` and `\d` are ASCII; .NET's are Unicode, so `caf\w` misses "café". No fixture or sample item
+  has a non-ASCII name.
 
 ## The loot preview (H3c)
 

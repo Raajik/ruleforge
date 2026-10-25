@@ -31,6 +31,9 @@ page.
 - The loot preview ports the match logic of the C#: each requirement's `Match` (`ref/shared/LootRules.cs`, 32
   methods, `#if VTC_PLUGIN`), `cLootItemRule.Match` (2902-2907), and the first-match rule order in
   `ref/plugin/LootCore.cs`. The port is a pure function `(profile, item) => decision` with tests.
+- Rule patterns are .NET regexes. The port translates the .NET syntax that JS reads differently: leading inline
+  flags `(?i)`, `(?m)`, `(?s)`, and the anchors `\A`, `\Z`, `\z`. Atomic groups, `\p{..}`, class subtraction and a
+  class that starts with `]` give "error" on the rule rather than a wrong answer.
 - Sample items are a JSON file of item property values, keyed by the same enum names as
   `src/core/gamedata/generated.ts`.
 - Strictness and character settings change only these things: which categories are on, and the main number of

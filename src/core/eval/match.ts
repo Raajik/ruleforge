@@ -306,11 +306,55 @@ export function matchRequirement(req: Requirement, item: LootItem, slots?: SlotD
 // when it reads the file (LootRules.cs 311-313). A bad pattern then gives
 // the result "error" on that rule, not a crash.
 function compilePattern(pattern: string): RegExp | null {
+  const js = dotNetToJs(pattern)
+  if (!js) return null
   try {
-    return new RegExp(pattern)
+    return new RegExp(js.source, js.flags)
   } catch {
     return null
   }
+}
+
+// The patterns are .NET regexes (specs/ruleforge-ui.md). This rewrites the
+// .NET syntax that JS reads differently, and gives null for .NET syntax that
+// JS would read as a different pattern without an error.
+function dotNetToJs(pattern: string): { source: string; flags: string } | null {
+  let flags = ''
+  let i = 0
+  const lead = /^\(\?([ims]+)\)/.exec(pattern)
+  if (lead) {
+    flags = [...new Set(lead[1])].join('')
+    i = lead[0].length
+  }
+  let out = ''
+  let inClass = false
+  for (; i < pattern.length; i++) {
+    const c = pattern[i]
+    if (c === '\\') {
+      const next = pattern[i + 1] ?? ''
+      i++
+      if (next === 'p' || next === 'P') return null
+      if (!inClass && next === 'A') out += '(?<![\\s\\S])'
+      else if (!inClass && next === 'z') out += '(?![\\s\\S])'
+      else if (!inClass && next === 'Z') out += '(?=\\n?(?![\\s\\S]))'
+      else out += c + next
+    } else if (inClass) {
+      if (c === '-' && pattern[i + 1] === '[') return null
+      if (c === ']') inClass = false
+      out += c
+    } else if (c === '[') {
+      // .NET reads a ] right after [ or [^ as a literal; JS reads it as the end of an empty class.
+      const start = pattern[i + 1] === '^' ? i + 2 : i + 1
+      if (pattern[start] === ']') return null
+      inClass = true
+      out += c
+    } else if (c === '(' && pattern[i + 1] === '?' && pattern[i + 2] === '>') {
+      return null
+    } else {
+      out += c
+    }
+  }
+  return { source: out, flags }
 }
 
 // The similar-color distance check of LootRules.cs 1911-1918: the hue within
