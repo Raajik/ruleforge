@@ -29,6 +29,7 @@ import {
   newRequirement,
   newRule,
   setKeepCount,
+  setRequirementType,
   setRuleAction,
   setRuleName,
   toggleDisabled,
@@ -703,7 +704,12 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
                 </div>
               </fieldset>
               {req ? (
-                <ReqEditor req={req} armorGroups={armorGroups} onChange={changeReq} />
+                <ReqEditor
+                  req={req}
+                  armorGroups={armorGroups}
+                  onChange={changeReq}
+                  onTypeChange={(type) => setProfile((p) => setRequirementType(p, selectedRule, selectedReq, type))}
+                />
               ) : (
                 <p className="req-fields">Select a requirement.</p>
               )}

@@ -17,6 +17,7 @@ import {
   newRequirement,
   newRule,
   setKeepCount,
+  requirementTypeCombo,
   setRequirementType,
   setRuleAction,
   setRuleName,
@@ -343,5 +344,17 @@ describe('a new rule and requirement in a file', () => {
     expect(back.rules[0]?.name).toBe('A')
     expect(back.rules[0]?.requirements[0]).toEqual(defaultRequirement(eLootRuleType.AnySimilarColor))
     expect(back.rules[1]?.name).toBe('New Rule')
+  })
+})
+
+describe('requirementTypeCombo', () => {
+  it('lists Enable/Disable first, then every type the editor can make by friendly name', () => {
+    const combo = requirementTypeCombo()
+    expect(combo[0]).toEqual({ type: eLootRuleType.DisabledRule, name: 'Enable/Disable' })
+    const creatable = Object.values(eLootRuleType).filter((t) => defaultRequirement(t) !== null)
+    expect(combo.map((e) => e.type).sort((a, b) => a - b)).toEqual([...creatable].sort((a, b) => a - b))
+    const names = combo.slice(1).map((e) => e.name)
+    expect(names).toEqual([...names].sort(new Intl.Collator('en').compare))
+    expect(names.slice(0, 3)).toEqual(['Armor Type Similar Color', 'Base Skill Range', 'Buffed Double Value Key >='])
   })
 })

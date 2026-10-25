@@ -28,6 +28,16 @@
 - **Verified** (`src/ui/ReqEditor.test.tsx`): `ReqEditor` shows the acts-on combo, the text values and the
   color sample of a requirement, and every change fires `onChange` with the changed requirement. The acts-on
   combo of type 15 lists the color slot names of `fixtures/ColorSlots.Default.xml` (64 names).
+- **Observed** (`ref/editor/Form1.cs` 197-223): the requirement type combo lists "Enable/Disable" first, then
+  every type that `LootRuleCreator.CreateLootRule` can make, sorted by `FriendlyName` in a
+  `SortedList<string, eLootRuleType>`. A pick of another type replaces the requirement with a new default one
+  (`cmbReqType_SelectedIndexChanged`, 630-655). The names are the `FriendlyName` overrides in
+  `ref/shared/LootRules.cs` 326-2838.
+- **Verified** (`src/core/ops/rules.test.ts`, "lists Enable/Disable first, then every type the editor can make by
+  friendly name", and `src/ui/ReqEditor.test.tsx`, "shows the requirement type combo and reports a picked type"):
+  `requirementTypeCombo` gives that list, and the editor's "Requirement type" combo calls `setRequirementType`
+  through the App. **Unknown** whether the .NET culture order and `Intl.Collator('en')` agree on the names that
+  differ only in `<=`, `>=`, `==` and `!=`.
 - **Verified** (`src/ui/App.test.tsx`, "clicking a requirement shows its fields"): clicking a requirement in
   the list shows its fields, and typing in a field updates the requirement. The App keeps the edited profile
   in state. The ops of phase E connect in T29.
