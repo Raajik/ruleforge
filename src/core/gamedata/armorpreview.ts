@@ -163,6 +163,23 @@ export function armorGroupView(group: string): ArmorGroupView {
   }
 }
 
+/** The grey of the regions outside the rule's region. */
+export const NEUTRAL_COLOR = '#8D939D'
+
+/** The paint before a roll: the rule's colour on its region, grey elsewhere. */
+export function basePaint(view: ArmorView): { parts: Record<string, string>; pattern: string } {
+  const parts: Record<string, string> = {}
+  for (const part of PIECE_PARTS[view.piece]) parts[part] = view.colored.includes(part) ? view.color : NEUTRAL_COLOR
+  return { parts, pattern: view.color }
+}
+
+/** Every mapped group of the piece that the group names, for example the three "Amuli Coat" groups. */
+export function pieceGroups(name: string): { group: string; view: ArmorGroupView }[] {
+  return Object.keys(GROUPS)
+    .filter((group) => splitGroup(group).name === name)
+    .map((group) => ({ group, view: armorGroupView(group) }))
+}
+
 /** #RRGGBB of the rule's R, G and B, each kept in 0-255. */
 export function colorHex(r: number, g: number, b: number): string {
   const byte = (v: number) => Math.min(255, Math.max(0, Math.trunc(v) || 0))
