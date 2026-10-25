@@ -75,6 +75,7 @@ export async function openDat(read: ReadRange, fileSize: number): Promise<DatArc
     const out = new Uint8Array(size)
     const seen = new Set<number>()
     let block = first
+    let previous = -1
     let done = 0
     let chunk: Uint8Array = new Uint8Array(0)
     let chunkStart = 0
@@ -84,11 +85,12 @@ export async function openDat(read: ReadRange, fileSize: number): Promise<DatArc
       seen.add(block)
       const take = Math.min(size - done, blockSize - 4)
       if (block < chunkStart || block + 4 + take > chunkStart + chunk.length) {
-        // Blocks of a file usually follow each other, so read the blocks
-        // still needed in one go and follow the chain inside that. The cap
-        // keeps a scattered chain from reading the rest of a big file again
-        // at every block.
-        const left = Math.ceil((size - done) / (blockSize - 4))
+        // Blocks of a file usually follow each other, so at the start and
+        // after a block that ran on, read the blocks still needed in one go.
+        // A chain that jumps reads one block at a time, so a scattered chain
+        // never reads more than the file holds.
+        const runsOn = done === 0 || block === previous + blockSize
+        const left = runsOn ? Math.ceil((size - done) / (blockSize - 4)) : 1
         chunkStart = block
         chunk = await readExact(read, block, Math.min(left * blockSize, READ_AHEAD, fileSize - block))
       }
@@ -97,6 +99,7 @@ export async function openDat(read: ReadRange, fileSize: number): Promise<DatArc
       out.set(chunk.subarray(at + 4, at + 4 + take), done)
       done += take
       if (done < size && next === 0) throw new DatError('Block chain ends before the file does.')
+      previous = block
       block = next
     }
     return out

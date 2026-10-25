@@ -65,6 +65,24 @@ describe('openDat read sizes', () => {
     expect(await archive.readFile(1)).toEqual(data)
     expect(read.largest).toBeLessThanOrEqual(65536)
   })
+
+  it('reads a chain that runs backwards one block at a time, about the file once', async () => {
+    const b = new DatBuilder()
+    const data = bytes(400 * 508)
+    const first = b.chain(data)
+    const at = (i: number) => first + i * 512
+    const dat = b.build(b.node([{ id: 1, offset: at(399), size: data.length }]))
+    // Relink the 400 blocks from last to first, with the data in chain order.
+    for (let i = 0; i < 400; i++) {
+      setNext(dat, at(399 - i), i < 399 ? at(398 - i) : 0)
+      dat.set(data.subarray(i * 508, (i + 1) * 508), at(399 - i) + 4)
+    }
+    const read = memoryReader(dat)
+    const archive = await openDat(read, dat.length)
+    expect(await archive.readFile(1)).toEqual(data)
+    // The header, the root node and the 400 blocks; a read-ahead at every block read the file 87 times over.
+    expect(read.total).toBeLessThan(dat.length * 1.05)
+  })
 })
 
 describe('openDat guards', () => {

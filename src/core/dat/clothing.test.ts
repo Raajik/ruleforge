@@ -54,4 +54,10 @@ describe('parsePaletteSet and parsePalette', () => {
   it('throw on a count larger than the bytes left, so they never allocate it', () => {
     expect(() => parsePalette(u32s(0x04000001, 0xffffffff))).toThrow(/does not fit/)
   })
+
+  it('throw on more than 2048 colours or 1024 palettes, even when the bytes are there', () => {
+    expect(parsePalette(u32s(0x04000001, 2048, ...new Array<number>(2048).fill(0)))).toHaveLength(2048)
+    expect(() => parsePalette(u32s(0x04000001, 2049, ...new Array<number>(2049).fill(0)))).toThrow(/more than 2048/)
+    expect(() => parsePaletteSet(u32s(0x0f000001, 1025, ...new Array<number>(1025).fill(0)))).toThrow(/more than 1024/)
+  })
 })

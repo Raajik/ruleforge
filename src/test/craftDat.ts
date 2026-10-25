@@ -88,15 +88,16 @@ export function concat(...parts: Uint8Array[]): Uint8Array {
   return out
 }
 
-/** A ranged read over bytes in memory that counts its calls and its largest read. */
-export function memoryReader(bytes: Uint8Array): ReadRange & { calls: number; largest: number } {
+/** A ranged read over bytes in memory that counts its calls, its largest read and the bytes asked for. */
+export function memoryReader(bytes: Uint8Array): ReadRange & { calls: number; largest: number; total: number } {
   const read = Object.assign(
     async (offset: number, length: number) => {
       read.calls++
       read.largest = Math.max(read.largest, length)
+      read.total += length
       return bytes.slice(offset, offset + length)
     },
-    { calls: 0, largest: 0 },
+    { calls: 0, largest: 0, total: 0 },
   )
   return read
 }

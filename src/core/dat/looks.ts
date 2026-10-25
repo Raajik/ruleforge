@@ -6,8 +6,10 @@ import type { LookSource, PaletteColors, PieceLooks } from '../gamedata/armorrol
 import { DatError, openDat, type ReadRange } from './archive'
 import { parseClothingTable, parsePalette, parsePaletteSet } from './clothing'
 
-// A palette is 2048 colours (8 kB), so this keeps the cache near 32 MB at most.
+// A palette is at most 2048 colours (8 kB) and a set at most 1024 ids (4 kB)
+// (clothing.ts), so the caches stay near 32 MB and 16 MB at most.
 const PALETTE_CACHE_LIMIT = 4096
+const SET_CACHE_LIMIT = 4096
 
 export async function openPortalLooks(read: ReadRange, fileSize: number): Promise<LookSource> {
   const dat = await openDat(read, fileSize)
@@ -35,6 +37,7 @@ export async function openPortalLooks(read: ReadRange, fileSize: number): Promis
             let set = sets.get(sub.paletteSet)
             if (!set) {
               set = parsePaletteSet(await file(sub.paletteSet))
+              if (sets.size >= SET_CACHE_LIMIT) sets.clear()
               sets.set(sub.paletteSet, set)
             }
             // A slot is one range; its example colour is the middle entry (docs/gamedata.md).

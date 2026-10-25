@@ -118,6 +118,14 @@ ACE (`ACE.DatLoader`) and gyre (`docs/dat-parser.md`) were read to learn the for
   a block outside the file, a chain that ends early, a file size larger than the file's blocks can hold (checked
   before the buffer is made), a node with more than 61 entries, a directory cycle and a directory deeper than 16
   nodes. **Verified** `archive.test.ts`, "openDat guards".
+- A read ahead covers at most 64 KiB, and only at the start of a chain or after a block that runs on into the next
+  one; a chain that jumps reads one block at a time. So a chain that runs backwards reads about the file once, not
+  once per block. **Verified** `archive.test.ts`, "openDat read sizes".
+- A Palette holds at most 2048 colours and a PaletteSet at most 1024 palettes; a larger count is a `DatError`. So the
+  caches of `src/core/dat/looks.ts` (4096 palettes, 4096 sets) stay near 32 MB and 16 MB even when many ids point at
+  one big corrupt file. **Verified** `clothing.test.ts`, "throw on more than 2048 colours or 1024 palettes". With
+  the caps, `realdat.test.ts` still reads every PaletteSet of the 26 mapped pieces and the palettes of the Amuli
+  Coat chest rolls. The largest set seen in the probe has 72 palettes (**Observed**, 2026-10-24).
 - A ClothingTable (0x10xxxxxx) is an id, the base effects (a u16 count, a u16 bucket size, then per entry a key and
   a list of model and texture swaps), then the palette templates in the same hash table shape: per template a key
   (the PaletteTemplate id), an icon and a list of sub-palettes, each a list of ranges (offset and count, in palette

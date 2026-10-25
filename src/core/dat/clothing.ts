@@ -96,21 +96,29 @@ export function parseClothingTable(bytes: Uint8Array): ClothingTable {
   return { id, templates }
 }
 
+// A palette holds at most 2048 colours: the sub-palette ranges index a
+// 2048-entry palette (docs/gamedata.md). The largest real PaletteSet of the
+// armor pieces has 72 palettes. The caps keep the caches of looks.ts near
+// their stated size even when many ids point at one big corrupt file.
+const MAX_COLORS = 2048
+const MAX_SET = 1024
+
 /** The palette ids of a PaletteSet, in shade order. */
 export function parsePaletteSet(bytes: Uint8Array): Uint32Array {
-  return parseIdList(bytes)
+  return parseIdList(bytes, MAX_SET)
 }
 
 /** The colours of a Palette, each 0xAARRGGBB. */
 export function parsePalette(bytes: Uint8Array): Uint32Array {
-  return parseIdList(bytes)
+  return parseIdList(bytes, MAX_COLORS)
 }
 
 // Both files are an id, then an int32 count, then that many uint32 values.
-function parseIdList(bytes: Uint8Array): Uint32Array {
+function parseIdList(bytes: Uint8Array, max: number): Uint32Array {
   const c = new Cursor(bytes)
   c.u32()
   const n = c.count(c.u32(), 4)
+  if (n > max) throw new DatError(`Count ${n} is more than ${max}.`)
   const values = new Uint32Array(n)
   for (let i = 0; i < n; i++) values[i] = c.u32()
   return values
