@@ -100,6 +100,23 @@ They are not the game's models or palette slots.
 - The preview colour is `#RRGGBB` from R, G and B, each channel kept in 0-255. **Verified**
   `armorpreview.test.ts`, "colorHex".
 
+## Game files: the armor preview roll (specs/armor-preview.md items 9-10)
+
+`src/core/dat/` reads the user's own `client_portal.dat` through ranged reads. It was written new from the format;
+ACE (`ACE.DatLoader`) and gyre (`docs/dat-parser.md`) were read to learn the format, and no code was copied.
+The tests use crafted bytes (`src/test/craftDat.ts`); no game data is in the repo.
+
+- The container: a header at 0x140 gives the block size (4 bytes in) and the offset of the root directory node
+  (32 bytes in). A file or a node is a chain of blocks; the first 4 bytes of a block point to the next block, 0 ends
+  the chain. A node is 62 branch offsets, an entry count and 61 entries of 24 bytes (flags, id, offset, size, date,
+  iteration), sorted by id; a node whose first branch is 0 is a leaf. **Observed** ACE
+  `Source/ACE.DatLoader/DatDatabase.cs`, `DatDatabaseHeader.cs`, `DatDirectory.cs`, `DatDirectoryHeader.cs`,
+  `DatFile.cs`, `DatReader.cs`. **Verified** `src/core/dat/archive.test.ts`, "openDat on a good file".
+- The reader stops a corrupt file with a `DatError`: a block chain that loops (to itself or back after some blocks),
+  a block outside the file, a chain that ends early, a file size larger than the file's blocks can hold (checked
+  before the buffer is made), a node with more than 61 entries, a directory cycle and a directory deeper than 16
+  nodes. **Verified** `archive.test.ts`, "openDat guards".
+
 ## Unknown
 
 - How the legacy editor orders these lists in its own UI. Phase F (T27–T28) reads `Form1.cs` and settles it.
