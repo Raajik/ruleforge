@@ -9,6 +9,7 @@ import { eLootAction } from '../core/format/enums'
 import type { LootProfile } from '../core/format/profile'
 import { readProfile } from '../core/format/profile'
 import { App } from './App'
+import { DEFAULT_COLOR_SLOTS } from './colorSlots'
 
 afterEach(cleanup)
 
@@ -125,5 +126,24 @@ describe('App layout', () => {
     expect(within(items[0]!).getByText('Off')).toBeTruthy()
     expect(within(items[1]!).getByText('Sell')).toBeTruthy()
     expect(within(items[2]!).getByText('Salvage')).toBeTruthy()
+  })
+
+  it('makes a new type 15 rule from scratch with the bundled armor groups', () => {
+    render(<App initialProfile={{ version: 1, rules: [], extraBlocks: [] }} colorSlots={DEFAULT_COLOR_SLOTS} />)
+    fireEvent.click(within(screen.getByRole('group', { name: 'Rule actions' })).getByRole('button', { name: 'New' }))
+    // The requirement "New" button sits under the requirement list, after the rule's.
+    fireEvent.click(screen.getAllByRole('button', { name: 'New' }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'SpellNameMatch' }))
+    const type = screen.getByLabelText('Requirement type') as HTMLSelectElement
+    const armor = [...type.options].find((o) => o.textContent === 'Armor Type Similar Color')!
+    fireEvent.change(type, { target: { value: armor.value } })
+    expect(screen.getByRole('button', { name: 'SimilarColorArmorType' })).toBeTruthy()
+    // The bundled ColorSlots.Default.xml: "None" and its 63 definitions.
+    const actsOn = screen.getByLabelText('Armor Type/Color Region') as HTMLSelectElement
+    expect(actsOn.options).toHaveLength(64)
+    const chest = [...actsOn.options].find((o) => o.textContent === 'Amuli Coat (Chest)')!
+    fireEvent.change(actsOn, { target: { value: chest.value } })
+    fireEvent.change(screen.getByLabelText('RGB color value (hex)'), { target: { value: '3060C0' } })
+    expect(screen.getByText('Amuli Coat, Chest in #3060C0')).toBeTruthy()
   })
 })

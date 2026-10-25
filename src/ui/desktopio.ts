@@ -33,14 +33,32 @@ export interface PickedDesktopProfile {
  * which is the C# `FileName`.
  */
 export function backupPath(path: string, dialogName: string | undefined, at: Date): string {
-  const folder = path.slice(0, Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1)
+  const folder = folderOf(path)
   const name = dialogName !== undefined && dialogName !== '' ? dialogName : baseName(path)
   return backupFileName(`${folder}${name}`, at)
+}
+
+/** The folder of a path, with its trailing separator. */
+function folderOf(path: string): string {
+  return path.slice(0, Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1)
 }
 
 /** The last path part, the file name that the window title shows. */
 function baseName(path: string): string {
   return path.split(/[/\\]/).pop() ?? path
+}
+
+/**
+ * The text of ColorSlots.User.xml in the folder of the profile, or null when
+ * it is missing or unreadable. The C# reads it from the VTank profile folder
+ * (ref/shared/ColorXML.cs 56-87), where VTank keeps its .utl profiles.
+ */
+export async function readUserColorSlots(profilePath: string): Promise<string | null> {
+  try {
+    return await readTextFile(`${folderOf(profilePath)}ColorSlots.User.xml`)
+  } catch {
+    return null
+  }
 }
 
 /** True inside a Tauri window. The web build has no plugins. */

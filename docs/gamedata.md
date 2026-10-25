@@ -69,6 +69,18 @@ tests read `fixtures/ColorSlots.Default.xml` with `node:fs`.
   reject a whole file. **Observed** `ref/shared/ColorXML.cs:56-87`. **Verified** the skip tests in
   `colorslots.test.ts`.
 
+- Both builds bundle `fixtures/ColorSlots.Default.xml` (`src/ui/colorSlots.ts`, a Vite `?raw` import) and pass its
+  definitions to the App, so the type 15 combo lists "None" and the 63 default groups. **Verified**
+  `src/ui/App.test.tsx` "makes a new type 15 rule from scratch with the bundled armor groups".
+- `parseColorSlots(xml, into)` reads a second file over the first, as the C# reads both files into one dictionary:
+  a name in both takes the later list, a new name goes at the end. **Verified** `colorslots.test.ts` "replaces a
+  default definition, appends a new one and keeps the input map".
+- The desktop app reads `ColorSlots.User.xml` from the folder of each profile it opens, over the bundled default
+  file. A missing or unreadable file leaves the default groups. This stands in for the C# read from the VTank
+  profile folder; Ruleforge has no profile folder setting. **Verified** `src/ui/App.desktop.test.tsx`, the two
+  "ColorSlots.User.xml" tests, with a fake fs. **Unknown** whether the `fs:scope` entry lets the real app read
+  the file (`TO-TEST.md`).
+
 ## Armor preview map (H4 armor preview)
 
 `src/core/gamedata/armorpreview.ts` maps a colour requirement to a stand-in piece, the parts in the colour and

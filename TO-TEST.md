@@ -33,3 +33,10 @@ them. Do each item, then delete it and its line here in the same commit.
    VirindiTank in Asheron's Call.
    **Expected:** the looter loads the profile and keeps the rules, with no error.
    **Why no check:** it needs the game and the Decal plugin, which are not part of this repo.
+
+6. **`ColorSlots.User.xml` beside a profile (desktop).** Put a `ColorSlots.User.xml` with a
+   `<slotdef name="My Robe (Base)">` in a folder, and a profile beside it. Open the profile, select a
+   requirement and pick the type "Armor Type Similar Color".
+   **Expected:** the "Armor Type/Color Region" combo lists "My Robe (Base)" after the 63 default groups.
+   **Why no check:** the tests fake `plugin-fs`. Only a real run shows that the `fs:scope` entry in
+   `src-tauri/capabilities/default.json` lets the app read the file.

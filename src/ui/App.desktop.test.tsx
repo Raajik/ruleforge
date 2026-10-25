@@ -11,6 +11,7 @@ import { fakeTauri, resetFakeTauri } from '../test/fakeTauri'
 import { eLootAction } from '../core/format/enums'
 import type { LootProfile } from '../core/format/profile'
 import { App } from './App'
+import { DEFAULT_COLOR_SLOTS } from './colorSlots'
 
 vi.mock('@tauri-apps/api/core', async () => (await import('../test/fakeTauri')).coreMock)
 vi.mock('@tauri-apps/plugin-dialog', async () => (await import('../test/fakeTauri')).dialogMock)
@@ -146,5 +147,44 @@ describe('App in the desktop build', () => {
     await waitFor(() => expect(writtenPaths()).toHaveLength(5))
     expect(writtenPaths()[3]).toBe('/profiles/mine.utl.2026-10-19-21-11.bak')
     expect(writtenPaths()[4]).toBe('/profiles/mine.utl')
+  })
+})
+
+describe('App in the desktop build: ColorSlots.User.xml', () => {
+  const USER_XML = '<VTClassicColorInfo><slotdef name="My Robe (Base)"><entry value="0"/></slotdef></VTClassicColorInfo>'
+
+  function armorGroupNames(): string[] {
+    fireEvent.click(within(screen.getByRole('list', { name: 'Rules' })).getAllByRole('button')[0]!)
+    fireEvent.click(within(screen.getByRole('list', { name: 'Requirements' })).getAllByRole('button')[0]!)
+    const type = screen.getByLabelText('Requirement type') as HTMLSelectElement
+    const armor = [...type.options].find((o) => o.textContent === 'Armor Type Similar Color')!
+    fireEvent.change(type, { target: { value: armor.value } })
+    return [...(screen.getByLabelText('Armor Type/Color Region') as HTMLSelectElement).options].map((o) => o.text)
+  }
+
+  it('reads the user file beside the opened profile over the bundled default file', async () => {
+    fakeTauri.readTextFile.mockImplementation(async (path) =>
+      String(path) === '/profiles/ColorSlots.User.xml' ? USER_XML : MINIMAL,
+    )
+    render(<App initialProfile={smallProfile()} colorSlots={DEFAULT_COLOR_SLOTS} desktop />)
+    pick('File', 'Open')
+    await waitFor(() => expect(fakeTauri.readTextFile).toHaveBeenCalledWith('/profiles/ColorSlots.User.xml'))
+    await waitFor(() => expect(armorGroupNames()).toContain('My Robe (Base)'))
+    const names = armorGroupNames()
+    expect(names[0]).toBe('None')
+    expect(names).toContain('Amuli Coat (Chest)')
+    expect(names).toHaveLength(65)
+  })
+
+  it('keeps the bundled groups when the folder has no user file', async () => {
+    fakeTauri.readTextFile.mockImplementation(async (path) => {
+      if (String(path).endsWith('ColorSlots.User.xml')) throw new Error('not found')
+      return MINIMAL
+    })
+    render(<App initialProfile={smallProfile()} colorSlots={DEFAULT_COLOR_SLOTS} desktop />)
+    pick('File', 'Open')
+    await waitFor(() => expect(fakeTauri.readTextFile).toHaveBeenCalledWith('/profiles/ColorSlots.User.xml'))
+    await waitFor(() => expect(screen.getByRole('list', { name: 'Rules' })).toBeTruthy())
+    expect(armorGroupNames()).toHaveLength(64)
   })
 })

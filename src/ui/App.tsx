@@ -17,6 +17,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { eLootAction, friendlyActionName, ruleTypeName } from '../core/format/enums'
 import { readProfile, writeProfile, type LootProfile, type Requirement } from '../core/format/profile'
 import { parseInt32 } from '../core/format/reader'
+import type { SlotDefinitions } from '../core/eval/match'
+import { parseColorSlots } from '../core/gamedata/colorslots'
 import { copyRuleText, pasteRuleText } from '../core/ops/clipboard'
 import { BACKUP_INTERVAL_MINUTES, newFile, unsavedChangesPrompt } from '../core/ops/file'
 import {
@@ -51,6 +53,7 @@ import {
 } from './fileio'
 import {
   openDesktopProfile,
+  readUserColorSlots,
   saveDesktopProfile,
 } from './desktopio'
 import { MenuBar, type MenuName } from './MenuBar'
@@ -80,14 +83,18 @@ function isTextEntry(target: EventTarget | null): boolean {
   return element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.tagName === 'SELECT'
 }
 
-export function App({ initialProfile, armorGroups, desktop = false }: {
+export function App({ initialProfile, colorSlots, desktop = false }: {
   initialProfile: LootProfile
-  /** The color slot names of the ColorSlots XML file (type 15 only). */
-  armorGroups?: readonly string[]
+  /** The slot definitions of ColorSlots.Default.xml. Their names fill the type 15 armor group combo. */
+  colorSlots?: SlotDefinitions
   /** The Tauri build sets this: File > Open and Save use the native dialogs. */
   desktop?: boolean
 }) {
   const [profile, setProfileState] = useState(initialProfile)
+  /** The default slots with ColorSlots.User.xml of the open profile's folder over them (desktop only). */
+  const [userSlots, setUserSlots] = useState<SlotDefinitions | null>(null)
+  const slots = userSlots ?? colorSlots
+  const armorGroups = useMemo(() => (slots ? [...slots.keys()] : undefined), [slots])
   /**
    * The base profile of the Review changes page (PLAN.md H4): the file as it
    * was opened. A load and New set a new base. A save keeps it, so the user
@@ -268,6 +275,10 @@ export function App({ initialProfile, armorGroups, desktop = false }: {
         const loaded = readProfile(picked.text)
         pathRef.current = picked.path
         loadProfile(loaded, picked.name, null)
+        void readUserColorSlots(picked.path).then((xml) => {
+          // A later open wins over a slow read of an earlier folder.
+          if (pathRef.current === picked.path) setUserSlots(xml === null ? null : parseColorSlots(xml, colorSlots))
+        })
       } catch {
         // The path follows a good file only, so a bad file leaves the open
         // path alone and a later Save cannot write over it.
