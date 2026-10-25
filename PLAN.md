@@ -366,6 +366,9 @@ mockup data, not app code. Keep every T27-T31 test green: change test queries on
   - Tested by `src/core/ops/strictness.test.ts` (32), `src/core/ops/baseprofiles.test.ts` (3) and
     `src/ui/OverviewPage.test.tsx` (12), 613 total. Facts: `docs/ops.md`, `docs/ui.md`.
 
+- [ ] H4 Armor preview: a 3D stand-in model in the colour requirement editor (user pick, 2026-10-24).
+  - Read `specs/armor-preview.md` first. Types 14, 15 and 16 get the view, type 17 gets none.
+
 ## Later: "better" (only when the user picks)
 Ideas, not tasks. Do not start these.
 - Review changes: align the rule lists like `diff`, so a delete among rules with the same name shows one
